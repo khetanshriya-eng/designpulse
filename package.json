@@ -1,0 +1,38 @@
+{
+  "name": "designpulse",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "db:seed": "tsx --env-file=.env.local scripts/seed-sources.ts",
+    "fetch": "tsx --env-file=.env.local scripts/fetch-feeds.ts",
+    "fetch:dry": "tsx scripts/fetch-feeds.ts --dry-run",
+    "summarize": "tsx --env-file=.env.local scripts/summarize.ts",
+    "curate": "tsx --env-file=.env.local scripts/curate.ts",
+    "backfill:images": "tsx --env-file=.env.local scripts/backfill-images.ts",
+    "pipeline": "npm run fetch && npm run summarize && npm run curate"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.105.4",
+    "cheerio": "^1.2.0",
+    "next": "16.2.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "rss-parser": "^3.13.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20.19.41",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "tailwindcss": "^4",
+    "tsx": "^4.22.1",
+    "typescript": "^5"
+  }
+}

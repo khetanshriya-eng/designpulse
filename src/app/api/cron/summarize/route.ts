@@ -1,0 +1,48 @@
+/**
+ * GET/POST /api/cron/summarize
+ *
+ * Wired to Vercel Cron via `vercel.json`. Auth: `Authorization: Bearer
+ * $CRON_SECRET`. Returns a JSON summary of the run.
+ *
+ * Optional query params for manual debugging:
+ *   ?limit=20&concurrency=3&slug=verge
+ */
+import type { NextRequest } from "next/server";
+import { runSummarize } from "@/lib/pipeline/summarize";
+import { logger } from "@/lib/logger";
+
+export const dynamic = "force-dynamic";
+// Provider calls (Gemini → Groq fallback) can stack up; give the function
+// room to drain its worker pool. Vercel Pro max is 300s.
+export const maxDuration = 300;
+
+async function handle(req: NextRequest) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    return Response.json({ error: "CRON_SECRET is not configured" }, { status: 503 });
+  }
+  const auth = req.headers.get("authorization");
+  if (auth !== `Bearer ${cronSecret}`) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const log = logger("cron.summarize");
+  try {
+    const url = new URL(req.url);
+    const limit = Number(url.searchParams.get("limit") ?? "50");
+    const concurrency = Number(url.searchParams.get("concurrency") ?? "3");
+    const slug = url.searchParams.get("slug") ?? undefined;
+    const result = await runSummarize({ limit, concurrency, slug, log });
+    return Response.json({ success: true, ...result });
+  } catch (err) {
+    const message = (err as Error).message;
+    log.error("crashed", { error: message });
+    return Response.json(
+      { success: false, error: "Summarize pipeline failed", detail: message },
+      { status: 500 }
+    );
+  }
+}
+
+export const GET = handle;
+export const POST = handle;

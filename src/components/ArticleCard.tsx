@@ -1,0 +1,149 @@
+import Link from "next/link";
+import type { Article } from "@/data/articles";
+import { SourceBadge } from "./SourceBadge";
+import { CategoryDot } from "./CategoryDot";
+import { ArticleImage } from "./ArticleImage";
+import { formatRelativeTime, formatReadTime } from "@/lib/format";
+
+type Variant = "default" | "horizontal" | "compact" | "medium";
+
+type Props = {
+  article: Article;
+  variant?: Variant;
+};
+
+export function ArticleCard({ article, variant = "default" }: Props) {
+  if (variant === "compact") return <CompactCard article={article} />;
+  if (variant === "horizontal") return <HorizontalCard article={article} />;
+  if (variant === "medium") return <MediumCard article={article} />;
+  return <DefaultCard article={article} />;
+}
+
+function DefaultCard({ article }: { article: Article }) {
+  const readTime = formatReadTime(article);
+  return (
+    <Link
+      href={article.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group block"
+    >
+      <ArticleImage article={article} aspect="video" size="md" />
+      <div className="pt-3.5 flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-3">
+          <SourceBadge sourceId={article.sourceId} />
+          <CategoryDot category={article.category} />
+        </div>
+        <h3 className="font-heading text-[1rem] leading-snug font-bold text-ink group-hover:text-accent transition-colors">
+          {article.title}
+        </h3>
+        <p className="text-[13px] leading-relaxed text-ink-muted line-clamp-2">
+          {article.summary}
+        </p>
+        <div className="flex items-center gap-2 text-[11px] text-ink-subtle pt-1">
+          <span>{formatRelativeTime(article.publishedAt)}</span>
+          {readTime && (
+            <>
+              <span aria-hidden>·</span>
+              <span>{readTime}</span>
+            </>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function MediumCard({ article }: { article: Article }) {
+  const readTime = formatReadTime(article);
+  return (
+    <Link
+      href={article.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group block"
+    >
+      <ArticleImage article={article} aspect="video" size="sm" />
+      <div className="pt-3 flex flex-col gap-1.5">
+        <div className="flex items-center justify-between gap-3">
+          <SourceBadge sourceId={article.sourceId} />
+          <CategoryDot category={article.category} />
+        </div>
+        <h3 className="font-heading text-[0.95rem] leading-snug font-semibold text-ink group-hover:text-accent transition-colors line-clamp-3">
+          {article.title}
+        </h3>
+        <div className="flex items-center gap-2 text-[11px] text-ink-subtle pt-0.5">
+          <span>{formatRelativeTime(article.publishedAt)}</span>
+          {readTime && (
+            <>
+              <span aria-hidden>·</span>
+              <span>{readTime}</span>
+            </>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function HorizontalCard({ article }: { article: Article }) {
+  const readTime = formatReadTime(article);
+  return (
+    <Link
+      href={article.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group flex gap-4 py-4 border-b border-rule first:border-t"
+    >
+      <div className="w-28 sm:w-36 shrink-0">
+        <ArticleImage article={article} aspect="square" size="sm" />
+      </div>
+      <div className="flex-1 min-w-0 flex flex-col justify-between gap-2">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-3">
+            <SourceBadge sourceId={article.sourceId} />
+            <CategoryDot category={article.category} />
+          </div>
+          <h3 className="font-heading text-[0.95rem] sm:text-[1.05rem] leading-snug font-bold text-ink group-hover:text-accent transition-colors line-clamp-3">
+            {article.title}
+          </h3>
+          <p className="hidden sm:block text-[13px] leading-relaxed text-ink-muted line-clamp-2">
+            {article.summary}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-[11px] text-ink-subtle">
+          <span>{formatRelativeTime(article.publishedAt)}</span>
+          {readTime && (
+            <>
+              <span aria-hidden>·</span>
+              <span>{readTime}</span>
+            </>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function CompactCard({ article }: { article: Article }) {
+  return (
+    <Link
+      href={article.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group flex gap-3 items-start"
+    >
+      <div className="w-14 h-14 shrink-0">
+        <ArticleImage article={article} aspect="square" size="sm" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <SourceBadge sourceId={article.sourceId} />
+        </div>
+        <h4 className="font-heading text-[13px] font-semibold leading-snug text-ink group-hover:text-accent transition-colors line-clamp-2">
+          {article.title}
+        </h4>
+      </div>
+    </Link>
+  );
+}

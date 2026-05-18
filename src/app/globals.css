@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Typography */
+  --font-heading: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand — BBC-inspired editorial palette */
+  --color-accent: #bb1919;
+  --color-accent-hover: #a01515;
+  --color-accent-soft: #fbeaea;
+
+  --color-ink: #1a1a1a;
+  --color-ink-muted: #4a4a4a;
+  --color-ink-subtle: #707070;
+
+  --color-paper: #ffffff;
+  --color-paper-tint: #f6f6f6;
+  --color-paper-warm: #faf8f5;
+
+  --color-rule: #e6e6e6;
+  --color-rule-strong: #1a1a1a;
+
+  /* Category accent dots */
+  --color-cat-design: #bb1919;
+  --color-cat-thinking: #1f6feb;
+  --color-cat-inspiration: #d97706;
+  --color-cat-youtube: #cf2e2e;
+  --color-cat-product: #0f766e;
+  --color-cat-tech: #4338ca;
+  --color-cat-ai: #7c3aed;
+  --color-cat-newsletters: #be185d;
+  --color-cat-podcasts: #b45309;
+}
+
+html,
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "ss02", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings use Manrope */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.015em;
+}
+
+/* Hairline rules in the BBC tradition */
+.rule-top {
+  border-top: 1px solid var(--color-rule);
+}
+.rule-bottom {
+  border-bottom: 1px solid var(--color-rule);
+}
+.rule-strong-top {
+  border-top: 2px solid var(--color-rule-strong);
+}
+
+/* Generative thumbnail backgrounds (avoid external image deps in prototype) */
+.thumb-grad-1 { background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%); }
+.thumb-grad-2 { background: linear-gradient(135deg, #bb1919 0%, #7a0f0f 100%); }
+.thumb-grad-3 { background: linear-gradient(135deg, #1f6feb 0%, #0b3e91 100%); }
+.thumb-grad-4 { background: linear-gradient(135deg, #d97706 0%, #92400e 100%); }
+.thumb-grad-5 { background: linear-gradient(135deg, #0f766e 0%, #064e44 100%); }
+.thumb-grad-6 { background: linear-gradient(135deg, #4338ca 0%, #1e1b6e 100%); }
+.thumb-grad-7 { background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%); }
+.thumb-grad-8 { background: linear-gradient(135deg, #be185d 0%, #831843 100%); }
+.thumb-grad-9 { background: linear-gradient(135deg, #b45309 0%, #78350f 100%); }
+.thumb-grad-10 { background: linear-gradient(135deg, #faf8f5 0%, #e6e1d6 100%); color: #1a1a1a; }
+
+/* Subtle dot pattern for editorial flair on hero overlays */
+.dot-pattern {
+  background-image: radial-gradient(rgba(255,255,255,0.18) 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+
+/* Source avatar ring */
+.source-avatar-ring {
+  background: conic-gradient(from 180deg at 50% 50%, #bb1919, #1a1a1a, #bb1919);
+}
