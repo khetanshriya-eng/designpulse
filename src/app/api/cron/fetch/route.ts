@@ -13,9 +13,9 @@ import { runFetch } from "@/lib/pipeline/fetch";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
-// Fetch is the heaviest pipeline step (60 RSS feeds + per-item HTML enrichment).
-// Bump above the default to allow some headroom on the Vercel function.
-export const maxDuration = 300;
+// Hobby plan caps at 60s. Fetch usually fits but a slow source can push us
+// over; the runner upserts on original_url so the next run picks up cleanly.
+export const maxDuration = 60;
 
 async function handle(req: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;

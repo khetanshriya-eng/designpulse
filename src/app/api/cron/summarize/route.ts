@@ -12,9 +12,9 @@ import { runSummarize } from "@/lib/pipeline/summarize";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
-// Provider calls (Gemini → Groq fallback) can stack up; give the function
-// room to drain its worker pool. Vercel Pro max is 300s.
-export const maxDuration = 300;
+// Hobby plan caps at 60s. The summarize runner is resumable — unsummarized
+// rows roll over to the next invocation.
+export const maxDuration = 60;
 
 async function handle(req: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;

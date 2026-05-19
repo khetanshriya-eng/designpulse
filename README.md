@@ -37,39 +37,54 @@ cron-protected API route:
 | Fetch     | `npm run fetch`      | `/api/cron/fetch`       |
 | Summarize | `npm run summarize`  | `/api/cron/summarize`   |
 | Curate    | `npm run curate`     | `/api/cron/curate`      |
+| All three | `npm run pipeline`   | `/api/cron/pipeline`    |
 | Send      | —                    | `/api/send-digest`      |
 
 Each script supports `--dry-run`; the API routes accept the same options as
 query params (`?limit=20`, `?slug=verge`, `?window-hours=72`).
 
+`/api/cron/pipeline` runs fetch → summarize → curate sequentially in a single
+function invocation. Useful on Vercel Hobby, which caps the project at 2 daily
+crons (one for the full pipeline, one for the digest send).
+
 ### Manual trigger
 
 ```bash
 curl -H "Authorization: Bearer $CRON_SECRET" \
-  https://designpulse.site/api/cron/fetch
+  https://designpulse.vercel.app/api/cron/pipeline
 ```
 
 ## Deploy to Vercel
 
-1. Push to GitHub and import the repo into Vercel (root = `designpulse/`).
+1. Push to GitHub and import the repo into Vercel.
 2. Add the env vars from the table above to the Vercel project. `CRON_SECRET`
    must be set **before** the first deploy or cron jobs won't authenticate.
-3. Vercel reads `vercel.json` automatically. Schedule (all UTC):
+3. Vercel reads `vercel.json` automatically. Hobby-tier schedule (all UTC):
 
-   | Time   | Job             | Why                                        |
-   | ------ | --------------- | ------------------------------------------ |
-   | 00:30  | curate          | Pick today's hero before any reader hits it |
-   | 01:30  | send-digest     | Email goes out ~6:30am ET                  |
-   | 06:00  | fetch (morning) | Catch the overnight US/EU publishing window |
-   | 06:30  | summarize       | Run 30m after the fetch                    |
-   | 18:00  | fetch (evening) | Catch the daytime publishing window         |
-   | 18:30  | summarize       | Run 30m after the fetch                    |
+   | Time  | Job          | Why                                                              |
+   | ----- | ------------ | ---------------------------------------------------------------- |
+   | 05:00 | pipeline     | One-shot fetch → summarize → curate. ~6h headroom before digest. |
+   | 11:30 | send-digest  | Email goes out ~6:30am ET / 3:30am PT.                           |
 
-   Hobby tier is limited to two daily crons — upgrade to Pro for the twice-daily
-   pipeline, or trim `vercel.json` accordingly.
+   Pro tier ($20/mo) lifts the 2-cron + daily-only limit; if you upgrade,
+   replace `vercel.json` with the four-cron version (split fetch/summarize
+   into morning + evening runs and `maxDuration = 300` on each route).
 
 4. Vercel Cron auto-attaches `Authorization: Bearer $CRON_SECRET` to every
    scheduled call. No additional wiring needed.
+
+### Hobby-tier timeout notes
+
+Hobby caps `maxDuration` at 60s. All cron routes are set to 60s and every
+pipeline step is **resumable**, so a partial run never corrupts state:
+
+- **Fetch** upserts on `original_url` with `ignoreDuplicates: true`.
+- **Summarize** only loads rows where `summary IS NULL`.
+- **Curate** idempotently resets `is_featured`/`is_must_read` and upserts
+  today's `editions` row on conflict.
+
+If `/api/cron/pipeline` regularly times out before curate, run
+`npm run pipeline` from your laptop instead, or upgrade to Pro.
 
 ## Logging + monitoring
 
