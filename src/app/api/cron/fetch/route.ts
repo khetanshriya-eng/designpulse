@@ -32,9 +32,11 @@ async function handle(req: NextRequest) {
     const url = new URL(req.url);
     const limitParam = url.searchParams.get("limit");
     const onlyParam = url.searchParams.get("only");
+    const concurrencyParam = url.searchParams.get("concurrency");
     const result = await runFetch({
       limit: limitParam ? Number(limitParam) : null,
       only: onlyParam,
+      concurrency: concurrencyParam ? Number(concurrencyParam) : undefined,
       log,
     });
     return Response.json({ success: true, ...result });

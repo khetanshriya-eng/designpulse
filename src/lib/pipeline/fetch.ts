@@ -18,6 +18,13 @@ export type FetchOptions = {
   dryRun?: boolean;
   limit?: number | null;
   only?: string | null;
+  /**
+   * How many sources to fetch in parallel. Defaults to 4. Each worker pulls
+   * the next source off a shared cursor — same worker-pool pattern as
+   * runSummarize. On Vercel Hobby (60s function cap), 4 keeps us well under
+   * the cap for ~60 sources.
+   */
+  concurrency?: number;
   /** Optional logger override; defaults to a `cron.fetch`-scoped one. */
   log?: Logger;
 };
@@ -101,11 +108,13 @@ function itemToInsert(item: EnrichedItem): ArticleInsert {
 export async function runFetch(opts: FetchOptions = {}): Promise<FetchResult> {
   const log = opts.log ?? logger("pipeline.fetch");
   const sources = await loadSources(opts);
+  const concurrency = Math.max(1, opts.concurrency ?? 4);
   log.info("starting", {
     sources: sources.length,
     dryRun: opts.dryRun ?? false,
     only: opts.only ?? null,
     limit: opts.limit ?? null,
+    concurrency,
   });
 
   let totalItems = 0;
@@ -113,36 +122,55 @@ export async function runFetch(opts: FetchOptions = {}): Promise<FetchResult> {
   const perSource: SourceResult[] = [];
   const allInserts: ArticleInsert[] = [];
 
-  for (const source of sources) {
-    const result = await fetchSource(source);
-    if (result.errors.length) {
-      totalErrors += result.errors.length;
-      for (const e of result.errors) log.warn("source error", { slug: source.slug, error: e });
-    }
-    if (result.items.length === 0) {
-      perSource.push({ slug: source.slug, items: 0, durationMs: result.durationMs, errors: result.errors });
-      log.debug("empty source", { slug: source.slug, durationMs: result.durationMs });
-      continue;
-    }
+  // Worker-pool pattern: each worker pulls the next index off a shared
+  // cursor. JS is single-threaded so shared-state mutations between awaits
+  // are race-free.
+  let cursor = 0;
+  async function worker() {
+    while (true) {
+      const i = cursor++;
+      if (i >= sources.length) return;
+      const source = sources[i];
 
-    const enriched = await enrichBatch(result.items, 4);
-    totalItems += enriched.length;
-    perSource.push({
-      slug: source.slug,
-      items: enriched.length,
-      durationMs: result.durationMs,
-      errors: result.errors,
-    });
-    log.info("source fetched", {
-      slug: source.slug,
-      items: enriched.length,
-      durationMs: result.durationMs,
-    });
+      const result = await fetchSource(source);
+      if (result.errors.length) {
+        totalErrors += result.errors.length;
+        for (const e of result.errors) log.warn("source error", { slug: source.slug, error: e });
+      }
+      if (result.items.length === 0) {
+        perSource.push({
+          slug: source.slug,
+          items: 0,
+          durationMs: result.durationMs,
+          errors: result.errors,
+        });
+        log.debug("empty source", { slug: source.slug, durationMs: result.durationMs });
+        continue;
+      }
 
-    if (!opts.dryRun) {
-      allInserts.push(...enriched.map(itemToInsert));
+      const enriched = await enrichBatch(result.items, 4);
+      totalItems += enriched.length;
+      perSource.push({
+        slug: source.slug,
+        items: enriched.length,
+        durationMs: result.durationMs,
+        errors: result.errors,
+      });
+      log.info("source fetched", {
+        slug: source.slug,
+        items: enriched.length,
+        durationMs: result.durationMs,
+      });
+
+      if (!opts.dryRun) {
+        allInserts.push(...enriched.map(itemToInsert));
+      }
     }
   }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, sources.length) }, worker)
+  );
 
   let inserted = 0;
   if (!opts.dryRun && allInserts.length > 0) {

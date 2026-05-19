@@ -38,7 +38,12 @@ async function handle(req: NextRequest) {
   // Each step is independent re: errors. If one throws we still return
   // partial progress for the others — the next run will retry.
   try {
-    out.fetch = await runFetch({ log: logger("cron.pipeline.fetch") });
+    // Concurrency 4 fits ~60 RSS sources inside ~15-20s on a Vercel function,
+    // leaving room for summarize + curate before the 60s Hobby cap.
+    out.fetch = await runFetch({
+      concurrency: 4,
+      log: logger("cron.pipeline.fetch"),
+    });
   } catch (err) {
     out.fetch = { error: (err as Error).message };
     log.error("fetch step failed", { error: (err as Error).message });
