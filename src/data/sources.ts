@@ -47,19 +47,20 @@ export const SOURCES: Source[] = [
   { id: "uxdesigncc", name: "UX Collective", slug: "uxdesigncc", url: "https://uxdesign.cc", feedUrl: "https://uxdesign.cc/feed", type: "publication", category: "ux-thinking", initials: "UX", swatch: "thumb-grad-1" },
   { id: "designmba", name: "Design MBA", slug: "designmba", url: "https://www.designmba.show/", feedUrl: "https://feeds.simplecast.com/740y1GZg", type: "podcast", category: "ux-thinking", initials: "DM", swatch: "thumb-grad-6" },
   { id: "nngroup", name: "NN/g", slug: "nngroup", url: "https://nngroup.com", feedUrl: "https://nngroup.com/feed/rss/", type: "publication", category: "ux-thinking", initials: "NN", swatch: "thumb-grad-2" },
-  { id: "uxtigers", name: "UX Tigers", slug: "uxtigers", url: "https://uxtigers.com", feedUrl: "https://uxtigers.com/feed", type: "blog", category: "ux-thinking", initials: "UT", swatch: "thumb-grad-4" },
+  // uxtigers — RSS dropped; covered by yt-uxtigers (removed 2026-05-25).
   { id: "smashing", name: "Smashing Magazine", slug: "smashing", url: "https://smashingmagazine.com", feedUrl: "https://smashingmagazine.com/feed/", type: "publication", category: "ux-thinking", initials: "SM", swatch: "thumb-grad-2" },
-  { id: "idf", name: "Interaction Design Foundation", slug: "idf", url: "https://interaction-design.org", feedUrl: "https://interaction-design.org/rss/news.xml", type: "publication", category: "ux-thinking", initials: "ID", swatch: "thumb-grad-3" },
+  // idf — IDF blocks unauthenticated RSS (403). Removed 2026-05-25.
   { id: "designspells", name: "Design Spells", slug: "designspells", url: "https://designspells.com", type: "newsletter", category: "ux-thinking", initials: "Ds", swatch: "thumb-grad-7" },
   { id: "dense", name: "Dense Discovery", slug: "dense", url: "https://densediscovery.com", type: "newsletter", category: "ux-thinking", initials: "Dd", swatch: "thumb-grad-10" },
-  { id: "itsnicethat", name: "It's Nice That", slug: "itsnicethat", url: "https://itsnicethat.com", feedUrl: "https://itsnicethat.com/feed", type: "publication", category: "ux-thinking", initials: "IN", swatch: "thumb-grad-4" },
+  // itsnicethat — RSS feed dropped (404). Removed 2026-05-25.
   { id: "femke-blog", name: "Femke.design", slug: "femke-blog", url: "https://femke.design", type: "newsletter", category: "ux-thinking", initials: "Fe", swatch: "thumb-grad-8" },
 
   // Inspiration
   { id: "mobbin", name: "Mobbin", slug: "mobbin", url: "https://mobbin.com", type: "gallery", category: "inspiration", initials: "Mo", swatch: "thumb-grad-1" },
   { id: "godly", name: "Godly", slug: "godly", url: "https://godly.website", type: "gallery", category: "inspiration", initials: "Go", swatch: "thumb-grad-6" },
-  { id: "awwwards", name: "Awwwards", slug: "awwwards", url: "https://awwwards.com", feedUrl: "https://awwwards.com/rss-feed", type: "gallery", category: "inspiration", initials: "Aw", swatch: "thumb-grad-1" },
-  { id: "dribbble", name: "Dribbble", slug: "dribbble", url: "https://dribbble.com", feedUrl: "https://dribbble.com/shots/popular.rss", type: "gallery", category: "inspiration", initials: "Dr", swatch: "thumb-grad-8" },
+  // awwwards — feed path changed; was /rss-feed (404), now /feed. Verified 2026-05-25.
+  { id: "awwwards", name: "Awwwards", slug: "awwwards", url: "https://awwwards.com", feedUrl: "https://awwwards.com/feed", type: "gallery", category: "inspiration", initials: "Aw", swatch: "thumb-grad-1" },
+  // dribbble — Cloudflare-blocked RSS (returns empty). Removed 2026-05-25.
   { id: "landingfolio", name: "Landingfolio", slug: "landingfolio", url: "https://landingfolio.com", type: "gallery", category: "inspiration", initials: "Lf", swatch: "thumb-grad-3" },
   { id: "pageflows", name: "Page Flows", slug: "pageflows", url: "https://pageflows.com", type: "gallery", category: "inspiration", initials: "Pf", swatch: "thumb-grad-5" },
 
@@ -85,7 +86,7 @@ export const SOURCES: Source[] = [
 
   // Product & Startup
   { id: "lennys", name: "Lenny's Newsletter", slug: "lennys", url: "https://lennysnewsletter.com", feedUrl: "https://lennysnewsletter.com/feed", type: "newsletter", category: "product", initials: "LN", swatch: "thumb-grad-5" },
-  { id: "firstround", name: "First Round Review", slug: "firstround", url: "https://review.firstround.com", feedUrl: "https://review.firstround.com/feed", type: "blog", category: "product", initials: "FR", swatch: "thumb-grad-1" },
+  // firstround — RSS dropped (all paths 404). Removed 2026-05-25.
   { id: "stratechery", name: "Stratechery", slug: "stratechery", url: "https://stratechery.com", feedUrl: "https://stratechery.com/feed/", type: "newsletter", category: "product", initials: "St", swatch: "thumb-grad-3" },
   { id: "productdisrupt", name: "Product Disrupt", slug: "productdisrupt", url: "https://productdisrupt.com", type: "newsletter", category: "product", initials: "PD", swatch: "thumb-grad-7" },
   { id: "producthunt", name: "Product Hunt", slug: "producthunt", url: "https://producthunt.com", feedUrl: "https://producthunt.com/feed", type: "forum", category: "product", initials: "PH", swatch: "thumb-grad-4" },
@@ -102,7 +103,7 @@ export const SOURCES: Source[] = [
   { id: "tldrai", name: "TLDR AI", slug: "tldrai", url: "https://tldr.tech/ai", type: "newsletter", category: "ai-tools", initials: "TA", swatch: "thumb-grad-7" },
   { id: "bensbites", name: "Ben's Bites", slug: "bensbites", url: "https://bensbites.com", type: "newsletter", category: "ai-tools", initials: "BB", swatch: "thumb-grad-9" },
   { id: "rundownai", name: "The Rundown AI", slug: "rundownai", url: "https://therundown.ai", type: "newsletter", category: "ai-tools", initials: "RA", swatch: "thumb-grad-6" },
-  { id: "futureux", name: "Future of UX Podcast", slug: "futureux", url: "https://futureofux.com", feedUrl: "https://futureofux.com/feed", type: "podcast", category: "ai-tools", initials: "FU", swatch: "thumb-grad-7" },
+  // futureux — broken self-signed SSL cert on origin. Removed 2026-05-25.
   { id: "importai", name: "Import AI", slug: "importai", url: "https://importai.net", feedUrl: "https://importai.net/feed", type: "newsletter", category: "ai-tools", initials: "IA", swatch: "thumb-grad-6" },
 
   // General Newsletters

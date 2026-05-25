@@ -4,7 +4,6 @@ import { MustReadSection } from "@/components/MustReadSection";
 import { EditorsPick } from "@/components/EditorsPick";
 import { CategoryGrid } from "@/components/CategoryGrid";
 import { InspirationStrip } from "@/components/InspirationStrip";
-import { NewsletterCTA } from "@/components/NewsletterCTA";
 import { SectionHeader } from "@/components/SectionHeader";
 import { formatEditionDate } from "@/lib/format";
 import {
@@ -169,9 +168,6 @@ export default async function Home() {
           </div>
         </section>
       )}
-
-      {/* Newsletter CTA */}
-      <NewsletterCTA />
     </>
   );
 }

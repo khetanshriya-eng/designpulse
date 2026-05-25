@@ -51,8 +51,11 @@ async function handle(req: NextRequest) {
 
   try {
     // Keep limit modest so summarize fits in the remaining budget.
+    // 25 fit in 35s on the 2026-05-25 run (54s total), leaving 6s of headroom.
+    // 15 gives ~10s of cushion in case Gemini rate-limits or one article
+    // hits a slow path. Unsummarized articles roll over to the next run.
     out.summarize = await runSummarize({
-      limit: 25,
+      limit: 15,
       concurrency: 3,
       log: logger("cron.pipeline.summarize"),
     });
