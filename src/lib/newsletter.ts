@@ -10,7 +10,8 @@ import { createPublicClient } from "@/lib/db/client";
 import type { ArticleWithSource } from "@/lib/data/adapter";
 import { CATEGORY_META } from "@/data/sources";
 
-const SITE_URL = "https://designpulse.site";
+// Override via NEXT_PUBLIC_SITE_URL once a custom domain is wired up.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://designpulse-app.vercel.app";
 const TARGET_ARTICLES = 7;
 const POOL_SIZE = 30;
 const MAX_PER_CATEGORY = 2;
