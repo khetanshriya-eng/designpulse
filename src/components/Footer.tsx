@@ -88,14 +88,6 @@ export function Footer() {
                   About DesignPulse
                 </a>
               </li>
-              <li>
-                <a
-                  href="#rss"
-                  className="text-ink-muted hover:text-ink transition-colors"
-                >
-                  RSS
-                </a>
-              </li>
             </ul>
           </div>
         </div>

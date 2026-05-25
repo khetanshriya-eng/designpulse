@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CATEGORY_META, type SourceCategory } from "@/data/sources";
 import { formatEditionDate } from "@/lib/format";
-import { listEditionDates } from "@/lib/data/queries";
+import { listEditionDates, getArticleCount } from "@/lib/data/queries";
 import { SearchTrigger } from "./SearchTrigger";
 
 const NAV_CATEGORIES: SourceCategory[] = [
@@ -18,9 +18,14 @@ export async function Navigation() {
   // Newest edition date from the DB. Falls back to today's ISO date so the
   // header still renders something sensible before the first edition exists.
   let editionDate: string;
+  let storyCount = 0;
   try {
-    const dates = await listEditionDates(1);
+    const [dates, count] = await Promise.all([
+      listEditionDates(1),
+      getArticleCount(),
+    ]);
     editionDate = dates[0] ?? new Date().toISOString().slice(0, 10);
+    storyCount = count;
   } catch {
     editionDate = new Date().toISOString().slice(0, 10);
   }
@@ -57,28 +62,35 @@ export async function Navigation() {
         </div>
       </div>
 
-      {/* Category nav row */}
+      {/* Category nav row — links on the left, story-count meter on the right */}
       <nav
         aria-label="Categories"
         className="border-t border-rule overflow-x-auto"
       >
-        <ul className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-5 sm:gap-7 h-10 text-[13px] whitespace-nowrap">
-          <li>
-            <Link href="/" className="font-medium text-ink hover:text-accent transition-colors">
-              Today
-            </Link>
-          </li>
-          {NAV_CATEGORIES.map((slug) => (
-            <li key={slug}>
-              <Link
-                href={`/category/${slug}`}
-                className="text-ink-muted hover:text-ink transition-colors"
-              >
-                {CATEGORY_META[slug].label}
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-10 gap-6">
+          <ul className="flex items-center gap-5 sm:gap-7 text-[13px] whitespace-nowrap">
+            <li>
+              <Link href="/" className="font-medium text-ink hover:text-accent transition-colors">
+                Today
               </Link>
             </li>
-          ))}
-        </ul>
+            {NAV_CATEGORIES.map((slug) => (
+              <li key={slug}>
+                <Link
+                  href={`/category/${slug}`}
+                  className="text-ink-muted hover:text-ink transition-colors"
+                >
+                  {CATEGORY_META[slug].label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          {storyCount > 0 && (
+            <span className="hidden md:inline-block text-[10px] uppercase tracking-[0.16em] text-ink-subtle whitespace-nowrap font-mono">
+              {storyCount} stories curated
+            </span>
+          )}
+        </div>
       </nav>
     </header>
   );

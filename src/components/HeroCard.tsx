@@ -12,12 +12,18 @@ export function HeroCard({ article }: { article: Article }) {
       href={article.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group grid md:grid-cols-2 gap-6 md:gap-10 items-center"
+      className="group grid md:grid-cols-2 gap-6 md:gap-10 items-stretch"
     >
-      <div className="order-1 md:order-1">
-        <ArticleImage article={article} aspect="wide" size="lg" />
+      {/*
+        Image column. `relative` + `min-h-[300px]` give the absolutely-positioned
+        <img> inside a height to fill. With `items-stretch` on the parent grid,
+        this column also grows to match the text column when the title/summary
+        is long — no more whitespace gap below the image.
+      */}
+      <div className="relative order-1 min-h-[300px] rounded-sm overflow-hidden">
+        <ArticleImage article={article} fill size="lg" />
       </div>
-      <div className="order-2 md:order-2 flex flex-col gap-4">
+      <div className="order-2 flex flex-col justify-center gap-4">
         <div className="flex items-center gap-3 flex-wrap">
           <span className="inline-flex items-center gap-2 bg-accent text-white px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] font-bold rounded-sm">
             Top story

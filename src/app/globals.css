@@ -5,10 +5,10 @@
   --font-heading: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
-  /* Brand — BBC-inspired editorial palette */
-  --color-accent: #bb1919;
-  --color-accent-hover: #a01515;
-  --color-accent-soft: #fbeaea;
+  /* Brand — indigo, design-oriented (replaced BBC red 2026-05-25) */
+  --color-accent: #4f46e5;        /* indigo-600 */
+  --color-accent-hover: #4338ca;  /* indigo-700 */
+  --color-accent-soft: #eef2ff;   /* indigo-50 */
 
   --color-ink: #1a1a1a;
   --color-ink-muted: #4a4a4a;
@@ -83,5 +83,5 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Source avatar ring */
 .source-avatar-ring {
-  background: conic-gradient(from 180deg at 50% 50%, #bb1919, #1a1a1a, #bb1919);
+  background: conic-gradient(from 180deg at 50% 50%, #4f46e5, #1a1a1a, #4f46e5);
 }

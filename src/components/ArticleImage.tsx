@@ -13,6 +13,13 @@ type Props = {
   aspect?: Aspect;
   size?: Size;
   className?: string;
+  /**
+   * When true, the image fills the parent container instead of holding an
+   * aspect ratio. Use for the hero card where the image should match the
+   * text column's height. Parent MUST be `position: relative` and have
+   * a height (e.g. `min-h-[300px]` or via flex `items-stretch`).
+   */
+  fill?: boolean;
 };
 
 const ASPECT: Record<Aspect, string> = {
@@ -54,6 +61,7 @@ export function ArticleImage({
   aspect = "video",
   size = "md",
   className = "",
+  fill = false,
 }: Props) {
   const [failed, setFailed] = useState(false);
   const source = sourceById(article.sourceId);
@@ -62,10 +70,16 @@ export function ArticleImage({
   const isVideoOrPod =
     article.contentType === "video" || article.contentType === "podcast-episode";
 
+  // `fill` mode: the parent already constrains height (e.g. the hero's
+  // `items-stretch` grid). Skip the aspect class and just fill the parent.
+  const containerSizing = fill
+    ? "absolute inset-0"
+    : `relative w-full ${aspectClass}`;
+
   if (hasImage) {
     return (
       <div
-        className={`relative w-full ${aspectClass} overflow-hidden bg-paper-tint ${className}`}
+        className={`${containerSizing} overflow-hidden bg-paper-tint ${className}`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -89,7 +103,7 @@ export function ArticleImage({
 
   return (
     <div
-      className={`relative w-full ${aspectClass} overflow-hidden flex flex-col items-center justify-center ${className}`}
+      className={`${containerSizing} overflow-hidden flex flex-col items-center justify-center ${className}`}
       style={{ backgroundColor: palette.bg }}
     >
       {favicon && (
