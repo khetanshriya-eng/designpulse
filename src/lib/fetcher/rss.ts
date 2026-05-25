@@ -16,7 +16,11 @@ type CustomItem = {
 };
 
 const parser: Parser<{}, CustomItem> = new Parser({
-  timeout: 20_000,
+  // Per-source timeout. Kept tight (8s) so one slow source can't pin a
+  // fetch worker for the whole Vercel 60s budget — see incident on
+  // prototypr (2026-05-25) where a 20s hang ate the summarize budget.
+  // Legitimate sources we observe complete in <1.5s, so 8s is 5x cushion.
+  timeout: 8_000,
   headers: {
     "User-Agent":
       "DesignPulse/0.1 (+https://designpulse.app) - friendly RSS reader",
