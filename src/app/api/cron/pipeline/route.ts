@@ -16,6 +16,7 @@ import { runFetch } from "@/lib/pipeline/fetch";
 import { runSummarize } from "@/lib/pipeline/summarize";
 import { runCurate } from "@/lib/pipeline/curate";
 import { logger } from "@/lib/logger";
+import { sendAdminAlert } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 // Hobby plan caps at 60s.
@@ -34,6 +35,9 @@ async function handle(req: NextRequest) {
   const log = logger("cron.pipeline");
   const t0 = Date.now();
   const out: Record<string, unknown> = {};
+  // Collect step failures so we can send a single consolidated admin
+  // alert at the end instead of one per step.
+  const failures: { step: string; error: string }[] = [];
 
   // Each step is independent re: errors. If one throws we still return
   // partial progress for the others — the next run will retry.
@@ -45,35 +49,55 @@ async function handle(req: NextRequest) {
       log: logger("cron.pipeline.fetch"),
     });
   } catch (err) {
-    out.fetch = { error: (err as Error).message };
-    log.error("fetch step failed", { error: (err as Error).message });
+    const error = (err as Error).message;
+    out.fetch = { error };
+    log.error("fetch step failed", { error });
+    failures.push({ step: "fetch", error });
   }
 
   try {
-    // Keep limit modest so summarize fits in the remaining budget.
-    // 25 fit in 35s on the 2026-05-25 run (54s total), leaving 6s of headroom.
-    // 15 gives ~10s of cushion in case Gemini rate-limits or one article
-    // hits a slow path. Unsummarized articles roll over to the next run.
     out.summarize = await runSummarize({
       limit: 15,
       concurrency: 3,
       log: logger("cron.pipeline.summarize"),
     });
   } catch (err) {
-    out.summarize = { error: (err as Error).message };
-    log.error("summarize step failed", { error: (err as Error).message });
+    const error = (err as Error).message;
+    out.summarize = { error };
+    log.error("summarize step failed", { error });
+    failures.push({ step: "summarize", error });
   }
 
   try {
     out.curate = await runCurate({ log: logger("cron.pipeline.curate") });
   } catch (err) {
-    out.curate = { error: (err as Error).message };
-    log.error("curate step failed", { error: (err as Error).message });
+    const error = (err as Error).message;
+    out.curate = { error };
+    log.error("curate step failed", { error });
+    failures.push({ step: "curate", error });
   }
 
   const durationMs = Date.now() - t0;
-  log.info("pipeline complete", { durationMs });
-  return Response.json({ success: true, durationMs, ...out });
+  log.info("pipeline complete", { durationMs, failureCount: failures.length });
+
+  // Admin alert: any step that hard-failed is worth an email. We don't
+  // alert on partial summarize results (some articles failing to
+  // summarize is normal — the next run retries them).
+  if (failures.length > 0) {
+    await sendAdminAlert({
+      subject: `Pipeline failed (${failures.length} step${failures.length === 1 ? "" : "s"})`,
+      body: [
+        `Run at ${new Date().toISOString()} took ${durationMs}ms.`,
+        "",
+        "Failed steps:",
+        ...failures.map((f) => `  - ${f.step}: ${f.error}`),
+        "",
+        `Logs: https://vercel.com/dashboard → designpulse-app → Logs, filter by /api/cron/pipeline`,
+      ].join("\n"),
+    });
+  }
+
+  return Response.json({ success: failures.length === 0, durationMs, ...out });
 }
 
 export const GET = handle;

@@ -33,10 +33,42 @@
   --color-cat-podcasts: #b45309;
 }
 
+/*
+ * Dark theme. The server picks light/dark per visitor sunrise/sunset and
+ * sets <html data-theme="..."> — see src/lib/theme.ts. CSS variables here
+ * override the defaults defined in @theme above. Tailwind utilities like
+ * `bg-paper` resolve to `var(--color-paper)`, so flipping the var here
+ * cascades to every component automatically.
+ *
+ * Category color dots are intentionally NOT overridden — they're the
+ * brand-level differentiator and should look the same in both themes.
+ * The accent gets a lighter indigo for AA contrast on dark surfaces.
+ */
+html[data-theme="dark"] {
+  --color-paper: #0d1117;
+  --color-paper-tint: #161b22;
+  --color-paper-warm: #1c1f26;
+
+  --color-ink: #e6edf3;
+  --color-ink-muted: #adb5bd;
+  --color-ink-subtle: #8b949e;
+
+  --color-rule: #2a2f37;
+  --color-rule-strong: #c9d1d9;
+
+  --color-accent: #818cf8;       /* indigo-400 — softer on dark */
+  --color-accent-hover: #a5b4fc; /* indigo-300 */
+  --color-accent-soft: #1e1b4b;  /* indigo-950 — for subtle tinted backgrounds */
+}
+
 html,
 body {
   background: var(--color-paper);
   color: var(--color-ink);
+  color-scheme: light;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 body {
