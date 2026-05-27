@@ -63,6 +63,11 @@ export const SOURCES: Source[] = [
   // dribbble — Cloudflare-blocked RSS (returns empty). Removed 2026-05-25.
   { id: "landingfolio", name: "Landingfolio", slug: "landingfolio", url: "https://landingfolio.com", type: "gallery", category: "inspiration", initials: "Lf", swatch: "thumb-grad-3" },
   { id: "pageflows", name: "Page Flows", slug: "pageflows", url: "https://pageflows.com", type: "gallery", category: "inspiration", initials: "Pf", swatch: "thumb-grad-5" },
+  // Inspiration — added 2026-05-27, feeds verified live.
+  { id: "codrops", name: "Codrops", slug: "codrops", url: "https://tympanus.net/codrops", feedUrl: "https://tympanus.net/codrops/feed/", type: "publication", category: "inspiration", initials: "Cd", swatch: "thumb-grad-6" },
+  { id: "onepagelove", name: "One Page Love", slug: "onepagelove", url: "https://onepagelove.com", feedUrl: "https://onepagelove.com/feed", type: "gallery", category: "inspiration", initials: "Op", swatch: "thumb-grad-7" },
+  { id: "muzli", name: "Muzli", slug: "muzli", url: "https://medium.com/muzli-design-inspiration", feedUrl: "https://medium.com/feed/muzli-design-inspiration", type: "publication", category: "inspiration", initials: "Mz", swatch: "thumb-grad-4" },
+  { id: "cssda", name: "CSS Design Awards", slug: "cssda", url: "https://www.cssdesignawards.com", feedUrl: "https://www.cssdesignawards.com/sites-of-the-day-feed.xml", type: "gallery", category: "inspiration", initials: "CA", swatch: "thumb-grad-8" },
 
   // YouTube
   { id: "yt-figma", name: "Figma (YT)", slug: "yt-figma", url: "https://youtube.com/@figma", type: "youtube", category: "youtube", initials: "Fi", swatch: "thumb-grad-2", youtubeChannelId: "UCQsVmhSa4X-G3lHlUtejzLA" },
@@ -105,6 +110,11 @@ export const SOURCES: Source[] = [
   { id: "rundownai", name: "The Rundown AI", slug: "rundownai", url: "https://therundown.ai", type: "newsletter", category: "ai-tools", initials: "RA", swatch: "thumb-grad-6" },
   // futureux — broken self-signed SSL cert on origin. Removed 2026-05-25.
   { id: "importai", name: "Import AI", slug: "importai", url: "https://importai.net", feedUrl: "https://importai.net/feed", type: "newsletter", category: "ai-tools", initials: "IA", swatch: "thumb-grad-6" },
+  // AI & Tools — added 2026-05-27, feeds verified live.
+  { id: "openai-blog", name: "OpenAI Blog", slug: "openai-blog", url: "https://openai.com/blog", feedUrl: "https://openai.com/blog/rss.xml", type: "blog", category: "ai-tools", initials: "OA", swatch: "thumb-grad-1" },
+  { id: "huggingface", name: "Hugging Face", slug: "huggingface", url: "https://huggingface.co/blog", feedUrl: "https://huggingface.co/blog/feed.xml", type: "blog", category: "ai-tools", initials: "HF", swatch: "thumb-grad-9" },
+  { id: "oneusefulthing", name: "One Useful Thing", slug: "oneusefulthing", url: "https://www.oneusefulthing.org", feedUrl: "https://www.oneusefulthing.org/feed", type: "newsletter", category: "ai-tools", initials: "1U", swatch: "thumb-grad-3" },
+  { id: "mit-ai", name: "MIT Tech Review · AI", slug: "mit-ai", url: "https://www.technologyreview.com/topic/artificial-intelligence/", feedUrl: "https://www.technologyreview.com/topic/artificial-intelligence/feed", type: "publication", category: "ai-tools", initials: "MT", swatch: "thumb-grad-5" },
 
   // General Newsletters
   { id: "morningbrew", name: "Morning Brew", slug: "morningbrew", url: "https://morningbrew.com", type: "newsletter", category: "newsletters", initials: "MB", swatch: "thumb-grad-4" },

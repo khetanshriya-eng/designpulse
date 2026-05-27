@@ -56,6 +56,37 @@ function filterSources(rows: SourceRow[], opts: FetchOptions): SourceRow[] {
   return out;
 }
 
+/**
+ * Sync the static SOURCES list into the DB before reading. Upserts on slug
+ * so a new source added in code shows up in the next fetch automatically,
+ * without a separate `db:seed` step. Safe to call every run.
+ */
+async function syncSourcesFromCode(log: Logger): Promise<void> {
+  const supabase = createServiceClient();
+  const rows = SOURCES.map((s) => ({
+    slug: s.slug,
+    name: s.name,
+    url: s.url,
+    feed_url: s.feedUrl ?? null,
+    type: s.type,
+    category: s.category,
+    icon_url: null,
+    initials: s.initials,
+    swatch: s.swatch,
+    youtube_channel_id: s.youtubeChannelId ?? null,
+    is_active: true,
+  }));
+  const { error, count } = await supabase
+    .from("sources")
+    .upsert(rows, { onConflict: "slug", count: "exact" });
+  if (error) {
+    // Don't crash the pipeline — log and continue with whatever DB has.
+    log.warn("source sync failed", { error: error.message });
+    return;
+  }
+  log.debug("source sync ok", { upserted: count ?? rows.length });
+}
+
 async function loadSources(opts: FetchOptions): Promise<SourceRow[]> {
   if (opts.dryRun) {
     const rows: SourceRow[] = SOURCES.map((s) => ({
@@ -107,6 +138,8 @@ function itemToInsert(item: EnrichedItem): ArticleInsert {
 
 export async function runFetch(opts: FetchOptions = {}): Promise<FetchResult> {
   const log = opts.log ?? logger("pipeline.fetch");
+  // Make sure any sources added in code since the last fetch are in the DB.
+  if (!opts.dryRun) await syncSourcesFromCode(log);
   const sources = await loadSources(opts);
   const concurrency = Math.max(1, opts.concurrency ?? 4);
   log.info("starting", {
