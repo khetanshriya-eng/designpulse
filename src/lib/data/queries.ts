@@ -114,36 +114,84 @@ export async function getMustReads(limit = 5): Promise<Article[]> {
 }
 
 /**
+ * Pick `limit` articles from `pool` while enforcing at most `maxPerSource`
+ * items from any single source. Pool is assumed to be ordered by recency
+ * (newest first). The first pass takes the newest of each source until
+ * we hit the per-source cap; a second pass fills any remaining slots from
+ * the leftovers. This way a busy source (e.g. Prototypr publishing 12
+ * items in one day) can't crowd out fresher items from other sources,
+ * but the result is still ordered by recency.
+ */
+function diversifyBySource(
+  pool: ArticleWithSource[],
+  limit: number,
+  maxPerSource = 2
+): ArticleWithSource[] {
+  const picked: ArticleWithSource[] = [];
+  const perSource = new Map<string, number>();
+  const leftovers: ArticleWithSource[] = [];
+
+  for (const row of pool) {
+    const sourceId = row.source_id ?? "unknown";
+    const count = perSource.get(sourceId) ?? 0;
+    if (count < maxPerSource) {
+      picked.push(row);
+      perSource.set(sourceId, count + 1);
+      if (picked.length >= limit) return picked;
+    } else {
+      leftovers.push(row);
+    }
+  }
+  // Backfill if we under-filled because the pool was too small or too
+  // source-concentrated.
+  for (const row of leftovers) {
+    if (picked.length >= limit) break;
+    picked.push(row);
+  }
+  return picked;
+}
+
+/**
  * Most recent N articles with a real summary. Used for the "Latest" grid on
  * the homepage. Excludes the IDs in `excludeIds` so we don't repeat the hero
- * or editor's pick.
+ * or editor's pick. Enforces source diversity — at most 2 articles from
+ * any single source.
  */
 export async function getLatest(
   limit = 6,
   excludeIds: string[] = []
 ): Promise<Article[]> {
   const sb = createPublicClient();
+  // Pull a wider pool than `limit` so diversification has options to choose
+  // from. ~5x the target is plenty for ~65 active sources.
+  const poolSize = Math.max(limit * 5, 30);
   let q = sb
     .from("articles")
     .select(SELECT)
     .not("summary", "is", null)
     .neq("summary", "")
     .order("published_at", { ascending: false })
-    .limit(limit + excludeIds.length);
+    .limit(poolSize + excludeIds.length);
   if (excludeIds.length) q = q.not("id", "in", `(${excludeIds.join(",")})`);
 
   const { data, error } = await q;
   if (error) throw error;
-  return rowsToArticles((data ?? []) as ArticleWithSource[]).slice(0, limit);
+  const pool = (data ?? []) as ArticleWithSource[];
+  return rowsToArticles(diversifyBySource(pool, limit, 2));
 }
 
-/** Top N from one category — used by the homepage's category pairs. */
+/**
+ * Top N from one category — used by the homepage's category pairs.
+ * Diversifies by source (max 1 per source) so a 2-card preview shows
+ * articles from two distinct sources rather than two from the same one.
+ */
 export async function getByCategory(
   category: SourceCategory,
   limit = 2,
   excludeIds: string[] = []
 ): Promise<Article[]> {
   const sb = createPublicClient();
+  const poolSize = Math.max(limit * 6, 18);
   let q = sb
     .from("articles")
     .select(SELECT)
@@ -151,12 +199,14 @@ export async function getByCategory(
     .not("summary", "is", null)
     .neq("summary", "")
     .order("published_at", { ascending: false })
-    .limit(limit + excludeIds.length);
+    .limit(poolSize + excludeIds.length);
   if (excludeIds.length) q = q.not("id", "in", `(${excludeIds.join(",")})`);
 
   const { data, error } = await q;
   if (error) throw error;
-  return rowsToArticles((data ?? []) as ArticleWithSource[]).slice(0, limit);
+  const pool = (data ?? []) as ArticleWithSource[];
+  // Category previews show 2 cards — keep them from different sources.
+  return rowsToArticles(diversifyBySource(pool, limit, 1));
 }
 
 /** Full category page — bigger N, paginated by offset. */

@@ -37,7 +37,7 @@ export type Source = {
 export const SOURCES: Source[] = [
   // Design — Tools & Updates
   { id: "figma-blog", name: "Figma Blog", slug: "figma-blog", url: "https://www.figma.com/blog/", type: "blog", category: "design-tools", initials: "Fi", swatch: "thumb-grad-2" },
-  { id: "figma-shortcuts", name: "Figma Shortcuts", slug: "figma-shortcuts", url: "https://figmashortcuts.com", type: "blog", category: "design-tools", initials: "Fs", swatch: "thumb-grad-1" },
+  // figma-shortcuts — removed 2026-05-27, covered by figma-blog.
   { id: "toools", name: "TOOOLS.design", slug: "toools", url: "https://www.toools.design/", type: "newsletter", category: "design-tools", initials: "To", swatch: "thumb-grad-10" },
   { id: "sidebar", name: "Sidebar.io", slug: "sidebar", url: "https://sidebar.io", feedUrl: "https://sidebar.io/feed.xml", type: "newsletter", category: "design-tools", initials: "Sb", swatch: "thumb-grad-3" },
   { id: "uxtools", name: "UX Tools", slug: "uxtools", url: "https://www.uxtools.co/", type: "blog", category: "design-tools", initials: "Ux", swatch: "thumb-grad-5" },

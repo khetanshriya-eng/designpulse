@@ -76,17 +76,9 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/archive" className="text-ink-muted hover:text-ink transition-colors">
-                  Past editions
-                </Link>
-              </li>
-              <li>
-                <a
-                  href="#about"
-                  className="text-ink-muted hover:text-ink transition-colors"
-                >
+                <Link href="/about" className="text-ink-muted hover:text-ink transition-colors">
                   About DesignPulse
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

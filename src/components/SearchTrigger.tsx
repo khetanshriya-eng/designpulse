@@ -113,8 +113,8 @@ export function SearchTrigger() {
           />
 
           {/* Panel */}
-          <div className="relative w-full max-w-[640px] bg-paper border border-rule shadow-xl">
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-rule">
+          <div className="relative w-full max-w-[600px] bg-paper rounded-xl shadow-2xl ring-1 ring-rule overflow-hidden">
+            <div className="flex items-center gap-3 px-5 py-4">
               <SearchIcon />
               <input
                 ref={inputRef}
@@ -124,14 +124,14 @@ export function SearchTrigger() {
                 className="flex-1 bg-transparent outline-none text-[15px] placeholder:text-ink-subtle"
                 aria-label="Search query"
               />
-              <kbd className="hidden sm:inline-block text-[10px] uppercase tracking-wider text-ink-subtle border border-rule rounded px-1.5 py-0.5">
+              <kbd className="hidden sm:inline-block text-[10px] uppercase tracking-wider text-ink-subtle bg-paper-tint rounded px-1.5 py-0.5">
                 Esc
               </kbd>
             </div>
 
-            <div className="max-h-[60vh] overflow-y-auto">
+            <div className="max-h-[60vh] overflow-y-auto border-t border-rule">
               {tooShort && (
-                <p className="px-4 py-6 text-sm text-ink-subtle">
+                <p className="px-5 py-8 text-sm text-ink-subtle text-center">
                   Type at least 2 characters to search.
                 </p>
               )}

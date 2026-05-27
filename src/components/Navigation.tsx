@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { CATEGORY_META, type SourceCategory } from "@/data/sources";
+import type { SourceCategory } from "@/data/sources";
 import { formatEditionDate } from "@/lib/format";
 import { listEditionDates, getArticleCount } from "@/lib/data/queries";
 import { SearchTrigger } from "./SearchTrigger";
+import { CategoryNav } from "./CategoryNav";
 
 const NAV_CATEGORIES: SourceCategory[] = [
   "design-tools",
@@ -62,36 +63,9 @@ export async function Navigation() {
         </div>
       </div>
 
-      {/* Category nav row — links on the left, story-count meter on the right */}
-      <nav
-        aria-label="Categories"
-        className="border-t border-rule overflow-x-auto"
-      >
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-10 gap-6">
-          <ul className="flex items-center gap-5 sm:gap-7 text-[13px] whitespace-nowrap">
-            <li>
-              <Link href="/" className="font-medium text-ink hover:text-accent transition-colors">
-                Today
-              </Link>
-            </li>
-            {NAV_CATEGORIES.map((slug) => (
-              <li key={slug}>
-                <Link
-                  href={`/category/${slug}`}
-                  className="text-ink-muted hover:text-ink transition-colors"
-                >
-                  {CATEGORY_META[slug].label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-          {storyCount > 0 && (
-            <span className="hidden md:inline-block text-[10px] uppercase tracking-[0.16em] text-ink-subtle whitespace-nowrap font-mono">
-              {storyCount} stories curated
-            </span>
-          )}
-        </div>
-      </nav>
+      {/* Category nav row — links on the left, story-count meter on the right.
+          Extracted into a client component so it can detect the active path. */}
+      <CategoryNav categories={NAV_CATEGORIES} storyCount={storyCount} />
     </header>
   );
 }
