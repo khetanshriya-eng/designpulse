@@ -152,32 +152,61 @@ function diversifyBySource(
 }
 
 /**
- * Most recent N articles with a real summary. Used for the "Latest" grid on
- * the homepage. Excludes the IDs in `excludeIds` so we don't repeat the hero
- * or editor's pick. Enforces source diversity — at most 2 articles from
- * any single source.
+ * Most recent N articles with a real summary. Used for the "Latest" grid
+ * on the homepage. Three layered constraints, in order:
+ *
+ *   1. Recency window: only articles published in the last 7 days are
+ *      eligible. The section literally claims to be "latest", so a
+ *      10-day-old Prototypr entry doesn't belong even if it's the
+ *      newest thing the DB has.
+ *   2. Source diversity: at most 2 articles per source, so one busy
+ *      feed can't dominate the grid.
+ *   3. Hero/editor's-pick exclusion via `excludeIds`.
+ *
+ * If the 7-day window yields fewer than `limit` items, we expand to 14
+ * then 30 days so the section still renders something rather than
+ * collapsing to nothing on slow news weeks. The kicker/description above
+ * the section is computed separately from the actual ages and will say
+ * "Recent highlights" instead of "Fresh from the past 24 hours" when
+ * the data is older.
  */
 export async function getLatest(
   limit = 6,
   excludeIds: string[] = []
 ): Promise<Article[]> {
+  const windows = [7, 14, 30]; // days, in order of preference
+  for (const days of windows) {
+    const pool = await fetchLatestPool(limit * 5, excludeIds, days);
+    const picked = diversifyBySource(pool, limit, 2);
+    if (picked.length >= limit) {
+      return rowsToArticles(picked);
+    }
+  }
+  // Even with a 30-day window we can't fill the slot. Return whatever we
+  // have rather than nothing.
+  const pool = await fetchLatestPool(limit * 5, excludeIds, 30);
+  return rowsToArticles(diversifyBySource(pool, limit, 2));
+}
+
+async function fetchLatestPool(
+  poolSize: number,
+  excludeIds: string[],
+  withinDays: number
+): Promise<ArticleWithSource[]> {
   const sb = createPublicClient();
-  // Pull a wider pool than `limit` so diversification has options to choose
-  // from. ~5x the target is plenty for ~65 active sources.
-  const poolSize = Math.max(limit * 5, 30);
+  const cutoff = new Date(Date.now() - withinDays * 24 * 3600 * 1000).toISOString();
   let q = sb
     .from("articles")
     .select(SELECT)
     .not("summary", "is", null)
     .neq("summary", "")
+    .gte("published_at", cutoff)
     .order("published_at", { ascending: false })
-    .limit(poolSize + excludeIds.length);
+    .limit(Math.max(poolSize, 30) + excludeIds.length);
   if (excludeIds.length) q = q.not("id", "in", `(${excludeIds.join(",")})`);
-
   const { data, error } = await q;
   if (error) throw error;
-  const pool = (data ?? []) as ArticleWithSource[];
-  return rowsToArticles(diversifyBySource(pool, limit, 2));
+  return (data ?? []) as ArticleWithSource[];
 }
 
 /**

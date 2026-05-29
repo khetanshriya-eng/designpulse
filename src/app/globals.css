@@ -1,6 +1,12 @@
 @import "tailwindcss";
 
-@theme inline {
+/*
+ * IMPORTANT: this is `@theme` (no `inline`). With `inline`, Tailwind v4 bakes
+ * the literal hex into every utility class at build time, which breaks any
+ * runtime theming via CSS variables. Without `inline`, utilities resolve to
+ * `var(--color-*)` and the dark theme override below cascades correctly.
+ */
+@theme {
   /* Typography */
   --font-heading: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
@@ -21,7 +27,7 @@
   --color-rule: #e6e6e6;
   --color-rule-strong: #1a1a1a;
 
-  /* Category accent dots */
+  /* Category accent dots — kept the same in both themes for brand consistency. */
   --color-cat-design: #bb1919;
   --color-cat-thinking: #1f6feb;
   --color-cat-inspiration: #d97706;
@@ -31,34 +37,46 @@
   --color-cat-ai: #7c3aed;
   --color-cat-newsletters: #be185d;
   --color-cat-podcasts: #b45309;
+
+  /*
+   * Theme-independent scrim. Always a dark translucent overlay regardless
+   * of theme — used for modal scrims where the panel should always read as
+   * elevated above a darkened page.
+   */
+  --color-scrim: rgba(15, 23, 42, 0.5);
 }
 
 /*
- * Dark theme. The server picks light/dark per visitor sunrise/sunset and
- * sets <html data-theme="..."> — see src/lib/theme.ts. CSS variables here
- * override the defaults defined in @theme above. Tailwind utilities like
- * `bg-paper` resolve to `var(--color-paper)`, so flipping the var here
- * cascades to every component automatically.
+ * Dark theme.
  *
- * Category color dots are intentionally NOT overridden — they're the
- * brand-level differentiator and should look the same in both themes.
- * The accent gets a lighter indigo for AA contrast on dark surfaces.
+ * Picked server-side from the visitor's geo-based sunrise/sunset (see
+ * src/lib/theme.ts) and applied via <html data-theme="dark">. Tailwind
+ * utilities resolve to var(--color-*) so the overrides below cascade.
+ *
+ * Contrast targets (WCAG AA = 4.5:1 for normal text, 3:1 for large):
+ *   ink (#e8eef6) on paper (#0b0d12)        →  ~17:1  AAA
+ *   ink-muted (#c5cad4) on paper            →  ~13:1  AAA
+ *   ink-subtle (#9aa1ad) on paper           →   ~7:1  AA
+ *   accent (#9ea4ff) on paper               →   ~9:1  AAA
+ *   accent on paper-tint (#15181f)          →   ~8:1  AAA
+ *
+ * Category dots stay the same — brand differentiator, fine on either bg.
  */
 html[data-theme="dark"] {
-  --color-paper: #0d1117;
-  --color-paper-tint: #161b22;
-  --color-paper-warm: #1c1f26;
+  --color-paper: #0b0d12;          /* near-black with a hint of blue */
+  --color-paper-tint: #15181f;     /* cards, hover bg */
+  --color-paper-warm: #181b22;     /* footer warmth */
 
-  --color-ink: #e6edf3;
-  --color-ink-muted: #adb5bd;
-  --color-ink-subtle: #8b949e;
+  --color-ink: #e8eef6;            /* primary text */
+  --color-ink-muted: #c5cad4;      /* body copy */
+  --color-ink-subtle: #9aa1ad;     /* timestamps, kickers */
 
-  --color-rule: #2a2f37;
-  --color-rule-strong: #c9d1d9;
+  --color-rule: #262b34;           /* hairline borders */
+  --color-rule-strong: #e8eef6;    /* strong rules invert to bright */
 
-  --color-accent: #818cf8;       /* indigo-400 — softer on dark */
-  --color-accent-hover: #a5b4fc; /* indigo-300 */
-  --color-accent-soft: #1e1b4b;  /* indigo-950 — for subtle tinted backgrounds */
+  --color-accent: #9ea4ff;         /* lighter indigo for AA on dark */
+  --color-accent-hover: #c4c8ff;
+  --color-accent-soft: #1c1c4d;
 }
 
 html,
@@ -69,6 +87,27 @@ body {
 }
 html[data-theme="dark"] {
   color-scheme: dark;
+}
+
+/*
+ * Dark-mode image treatment.
+ *
+ * Real article thumbnails are remote photos — they're not themeable, but
+ * bright photos against a near-black page look jarring and over-saturated.
+ * Apply a subtle dim + desaturate so they sit on the page instead of
+ * shouting. Hovering restores the original treatment.
+ *
+ * Note the selector targets <img> elements inside the article-image
+ * container marked by `data-image="real"` (set in ArticleImage). Fallback
+ * images (the category-tinted placeholders) are NOT dimmed — they're
+ * already restrained.
+ */
+html[data-theme="dark"] [data-image="real"] img {
+  filter: brightness(0.85) saturate(0.92);
+  transition: filter 200ms ease;
+}
+html[data-theme="dark"] [data-image="real"]:hover img {
+  filter: brightness(1) saturate(1);
 }
 
 body {

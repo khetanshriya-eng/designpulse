@@ -30,24 +30,25 @@ const ASPECT: Record<Aspect, string> = {
 };
 
 /**
- * Per-category palette for the empty-state fallback. Light, paper-like
- * backgrounds with a muted accent ink — the favicon is the visual anchor,
- * a single small category label sits below it. NO article title, source
- * name, or other text that already appears in the card's metadata row.
+ * Per-category accent for the empty-state fallback. The fallback uses
+ * `bg-paper-tint` as its surface (which themes correctly), and overlays
+ * the category dot color as a low-opacity favicon + a thin category
+ * label. This way the placeholder reads correctly in both light and
+ * dark modes without per-theme palettes.
+ *
+ * The accent values map to the same CSS custom properties that drive
+ * the category dots in the rest of the UI, kept in sync via this table.
  */
-const CATEGORY_PALETTE: Record<
-  SourceCategory,
-  { bg: string; accent: string }
-> = {
-  "design-tools":   { bg: "#EEF2F7", accent: "#1F3A5F" },
-  "ux-thinking":    { bg: "#F4ECE0", accent: "#5B3A1F" },
-  inspiration:      { bg: "#F2E4F4", accent: "#5B1F5B" },
-  youtube:          { bg: "#F8E5E5", accent: "#7A1F1F" },
-  product:          { bg: "#E2F0EB", accent: "#1F5B45" },
-  "tech-news":      { bg: "#E6EEF5", accent: "#1F3A5F" },
-  "ai-tools":       { bg: "#EBE5F4", accent: "#3F1F7A" },
-  newsletters:      { bg: "#F0EDE5", accent: "#5B4A1F" },
-  podcasts:         { bg: "#F4E2EB", accent: "#7A1F4A" },
+const CATEGORY_ACCENT_VAR: Record<SourceCategory, string> = {
+  "design-tools":   "var(--color-cat-design)",
+  "ux-thinking":    "var(--color-cat-thinking)",
+  inspiration:      "var(--color-cat-inspiration)",
+  youtube:          "var(--color-cat-youtube)",
+  product:          "var(--color-cat-product)",
+  "tech-news":      "var(--color-cat-tech)",
+  "ai-tools":       "var(--color-cat-ai)",
+  newsletters:      "var(--color-cat-newsletters)",
+  podcasts:         "var(--color-cat-podcasts)",
 };
 
 const FAVICON_SIZE: Record<Size, string> = {
@@ -79,6 +80,7 @@ export function ArticleImage({
   if (hasImage) {
     return (
       <div
+        data-image="real"
         className={`${containerSizing} overflow-hidden bg-paper-tint ${className}`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -94,8 +96,9 @@ export function ArticleImage({
     );
   }
 
-  // Minimal fallback — favicon + category label only. No title, no source name.
-  const palette = CATEGORY_PALETTE[article.category];
+  // Minimal fallback. paper-tint bg themes automatically; the favicon and
+  // category label use the category accent var which works on either bg.
+  const accentVar = CATEGORY_ACCENT_VAR[article.category];
   const categoryLabel = (
     CATEGORY_META[article.category]?.label ?? article.category.replace(/-/g, " ")
   );
@@ -103,8 +106,8 @@ export function ArticleImage({
 
   return (
     <div
-      className={`${containerSizing} overflow-hidden flex flex-col items-center justify-center ${className}`}
-      style={{ backgroundColor: palette.bg }}
+      data-image="fallback"
+      className={`${containerSizing} overflow-hidden flex flex-col items-center justify-center bg-paper-tint ${className}`}
     >
       {favicon && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -112,12 +115,12 @@ export function ArticleImage({
           src={favicon}
           alt=""
           aria-hidden
-          className={`${FAVICON_SIZE[size]} rounded-full opacity-20`}
+          className={`${FAVICON_SIZE[size]} rounded-full opacity-30`}
         />
       )}
       <span
-        className="mt-3 text-[10px] font-bold uppercase tracking-[0.2em] opacity-60"
-        style={{ color: palette.accent }}
+        className="mt-3 text-[10px] font-bold uppercase tracking-[0.2em]"
+        style={{ color: accentVar }}
       >
         {categoryLabel}
       </span>

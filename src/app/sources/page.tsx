@@ -9,9 +9,9 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { SourceLogo } from "@/components/SourceLogo";
 
 export const metadata: Metadata = {
-  title: "All sources — DesignPulse",
+  title: "All sources · DesignPulse",
   description:
-    "Every blog, newsletter, YouTube channel and podcast feeding DesignPulse — organized by category.",
+    "Every blog, newsletter, YouTube channel and podcast feeding DesignPulse, organized by category.",
 };
 
 const CATEGORY_ORDER: SourceCategory[] = [
@@ -28,15 +28,15 @@ const CATEGORY_ORDER: SourceCategory[] = [
 
 const CATEGORY_DESCRIPTIONS: Record<SourceCategory, string> = {
   "design-tools":
-    "Updates from Figma and the broader design toolchain — plugins, IDE-style tools, and the workflows around them.",
+    "Updates from Figma and the broader design toolchain. Plugins, IDE-style tools, and the workflows around them.",
   "ux-thinking":
     "Long-form essays and research on craft, usability, and how design holds up under real users.",
   inspiration:
-    "Visual showcases. Sites, flows, components and screenshots — surfaced, not summarized.",
+    "Visual showcases. Sites, flows, components and screenshots, surfaced and not summarized.",
   youtube:
     "Channels with consistently useful videos on design, tooling, and product craft.",
   product:
-    "How products are built, priced, and run — for designers who think in business terms.",
+    "How products are built, priced, and run, for designers who think in business terms.",
   "tech-news":
     "Industry-level news that affects what you'll be designing six months from now.",
   "ai-tools":
@@ -44,7 +44,7 @@ const CATEGORY_DESCRIPTIONS: Record<SourceCategory, string> = {
   newsletters:
     "General-interest curators worth one inbox slot per day.",
   podcasts:
-    "Conversations worth a commute — craft, careers, and the business of design.",
+    "Conversations worth a commute. Craft, careers, and the business of design.",
 };
 
 export default function SourcesPage() {
@@ -61,7 +61,7 @@ export default function SourcesPage() {
         <p className="mt-4 text-[15px] leading-relaxed text-ink-muted max-w-2xl">
           We pull from blogs, RSS feeds, YouTube channels, podcasts and curated
           newsletters. Each piece is summarized and attributed back to its
-          source. No re-publishing, no scraping at scale — just smarter
+          source. No re-publishing, no scraping at scale, just smarter
           surfacing.
         </p>
         <div className="mt-6 flex flex-wrap gap-2">
@@ -144,7 +144,7 @@ export default function SourcesPage() {
           Missing a source?
         </h2>
         <p className="mt-2 text-[14px] text-ink-muted max-w-prose">
-          DesignPulse is opinionated, not exhaustive — but if you think
+          DesignPulse is opinionated, not exhaustive, but if you think
           something belongs here, send it our way. We add 1-2 sources per
           quarter after vetting.
         </p>

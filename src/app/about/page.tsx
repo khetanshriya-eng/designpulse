@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "About — DesignPulse",
+  title: "About · DesignPulse",
   description:
     "DesignPulse started as a personal project to stop scouring half a dozen sites every morning to keep up with what's happening in design.",
 };
@@ -20,19 +20,20 @@ export default function AboutPage() {
       <div className="mt-8 space-y-5 text-[16px] leading-relaxed text-ink-muted">
         <p>
           DesignPulse started as a personal project. I was tired of scouring
-          half a dozen webpages every morning — Figma's blog, NN/g, UX
-          Collective, Smashing, half a dozen YouTube channels — just to keep
-          up with what was happening in design.
+          half a dozen webpages every morning. Figma&apos;s blog, NN/g, UX
+          Collective, Smashing, half a dozen YouTube channels. All of it just
+          to keep up with what was happening in design.
         </p>
         <p>
-          So I built an aggregator: pulls everything I care about into one
-          tab, summarizes the long stuff, and surfaces the day's hero piece.
-          No re-publishing, no scraping at scale — just smarter surfacing
-          with attribution back to the source.
+          So I built an aggregator. It pulls everything I care about into
+          one tab, summarizes the long stuff, and surfaces the day&apos;s
+          hero piece. No re-publishing, no scraping at scale, just smarter
+          surfacing with attribution back to the source.
         </p>
         <p>
-          A few friends loved it, so I thought I'd share it with everyone.
-          That's it. No company, no roadmap meeting, no ads.
+          A few friends loved it, so I thought I&apos;d share it with
+          everyone. That&apos;s it. No company, no roadmap meeting, no
+          ads.
         </p>
       </div>
 
@@ -42,13 +43,14 @@ export default function AboutPage() {
         </h2>
         <ul className="space-y-2 text-[14.5px] text-ink-muted">
           <li>
-            <span className="text-ink font-medium">65 sources</span> —
+            <span className="text-ink font-medium">72 sources</span>:
             blogs, RSS feeds, YouTube channels, podcasts, newsletters.
           </li>
           <li>
-            Pipeline runs <span className="text-ink font-medium">twice a day</span> —
-            morning + evening — fetching new items, summarizing them with
-            an LLM, and picking the day's hero + must-reads.
+            The pipeline runs <span className="text-ink font-medium">twice a day</span>,
+            morning and evening, fetching new items, summarizing them
+            with an LLM, and picking the day&apos;s hero plus a handful
+            of must-reads.
           </li>
           <li>
             Built on Next.js, Supabase, and Vercel Cron. Open code,

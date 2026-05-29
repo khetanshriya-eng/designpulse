@@ -104,11 +104,16 @@ export function SearchTrigger() {
           aria-modal="true"
           aria-label="Search"
         >
-          {/* Scrim */}
+          {/*
+            Scrim: theme-independent dark overlay (defined as --color-scrim in
+            globals.css). Using bg-ink/40 here would invert in dark mode and
+            wash everything out.
+          */}
           <button
             aria-label="Close search"
             onClick={closeModal}
-            className="absolute inset-0 bg-ink/40 backdrop-blur-sm"
+            className="absolute inset-0 backdrop-blur-sm"
+            style={{ backgroundColor: "var(--color-scrim)" }}
             tabIndex={-1}
           />
 

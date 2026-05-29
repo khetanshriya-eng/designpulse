@@ -28,7 +28,7 @@ export async function generateMetadata({
   if (!isValidCategory(slug)) return { title: "Not found" };
   const meta = CATEGORY_META[slug];
   return {
-    title: `${meta.label} — DesignPulse`,
+    title: `${meta.label} · DesignPulse`,
     description: `Latest in ${meta.label.toLowerCase()} across DesignPulse's curated sources.`,
   };
 }

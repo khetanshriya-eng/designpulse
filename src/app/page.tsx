@@ -6,7 +6,8 @@ import { CategoryGrid } from "@/components/CategoryGrid";
 import { InspirationStrip } from "@/components/InspirationStrip";
 import { SectionHeader } from "@/components/SectionHeader";
 import { getByCategory, getEdition, getLatest } from "@/lib/data/queries";
-import { SOURCES } from "@/data/sources";
+import { SOURCES, type SourceCategory } from "@/data/sources";
+import type { Article } from "@/data/articles";
 
 // Always render fresh — the data layer reads the live edition.
 export const dynamic = "force-dynamic";
@@ -88,32 +89,17 @@ export default async function Home() {
         </section>
       )}
 
-      {/* Category grids — two pairs */}
-      {(designTools.length > 0 || aiTools.length > 0) && (
-        <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pb-14">
-          <div className="grid lg:grid-cols-2 gap-10">
-            {designTools.length > 0 && (
-              <CategoryGrid category="design-tools" articles={designTools} />
-            )}
-            {aiTools.length > 0 && (
-              <CategoryGrid category="ai-tools" articles={aiTools} />
-            )}
-          </div>
-        </section>
-      )}
-
-      {(uxThinking.length > 0 || techNews.length > 0) && (
-        <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pb-14">
-          <div className="grid lg:grid-cols-2 gap-10">
-            {uxThinking.length > 0 && (
-              <CategoryGrid category="ux-thinking" articles={uxThinking} />
-            )}
-            {techNews.length > 0 && (
-              <CategoryGrid category="tech-news" articles={techNews} />
-            )}
-          </div>
-        </section>
-      )}
+      {/* Category grids, two pairs. If only one side of a pair has content,
+          fall back to a single column so we don't render an awkward empty
+          half. The category page itself still has the full content. */}
+      <CategoryPair
+        left={{ category: "design-tools", articles: designTools }}
+        right={{ category: "ai-tools", articles: aiTools }}
+      />
+      <CategoryPair
+        left={{ category: "ux-thinking", articles: uxThinking }}
+        right={{ category: "tech-news", articles: techNews }}
+      />
 
       {/* Inspiration */}
       {inspirationItems.length > 0 && (
@@ -167,6 +153,39 @@ function EmptyState({ reason }: { reason: string }) {
       <p className="font-heading text-2xl text-ink mb-2">No edition yet</p>
       <p className="text-ink-subtle text-sm">{reason}</p>
     </div>
+  );
+}
+
+/**
+ * Paired category grid. Renders nothing if both sides are empty; renders
+ * a single full-width column if only one side has content; renders a
+ * 2-up grid when both have content. This keeps the page from showing
+ * an awkward "left-only" half-pair when a category is still ramping up
+ * (e.g. fresh sources whose articles haven't been summarized yet).
+ */
+function CategoryPair({
+  left,
+  right,
+}: {
+  left: { category: SourceCategory; articles: Article[] };
+  right: { category: SourceCategory; articles: Article[] };
+}) {
+  const cards = [left, right].filter((c) => c.articles.length > 0);
+  if (cards.length === 0) return null;
+  const gridClass =
+    cards.length === 2 ? "grid lg:grid-cols-2 gap-10" : "grid";
+  return (
+    <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pb-14">
+      <div className={gridClass}>
+        {cards.map((c) => (
+          <CategoryGrid
+            key={c.category}
+            category={c.category}
+            articles={c.articles}
+          />
+        ))}
+      </div>
+    </section>
   );
 }
 

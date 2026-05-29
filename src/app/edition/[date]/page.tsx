@@ -31,7 +31,7 @@ export async function generateMetadata({
   const { date } = await params;
   if (!DATE_RE.test(date)) return { title: "Not found" };
   return {
-    title: `Edition · ${formatEditionDate(date)} — DesignPulse`,
+    title: `Edition · ${formatEditionDate(date)} · DesignPulse`,
     description: `DesignPulse daily edition for ${formatEditionDate(date)}.`,
   };
 }

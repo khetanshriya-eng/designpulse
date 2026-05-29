@@ -19,9 +19,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "DesignPulse — Your daily design briefing",
+  title: "DesignPulse · Your daily design briefing",
   description:
-    "A daily magazine for product designers. Curated updates from Figma, NNGroup, UX Collective, Lenny's, The Verge, and 70+ trusted sources — summarized so you stay current in under 5 minutes.",
+    "A daily magazine for product designers. Curated updates from Figma, NN/g, UX Collective, Lenny's, The Verge, and 70+ trusted sources, summarized so you stay current in under five minutes.",
 };
 
 export default async function RootLayout({
