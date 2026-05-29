@@ -107,7 +107,7 @@ export async function getMustReads(limit = 5): Promise<Article[]> {
     .eq("is_must_read", true)
     .not("summary", "is", null)
     .neq("summary", "")
-    .order("published_at", { ascending: false })
+    .order("published_at", { ascending: false, nullsFirst: false })
     .limit(limit);
   if (error) throw error;
   return rowsToArticles((data ?? []) as ArticleWithSource[]);
@@ -201,7 +201,7 @@ async function fetchLatestPool(
     .not("summary", "is", null)
     .neq("summary", "")
     .gte("published_at", cutoff)
-    .order("published_at", { ascending: false })
+    .order("published_at", { ascending: false, nullsFirst: false })
     .limit(Math.max(poolSize, 30) + excludeIds.length);
   if (excludeIds.length) q = q.not("id", "in", `(${excludeIds.join(",")})`);
   const { data, error } = await q;
@@ -227,7 +227,12 @@ export async function getByCategory(
     .eq("category", category)
     .not("summary", "is", null)
     .neq("summary", "")
-    .order("published_at", { ascending: false })
+    // Require a real publish date so category previews never lead with an
+    // article whose date is unknown (we'd otherwise fall back to fetched_at
+    // for display, which is misleading — see bug report 2026-05-29 on
+    // Prototypr toolbox items dated 17 May via fetched_at fallback).
+    .not("published_at", "is", null)
+    .order("published_at", { ascending: false, nullsFirst: false })
     .limit(poolSize + excludeIds.length);
   if (excludeIds.length) q = q.not("id", "in", `(${excludeIds.join(",")})`);
 
@@ -253,7 +258,7 @@ export async function getCategoryPage(
     .eq("category", category)
     .not("summary", "is", null)
     .neq("summary", "")
-    .order("published_at", { ascending: false })
+    .order("published_at", { ascending: false, nullsFirst: false })
     .range(offset, offset + limit - 1);
   if (error) throw error;
 
@@ -285,7 +290,7 @@ export async function searchArticles(
     .not("summary", "is", null)
     .neq("summary", "")
     .or(`title.ilike.${pattern},summary.ilike.${pattern}`)
-    .order("published_at", { ascending: false })
+    .order("published_at", { ascending: false, nullsFirst: false })
     .limit(limit);
   if (error) throw error;
   return rowsToArticles((data ?? []) as ArticleWithSource[]);
