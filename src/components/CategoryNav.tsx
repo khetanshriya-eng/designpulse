@@ -29,7 +29,16 @@ export function CategoryNav({ categories, storyCount }: Props) {
   return (
     <nav
       aria-label="Categories"
-      className="border-t border-rule overflow-x-auto"
+      // overflow-x-auto enables horizontal scroll for the tab strip on mobile.
+      // overflow-y-hidden is explicit: without it browsers compute overflow-y
+      // to auto (because overflow-x is auto), which makes the nav its own
+      // vertical scroll container — combined with the active tab's
+      // border-b-2 spilling 1px below the parent's h-10, mobile users see a
+      // vertical scrollbar inside the nav and the page jitters diagonally
+      // while swiping. Bug report 2026-05-29.
+      // touch-action: pan-x tells mobile browsers any swipe on the nav is
+      // horizontal-only; vertical swipes pass through to the page scroll.
+      className="border-t border-rule overflow-x-auto overflow-y-hidden [touch-action:pan-x]"
     >
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-10 gap-6">
         <ul className="flex items-center gap-5 sm:gap-7 text-[13px] whitespace-nowrap">
