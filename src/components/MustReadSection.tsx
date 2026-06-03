@@ -1,8 +1,10 @@
 import Link from "next/link";
 import type { Article } from "@/data/articles";
+import { CATEGORY_META } from "@/data/sources";
 import { SourceBadge } from "./SourceBadge";
 import { CategoryDot } from "./CategoryDot";
 import { ArticleImage } from "./ArticleImage";
+import { PixelCard } from "./PixelCard";
 import { SectionHeader } from "./SectionHeader";
 import { formatRelativeTime, formatReadTime } from "@/lib/format";
 
@@ -31,25 +33,20 @@ export function MustReadSection({ articles }: { articles: Article[] }) {
 function PrimaryCard({ article }: { article: Article }) {
   const readTime = formatReadTime(article);
   return (
-    <Link
-      href={article.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group flex flex-col gap-4"
-    >
+    <PixelCard href={article.url} category={article.category}>
       <ArticleImage article={article} aspect="video" size="lg" />
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 p-5 sm:p-6 flex-1">
         <div className="flex items-center gap-3">
           <SourceBadge sourceId={article.sourceId} size="md" />
           <CategoryDot category={article.category} />
         </div>
-        <h3 className="font-heading text-[1.45rem] sm:text-[1.65rem] leading-tight font-extrabold text-ink group-hover:text-accent transition-colors tracking-tight">
+        <h3 className="font-heading text-[1.45rem] sm:text-[1.65rem] leading-tight font-bold text-ink group-hover:text-accent transition-colors tracking-tight">
           {article.title}
         </h3>
         <p className="text-[14px] leading-relaxed text-ink-muted line-clamp-3">
           {article.summary}
         </p>
-        <div className="flex items-center gap-2 text-[11px] text-ink-subtle">
+        <div className="flex items-center gap-2 text-[11px] text-ink-subtle mt-auto">
           <span>{formatRelativeTime(article.publishedAt)}</span>
           {readTime && (
             <>
@@ -59,7 +56,7 @@ function PrimaryCard({ article }: { article: Article }) {
           )}
         </div>
       </div>
-    </Link>
+    </PixelCard>
   );
 }
 
@@ -70,28 +67,34 @@ function SecondaryCard({ article }: { article: Article }) {
       href={article.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group grid grid-cols-[140px_1fr] sm:grid-cols-[180px_1fr] gap-4"
+      className="group surface-card block"
     >
-      <ArticleImage article={article} aspect="square" size="sm" />
-      <div className="flex flex-col gap-2 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <SourceBadge sourceId={article.sourceId} />
-          <CategoryDot category={article.category} />
+      <span
+        className="card-stripe"
+        style={{ background: CATEGORY_META[article.category].stripeVar }}
+        aria-hidden
+      />
+      <div className="grid grid-cols-[120px_1fr] sm:grid-cols-[150px_1fr]">
+        <div className="relative min-h-[120px]">
+          <ArticleImage article={article} fill size="sm" />
         </div>
-        <h3 className="font-heading text-[1.05rem] sm:text-[1.15rem] leading-snug font-bold text-ink group-hover:text-accent transition-colors line-clamp-3">
-          {article.title}
-        </h3>
-        <p className="hidden sm:block text-[13px] leading-relaxed text-ink-muted line-clamp-2">
-          {article.summary}
-        </p>
-        <div className="flex items-center gap-2 text-[11px] text-ink-subtle">
-          <span>{formatRelativeTime(article.publishedAt)}</span>
-          {readTime && (
-            <>
-              <span aria-hidden>·</span>
-              <span>{readTime}</span>
-            </>
-          )}
+        <div className="flex flex-col gap-2 min-w-0 p-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <SourceBadge sourceId={article.sourceId} />
+            <CategoryDot category={article.category} />
+          </div>
+          <h3 className="font-heading text-[1.05rem] sm:text-[1.15rem] leading-snug font-semibold text-ink group-hover:text-accent transition-colors line-clamp-3">
+            {article.title}
+          </h3>
+          <div className="flex items-center gap-2 text-[11px] text-ink-subtle mt-auto">
+            <span>{formatRelativeTime(article.publishedAt)}</span>
+            {readTime && (
+              <>
+                <span aria-hidden>·</span>
+                <span>{readTime}</span>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </Link>

@@ -12,7 +12,7 @@ export function EditorsPick({ article }: { article: Article }) {
         href={article.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="group relative block overflow-hidden"
+        className="group relative block surface-card"
       >
         <ArticleImage
           article={article}

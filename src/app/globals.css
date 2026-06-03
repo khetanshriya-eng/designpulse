@@ -1,82 +1,113 @@
 @import "tailwindcss";
 
 /*
- * IMPORTANT: this is `@theme` (no `inline`). With `inline`, Tailwind v4 bakes
- * the literal hex into every utility class at build time, which breaks any
- * runtime theming via CSS variables. Without `inline`, utilities resolve to
- * `var(--color-*)` and the dark theme override below cascades correctly.
+ * Designator — pixel-retro visual language.
+ *
+ * Philosophy: pixel in the chrome, clean in the content. Pixelify Sans drives
+ * headlines/labels/nav (via the `font-heading` utility); Space Mono is the
+ * readable body layer (the default `font-sans`). Swapping these two font vars
+ * re-skins the whole site because components already use `font-heading` for
+ * titles and the default font for summaries/meta.
+ *
+ * Theme: server picks light/dark from the visitor's sunrise/sunset (see
+ * src/lib/theme.ts) and sets <html data-theme>. A client toggle can override.
+ * "Morning" == light (warm paper zine); "night" == dark (arcade cabinet).
+ *
+ * NOTE: plain `@theme`, never `@theme inline` — inline bakes literal hex into
+ * utilities at build time and breaks runtime theming. Verified: utilities must
+ * compile to `var(--color-*)`.
  */
 @theme {
-  /* Typography */
-  --font-heading: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* Typography. font-heading → pixel display; font-sans → mono reading layer. */
+  --font-heading: var(--font-pixel), "Pixelify Sans", ui-monospace, monospace;
+  --font-sans: var(--font-mono), "Space Mono", ui-monospace, monospace;
 
-  /* Brand — indigo, design-oriented (replaced BBC red 2026-05-25) */
-  --color-accent: #4f46e5;        /* indigo-600 */
-  --color-accent-hover: #4338ca;  /* indigo-700 */
-  --color-accent-soft: #eef2ff;   /* indigo-50 */
+  /* ── Morning (light) palette — warm paper zine ── */
+  --color-paper: #f5f0e8;        /* page canvas */
+  --color-paper-tint: #ede7db;   /* section bands, image placeholders */
+  --color-paper-warm: #ede7db;   /* (footer is themed separately, always dark) */
+  --color-card: #fffdf7;         /* card surface — always light, both themes */
 
-  --color-ink: #1a1a1a;
-  --color-ink-muted: #4a4a4a;
-  --color-ink-subtle: #707070;
+  --color-ink: #1a1340;          /* primary text (on canvas in morning) */
+  --color-ink-muted: #5c5470;    /* body copy */
+  --color-ink-subtle: #9b93a8;   /* timestamps, metadata */
 
-  --color-paper: #ffffff;
-  --color-paper-tint: #f6f6f6;
-  --color-paper-warm: #faf8f5;
+  --color-accent: #5b3df5;       /* electric purple */
+  --color-accent-hover: #4a2fd0;
+  --color-accent-soft: #d4ff3f;  /* lime — used where accent sits on dark */
 
-  --color-rule: #e6e6e6;
-  --color-rule-strong: #1a1a1a;
+  --color-lime: #d4ff3f;
+  --color-hot: #ff4fd8;
+  --color-cyan: #00e5ff;
+  --color-amber: #ffb800;
 
-  /* Category accent dots — kept the same in both themes for brand consistency. */
-  --color-cat-design: #bb1919;
-  --color-cat-thinking: #1f6feb;
-  --color-cat-inspiration: #d97706;
-  --color-cat-youtube: #cf2e2e;
-  --color-cat-product: #0f766e;
-  --color-cat-tech: #4338ca;
-  --color-cat-ai: #7c3aed;
-  --color-cat-newsletters: #be185d;
-  --color-cat-podcasts: #b45309;
+  --color-rule: #ddd5c6;         /* soft hairline on cream */
+  --color-rule-strong: #1a1340;
 
-  /*
-   * Theme-independent scrim. Always a dark translucent overlay regardless
-   * of theme — used for modal scrims where the panel should always read as
-   * elevated above a darkened page.
-   */
-  --color-scrim: rgba(15, 23, 42, 0.5);
+  /* Category accents (spec palette). Same in both themes — brand markers. */
+  --color-cat-design: #c9a200;       /* lime reads too pale as text; deepen for dots */
+  --color-cat-thinking: #7c6bf5;
+  --color-cat-inspiration: #18b07a;  /* mint, darkened for contrast */
+  --color-cat-youtube: #e60000;
+  --color-cat-product: #d6249f;      /* hot pink, darkened for contrast */
+  --color-cat-tech: #0096b3;         /* cyan, darkened for contrast */
+  --color-cat-ai: #c77b00;           /* amber, darkened for contrast */
+  --color-cat-newsletters: #b06bff;
+  --color-cat-podcasts: #e05050;     /* coral */
 }
 
 /*
- * Dark theme.
- *
- * Picked server-side from the visitor's geo-based sunrise/sunset (see
- * src/lib/theme.ts) and applied via <html data-theme="dark">. Tailwind
- * utilities resolve to var(--color-*) so the overrides below cascade.
- *
- * Contrast targets (WCAG AA = 4.5:1 for normal text, 3:1 for large):
- *   ink (#e8eef6) on paper (#0b0d12)        →  ~17:1  AAA
- *   ink-muted (#c5cad4) on paper            →  ~13:1  AAA
- *   ink-subtle (#9aa1ad) on paper           →   ~7:1  AA
- *   accent (#9ea4ff) on paper               →   ~9:1  AAA
- *   accent on paper-tint (#15181f)          →   ~8:1  AAA
- *
- * Category dots stay the same — brand differentiator, fine on either bg.
+ * Pixel-system extras (not utility-backed — referenced via var() in custom
+ * CSS and inline styles). Morning values here, night overrides below.
  */
+:root {
+  --card-border: #1a1340;
+  --card-shadow: #1a1340;
+  --shadow-offset: 4px;
+  --nav-bg: #5b3df5;           /* purple bar in morning */
+  --nav-ink: #f5f0e8;          /* light text on the bar */
+  --confetti-opacity: 0.08;
+
+  /* Bright category stripe colors (for the 4px card top-edge accent). These
+     are the vivid spec values; the deeper --color-cat-* above are for small
+     dots/text where contrast matters. */
+  --stripe-design: #d4ff3f;
+  --stripe-thinking: #7c6bf5;
+  --stripe-inspiration: #4fffb0;
+  --stripe-youtube: #ff0000;
+  --stripe-product: #ff4fd8;
+  --stripe-tech: #00e5ff;
+  --stripe-ai: #ffb800;
+  --stripe-newsletters: #b06bff;
+  --stripe-podcasts: #ff6b6b;
+}
+
+/* ── Night (dark) palette — arcade cabinet ── */
 html[data-theme="dark"] {
-  --color-paper: #0b0d12;          /* near-black with a hint of blue */
-  --color-paper-tint: #15181f;     /* cards, hover bg */
-  --color-paper-warm: #181b22;     /* footer warmth */
+  --color-paper: #0f0a2a;        /* deep purple-navy canvas */
+  --color-paper-tint: #1a1340;
+  --color-paper-warm: #1a1340;
+  --color-card: #fdf5e6;         /* cards STAY warm cream for readability */
 
-  --color-ink: #e8eef6;            /* primary text */
-  --color-ink-muted: #c5cad4;      /* body copy */
-  --color-ink-subtle: #9aa1ad;     /* timestamps, kickers */
+  /* On the dark canvas these go light. Cards re-scope them dark — see
+     .surface-card below — so card text stays dark-on-cream in both themes. */
+  --color-ink: #f5f0e8;
+  --color-ink-muted: #c4bdd3;
+  --color-ink-subtle: #9b93a8;
 
-  --color-rule: #262b34;           /* hairline borders */
-  --color-rule-strong: #e8eef6;    /* strong rules invert to bright */
+  --color-accent: #9e8cff;       /* lighter purple for contrast on dark */
+  --color-accent-hover: #b9abff;
+  --color-accent-soft: #d4ff3f;
 
-  --color-accent: #9ea4ff;         /* lighter indigo for AA on dark */
-  --color-accent-hover: #c4c8ff;
-  --color-accent-soft: #1c1c4d;
+  --color-rule: #2a2050;
+  --color-rule-strong: #f5f0e8;
+
+  --card-border: #2a2050;
+  --card-shadow: #000000;
+  --shadow-offset: 5px;
+  --nav-bg: #1a1340;             /* dark bar at night */
+  --nav-ink: #f5f0e8;
+  --confetti-opacity: 0.15;
 }
 
 html,
@@ -89,70 +120,122 @@ html[data-theme="dark"] {
   color-scheme: dark;
 }
 
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings use the pixel display face. */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  letter-spacing: 0;
+}
+
+/* ─────────────────────────────────────────────
+ * Pixel card surface.
+ *
+ * Cream surface + hard 3px border + hard offset shadow + sharp corners.
+ * Lifts up-left on hover (shadow grows), presses down on click — tactile
+ * pixel-button feel. Critically, it RE-SCOPES the ink + accent tokens to
+ * their dark-on-cream values, so card text is always dark navy regardless
+ * of theme (cards are cream in both). Canvas text (section headers) keeps
+ * the theme ink (light at night).
+ * ───────────────────────────────────────────── */
+.surface-card {
+  background: var(--color-card);
+  border: 3px solid var(--card-border);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--card-shadow);
+  border-radius: 0;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  overflow: hidden;
+
+  --color-ink: #1a1340;
+  --color-ink-muted: #5c5470;
+  --color-ink-subtle: #6b6480;
+  --color-accent: #5b3df5;
+  --color-accent-hover: #4a2fd0;
+  --color-rule: #e3dccb;
+}
+.surface-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 var(--card-shadow);
+}
+.surface-card:active {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 var(--card-shadow);
+}
+
+/* 4px category accent stripe that sits flush under a card's top border. */
+.card-stripe {
+  height: 4px;
+  width: 100%;
+  flex: none;
+}
+
+/* Pixel-block section divider — alternating colored blocks instead of <hr>. */
+.pixel-divider {
+  height: 4px;
+  border: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--color-accent) 0px,
+    var(--color-accent) 8px,
+    transparent 8px,
+    transparent 12px,
+    var(--color-lime) 12px,
+    var(--color-lime) 20px,
+    transparent 20px,
+    transparent 24px
+  );
+}
+
+/* Hard top rule (kept from prior design, used by SectionHeader). */
+.rule-strong-top {
+  border-top: 2px solid var(--color-rule-strong);
+}
+
+/* Crisp pixel rendering — reserved for the logo / large display text where
+   chunkiness is wanted. Not applied to small body-adjacent titles, which stay
+   anti-aliased for legibility. */
+.pixel-crisp {
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  font-smooth: never;
+}
+
+/* Source-initials fallback chips (SourceBadge / SourceLogo) keep these. */
+.thumb-grad-1 { background: linear-gradient(135deg, #1a1340 0%, #2c2358 100%); }
+.thumb-grad-2 { background: linear-gradient(135deg, #5b3df5 0%, #3a1f9e 100%); }
+.thumb-grad-3 { background: linear-gradient(135deg, #00e5ff 0%, #0096b3 100%); }
+.thumb-grad-4 { background: linear-gradient(135deg, #ffb800 0%, #c77b00 100%); }
+.thumb-grad-5 { background: linear-gradient(135deg, #18b07a 0%, #0c6e4c 100%); }
+.thumb-grad-6 { background: linear-gradient(135deg, #7c6bf5 0%, #4c1d95 100%); }
+.thumb-grad-7 { background: linear-gradient(135deg, #ff4fd8 0%, #b3007e 100%); }
+.thumb-grad-8 { background: linear-gradient(135deg, #b06bff 0%, #6b2bb3 100%); }
+.thumb-grad-9 { background: linear-gradient(135deg, #e05050 0%, #962d2d 100%); }
+.thumb-grad-10 { background: linear-gradient(135deg, #f5f0e8 0%, #ddd5c6 100%); color: #1a1340; }
+
 /*
- * Dark-mode image treatment.
- *
- * Real article thumbnails are remote photos — they're not themeable, but
- * bright photos against a near-black page look jarring and over-saturated.
- * Apply a subtle dim + desaturate so they sit on the page instead of
- * shouting. Hovering restores the original treatment.
- *
- * Note the selector targets <img> elements inside the article-image
- * container marked by `data-image="real"` (set in ArticleImage). Fallback
- * images (the category-tinted placeholders) are NOT dimmed — they're
- * already restrained.
+ * Dark-mode treatment for real (remote) article thumbnails. Bright photos on
+ * the dark canvas look over-saturated; dim + desaturate slightly so they sit
+ * on the page. Restored on hover. Fallback placeholders are not touched.
  */
 html[data-theme="dark"] [data-image="real"] img {
-  filter: brightness(0.85) saturate(0.92);
+  filter: brightness(0.9) saturate(0.95);
   transition: filter 200ms ease;
 }
 html[data-theme="dark"] [data-image="real"]:hover img {
   filter: brightness(1) saturate(1);
 }
 
-body {
-  font-family: var(--font-sans);
-  font-feature-settings: "ss01", "ss02", "cv11";
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Headings use Manrope */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading);
-  letter-spacing: -0.015em;
-}
-
-/* Hairline rules in the BBC tradition */
-.rule-top {
-  border-top: 1px solid var(--color-rule);
-}
-.rule-bottom {
-  border-bottom: 1px solid var(--color-rule);
-}
-.rule-strong-top {
-  border-top: 2px solid var(--color-rule-strong);
-}
-
-/* Generative thumbnail backgrounds (avoid external image deps in prototype) */
-.thumb-grad-1 { background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%); }
-.thumb-grad-2 { background: linear-gradient(135deg, #bb1919 0%, #7a0f0f 100%); }
-.thumb-grad-3 { background: linear-gradient(135deg, #1f6feb 0%, #0b3e91 100%); }
-.thumb-grad-4 { background: linear-gradient(135deg, #d97706 0%, #92400e 100%); }
-.thumb-grad-5 { background: linear-gradient(135deg, #0f766e 0%, #064e44 100%); }
-.thumb-grad-6 { background: linear-gradient(135deg, #4338ca 0%, #1e1b6e 100%); }
-.thumb-grad-7 { background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%); }
-.thumb-grad-8 { background: linear-gradient(135deg, #be185d 0%, #831843 100%); }
-.thumb-grad-9 { background: linear-gradient(135deg, #b45309 0%, #78350f 100%); }
-.thumb-grad-10 { background: linear-gradient(135deg, #faf8f5 0%, #e6e1d6 100%); color: #1a1a1a; }
-
-/* Subtle dot pattern for editorial flair on hero overlays */
-.dot-pattern {
-  background-image: radial-gradient(rgba(255,255,255,0.18) 1px, transparent 1px);
-  background-size: 14px 14px;
-}
-
-/* Source avatar ring */
-.source-avatar-ring {
-  background: conic-gradient(from 180deg at 50% 50%, #4f46e5, #1a1a1a, #4f46e5);
+/* Respect reduced-motion: kill transitions/animations for users who ask. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .surface-card:hover { transform: none; }
 }

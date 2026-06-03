@@ -1,27 +1,30 @@
 import type { Metadata } from "next";
-import { Manrope, Inter } from "next/font/google";
+import { Pixelify_Sans, Space_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { pickTheme } from "@/lib/theme";
 
-const manrope = Manrope({
-  variable: "--font-manrope",
+// Pixel display face for headlines, labels, nav, badges.
+const pixel = Pixelify_Sans({
+  variable: "--font-pixel",
   subsets: ["latin"],
   display: "swap",
 });
 
-const inter = Inter({
-  variable: "--font-inter",
+// Clean monospace reading layer for summaries, metadata, body copy.
+const mono = Space_Mono({
+  variable: "--font-mono",
+  weight: ["400", "700"],
   subsets: ["latin"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "DesignPulse · Your daily design briefing",
+  title: "Designator · Your daily design briefing",
   description:
-    "A daily magazine for product designers. Curated updates from Figma, NN/g, UX Collective, Lenny's, The Verge, and 70+ trusted sources, summarized so you stay current in under five minutes.",
+    "A daily briefing for product designers. Curated updates from Figma, NN/g, UX Collective, Lenny's, The Verge, and 70+ trusted sources, summarized so you stay current in under five minutes.",
 };
 
 export default async function RootLayout({
@@ -43,7 +46,7 @@ export default async function RootLayout({
     <html
       lang="en"
       data-theme={theme}
-      className={`${manrope.variable} ${inter.variable} h-full antialiased`}
+      className={`${pixel.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-paper text-ink">
         <Navigation />

@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "About · DesignPulse",
+  title: "About · Designator",
   description:
-    "DesignPulse started as a personal project to stop scouring half a dozen sites every morning to keep up with what's happening in design.",
+    "Designator started as a personal project to stop scouring half a dozen sites every morning to keep up with what's happening in design.",
 };
 
 export default function AboutPage() {
@@ -19,7 +19,7 @@ export default function AboutPage() {
 
       <div className="mt-8 space-y-5 text-[16px] leading-relaxed text-ink-muted">
         <p>
-          DesignPulse started as a personal project. I was tired of scouring
+          Designator started as a personal project. I was tired of scouring
           half a dozen webpages every morning. Figma&apos;s blog, NN/g, UX
           Collective, Smashing, half a dozen YouTube channels. All of it just
           to keep up with what was happening in design.

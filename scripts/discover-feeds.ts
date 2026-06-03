@@ -37,7 +37,7 @@ const COMMON_PATHS = [
   "/posts.rss",
 ];
 
-const UA = "Mozilla/5.0 (compatible; DesignPulseBot/0.1; +https://designpulse.app)";
+const UA = "Mozilla/5.0 (compatible; DesignatorBot/0.1; +https://designpulse-app.vercel.app)";
 
 async function safeFetch(url: string, timeoutMs = 12000): Promise<Response | null> {
   try {

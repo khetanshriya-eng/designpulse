@@ -92,7 +92,7 @@ export function SearchTrigger() {
       <button
         aria-label="Search"
         onClick={() => setOpen(true)}
-        className="p-2 -mr-2 rounded-full hover:bg-paper-tint transition-colors"
+        className="p-2 -mr-2 rounded hover:bg-white/15 transition-colors [&_svg]:text-[color:var(--nav-ink)]"
       >
         <SearchIcon />
       </button>

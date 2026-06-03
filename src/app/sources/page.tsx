@@ -9,9 +9,9 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { SourceLogo } from "@/components/SourceLogo";
 
 export const metadata: Metadata = {
-  title: "All sources · DesignPulse",
+  title: "All sources · Designator",
   description:
-    "Every blog, newsletter, YouTube channel and podcast feeding DesignPulse, organized by category.",
+    "Every blog, newsletter, YouTube channel and podcast feeding Designator, organized by category.",
 };
 
 const CATEGORY_ORDER: SourceCategory[] = [
@@ -56,7 +56,7 @@ export default function SourcesPage() {
           The library
         </p>
         <h1 className="font-heading text-[2.25rem] sm:text-[2.75rem] leading-[1.05] font-extrabold tracking-tight text-ink">
-          All {SOURCES.length} sources that feed DesignPulse
+          All {SOURCES.length} sources that feed Designator
         </h1>
         <p className="mt-4 text-[15px] leading-relaxed text-ink-muted max-w-2xl">
           We pull from blogs, RSS feeds, YouTube channels, podcasts and curated
@@ -144,7 +144,7 @@ export default function SourcesPage() {
           Missing a source?
         </h2>
         <p className="mt-2 text-[14px] text-ink-muted max-w-prose">
-          DesignPulse is opinionated, not exhaustive, but if you think
+          Designator is opinionated, not exhaustive, but if you think
           something belongs here, send it our way. We add 1-2 sources per
           quarter after vetting.
         </p>

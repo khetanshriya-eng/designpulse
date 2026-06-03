@@ -26,7 +26,7 @@ export type AdminAlert = {
 export async function sendAdminAlert(alert: AdminAlert): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   const to = process.env.ADMIN_EMAIL;
-  const from = process.env.RESEND_FROM_EMAIL ?? "DesignPulse Alerts <onboarding@resend.dev>";
+  const from = process.env.RESEND_FROM_EMAIL ?? "Designator Alerts <onboarding@resend.dev>";
 
   if (!apiKey || !to) {
     log.warn("admin alert skipped — missing env", {
@@ -47,7 +47,7 @@ export async function sendAdminAlert(alert: AdminAlert): Promise<boolean> {
       body: JSON.stringify({
         from,
         to,
-        subject: `[DesignPulse] ${alert.subject}`,
+        subject: `[Designator] ${alert.subject}`,
         text: alert.body,
       }),
     });

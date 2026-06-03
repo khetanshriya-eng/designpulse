@@ -32,39 +32,52 @@ export async function Navigation() {
   }
 
   return (
-    <header className="sticky top-0 z-30 bg-paper/95 backdrop-blur supports-[backdrop-filter]:bg-paper/80 border-b border-rule">
-      {/* Top strip: edition date + logo + utility */}
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-accent" aria-hidden />
-              <span className="font-heading font-extrabold text-[1.05rem] tracking-tight">
-                DesignPulse
-              </span>
-            </Link>
-            <Link
-              href={`/edition/${editionDate}`}
-              className="hidden sm:inline-block text-[11px] uppercase tracking-[0.14em] text-ink-subtle border-l border-rule pl-3 ml-1 hover:text-ink transition-colors"
-            >
-              {formatEditionDate(editionDate)}
-            </Link>
-          </div>
+    <header className="sticky top-0 z-30">
+      {/* Top strip: pixel logo + edition readout + utility. Purple bar in
+          morning, dark navy at night (--nav-bg). */}
+      <div
+        className="border-b-[3px] border-[color:var(--card-border)]"
+        style={{ background: "var(--nav-bg)", color: "var(--nav-ink)" }}
+      >
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14">
+            <div className="flex items-center gap-3 min-w-0">
+              <Link href="/" aria-label="Designator — home" className="group flex items-center">
+                {/* Pixel wordmark. Swap for an <img src="/designator-logo.png">
+                    if you drop your exact asset into /public. */}
+                <span
+                  className="font-heading pixel-crisp font-bold text-[1.4rem] leading-none lowercase tracking-tight"
+                  style={{
+                    color: "var(--color-lime)",
+                    textShadow: "2px 2px 0 #1a1340",
+                  }}
+                >
+                  designator
+                </span>
+              </Link>
+              <Link
+                href={`/edition/${editionDate}`}
+                className="hidden sm:inline-block text-[11px] uppercase tracking-[0.14em] opacity-70 border-l border-white/25 pl-3 ml-1 hover:opacity-100 transition-opacity"
+              >
+                {formatEditionDate(editionDate)}
+              </Link>
+            </div>
 
-          <div className="flex items-center gap-1 sm:gap-3">
-            <Link
-              href="/sources"
-              className="hidden sm:inline-block text-[13px] text-ink-muted hover:text-ink transition-colors"
-            >
-              Sources
-            </Link>
-            <SearchTrigger />
+            <div className="flex items-center gap-2 sm:gap-4">
+              <Link
+                href="/sources"
+                className="hidden sm:inline-block font-heading text-[14px] opacity-80 hover:opacity-100 transition-opacity"
+              >
+                Sources
+              </Link>
+              <SearchTrigger />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Category nav row — links on the left, story-count meter on the right.
-          Extracted into a client component so it can detect the active path. */}
+          Client component so it can highlight the active path. */}
       <CategoryNav categories={NAV_CATEGORIES} storyCount={storyCount} />
     </header>
   );

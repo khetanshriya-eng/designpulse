@@ -1,7 +1,7 @@
-import Link from "next/link";
 import type { Article } from "@/data/articles";
 import { SourceBadge } from "./SourceBadge";
 import { ArticleImage } from "./ArticleImage";
+import { PixelCard } from "./PixelCard";
 import { SectionHeader } from "./SectionHeader";
 
 export function InspirationStrip({ articles }: { articles: Article[] }) {
@@ -32,21 +32,15 @@ export function InspirationStrip({ articles }: { articles: Article[] }) {
       />
       <div className={`grid ${colsClass} gap-4 sm:gap-5`}>
         {items.map((a) => (
-          <Link
-            key={a.id}
-            href={a.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group block"
-          >
+          <PixelCard key={a.id} href={a.url} category={a.category}>
             <ArticleImage article={a} aspect="portrait" size="md" />
-            <div className="pt-3 flex flex-col gap-1.5">
+            <div className="p-3 flex flex-col gap-1.5 flex-1">
               <SourceBadge sourceId={a.sourceId} />
               <h3 className="font-heading text-[14px] font-semibold leading-snug text-ink group-hover:text-accent transition-colors line-clamp-2">
                 {a.title}
               </h3>
             </div>
-          </Link>
+          </PixelCard>
         ))}
       </div>
     </section>

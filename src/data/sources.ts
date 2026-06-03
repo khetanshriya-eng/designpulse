@@ -138,17 +138,19 @@ export const SOURCES: Source[] = [
 
 export const CATEGORY_META: Record<
   SourceCategory,
-  { label: string; short: string; dotVar: string }
+  { label: string; short: string; dotVar: string; stripeVar: string }
 > = {
-  "design-tools": { label: "Design Tools", short: "Tools", dotVar: "var(--color-cat-design)" },
-  "ux-thinking": { label: "UX & Thinking", short: "Thinking", dotVar: "var(--color-cat-thinking)" },
-  inspiration: { label: "Inspiration", short: "Inspo", dotVar: "var(--color-cat-inspiration)" },
-  youtube: { label: "Video", short: "Video", dotVar: "var(--color-cat-youtube)" },
-  product: { label: "Product & Startup", short: "Product", dotVar: "var(--color-cat-product)" },
-  "tech-news": { label: "Tech News", short: "Tech", dotVar: "var(--color-cat-tech)" },
-  "ai-tools": { label: "AI & Tools", short: "AI", dotVar: "var(--color-cat-ai)" },
-  newsletters: { label: "Newsletters", short: "Newsletters", dotVar: "var(--color-cat-newsletters)" },
-  podcasts: { label: "Podcasts", short: "Podcasts", dotVar: "var(--color-cat-podcasts)" },
+  // dotVar → deepened color for small dots/text (contrast). stripeVar → vivid
+  // color for the 4px card top-edge accent (decorative, contrast not critical).
+  "design-tools": { label: "Design Tools", short: "Tools", dotVar: "var(--color-cat-design)", stripeVar: "var(--stripe-design)" },
+  "ux-thinking": { label: "UX & Thinking", short: "Thinking", dotVar: "var(--color-cat-thinking)", stripeVar: "var(--stripe-thinking)" },
+  inspiration: { label: "Inspiration", short: "Inspo", dotVar: "var(--color-cat-inspiration)", stripeVar: "var(--stripe-inspiration)" },
+  youtube: { label: "Video", short: "Video", dotVar: "var(--color-cat-youtube)", stripeVar: "var(--stripe-youtube)" },
+  product: { label: "Product & Startup", short: "Product", dotVar: "var(--color-cat-product)", stripeVar: "var(--stripe-product)" },
+  "tech-news": { label: "Tech News", short: "Tech", dotVar: "var(--color-cat-tech)", stripeVar: "var(--stripe-tech)" },
+  "ai-tools": { label: "AI & Tools", short: "AI", dotVar: "var(--color-cat-ai)", stripeVar: "var(--stripe-ai)" },
+  newsletters: { label: "Newsletters", short: "Newsletters", dotVar: "var(--color-cat-newsletters)", stripeVar: "var(--stripe-newsletters)" },
+  podcasts: { label: "Podcasts", short: "Podcasts", dotVar: "var(--color-cat-podcasts)", stripeVar: "var(--stripe-podcasts)" },
 };
 
 export const sourceById = (id: string) =>

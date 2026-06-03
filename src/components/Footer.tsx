@@ -15,22 +15,34 @@ const FOOTER_CATEGORIES: SourceCategory[] = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-rule bg-paper-warm">
+    // Always-dark arcade footer — a stable anchor regardless of page theme.
+    <footer className="text-[#f5f0e8]" style={{ background: "#1a1340" }}>
+      {/* Thick multi-color pixel divider caps the page. */}
+      <div
+        className="h-1.5"
+        style={{
+          background:
+            "repeating-linear-gradient(90deg, #d4ff3f 0 12px, #ff4fd8 12px 24px, #00e5ff 24px 36px, #ffb800 36px 48px)",
+        }}
+        aria-hidden
+      />
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
           <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center gap-2">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-accent" aria-hidden />
-              <span className="font-heading font-extrabold tracking-tight">DesignPulse</span>
-            </div>
-            <p className="mt-3 text-[13px] leading-relaxed text-ink-muted max-w-xs">
-              The daily briefing for product designers. 70+ sources, summarized,
-              in one tab.
+            <span
+              className="font-heading pixel-crisp font-bold text-[1.4rem] leading-none lowercase tracking-tight"
+              style={{ color: "var(--color-lime)", textShadow: "2px 2px 0 #000" }}
+            >
+              designator
+            </span>
+            <p className="mt-3 text-[13px] leading-relaxed text-white/60 max-w-xs">
+              The daily briefing for product designers. 70+ sources,
+              summarized, in one tab.
             </p>
           </div>
 
           <div>
-            <h4 className="font-heading text-[11px] uppercase tracking-[0.14em] text-ink-subtle">
+            <h4 className="font-heading text-[11px] uppercase tracking-[0.14em] text-white/50">
               Categories
             </h4>
             <ul className="mt-3 space-y-1.5 text-[13px]">
@@ -38,7 +50,7 @@ export function Footer() {
                 <li key={slug}>
                   <Link
                     href={`/category/${slug}`}
-                    className="text-ink-muted hover:text-ink transition-colors"
+                    className="text-white/70 hover:text-[color:var(--color-lime)] transition-colors"
                   >
                     {CATEGORY_META[slug].label}
                   </Link>
@@ -48,7 +60,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-heading text-[11px] uppercase tracking-[0.14em] text-ink-subtle">
+            <h4 className="font-heading text-[11px] uppercase tracking-[0.14em] text-white/50">
               More
             </h4>
             <ul className="mt-3 space-y-1.5 text-[13px]">
@@ -56,7 +68,7 @@ export function Footer() {
                 <li key={slug}>
                   <Link
                     href={`/category/${slug}`}
-                    className="text-ink-muted hover:text-ink transition-colors"
+                    className="text-white/70 hover:text-[color:var(--color-lime)] transition-colors"
                   >
                     {CATEGORY_META[slug].label}
                   </Link>
@@ -66,27 +78,30 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-heading text-[11px] uppercase tracking-[0.14em] text-ink-subtle">
+            <h4 className="font-heading text-[11px] uppercase tracking-[0.14em] text-white/50">
               About
             </h4>
             <ul className="mt-3 space-y-1.5 text-[13px]">
               <li>
-                <Link href="/sources" className="text-ink-muted hover:text-ink transition-colors">
+                <Link href="/sources" className="text-white/70 hover:text-[color:var(--color-lime)] transition-colors">
                   All sources
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="text-ink-muted hover:text-ink transition-colors">
-                  About DesignPulse
+                <Link href="/about" className="text-white/70 hover:text-[color:var(--color-lime)] transition-colors">
+                  About Designator
                 </Link>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-rule flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[12px] text-ink-subtle">
-          <p>© {new Date().getFullYear()} DesignPulse. Sources retain ownership of their content.</p>
-          <p>Edition refreshed twice daily.</p>
+        <div className="mt-10 pt-6 border-t border-white/15 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[12px] text-white/50">
+          <p>© {new Date().getFullYear()} Designator. Sources retain ownership of their content.</p>
+          <p>
+            Edition refreshed twice daily.{" "}
+            <span style={{ color: "var(--color-lime)" }} aria-hidden>✦</span>
+          </p>
         </div>
       </div>
     </footer>

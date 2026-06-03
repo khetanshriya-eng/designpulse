@@ -39,7 +39,7 @@ export async function enrichItem(item: FetchedItem): Promise<EnrichedItem> {
       redirect: "follow",
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (compatible; DesignPulseBot/0.1; +https://designpulse.app)",
+          "Mozilla/5.0 (compatible; DesignatorBot/0.1; +https://designpulse-app.vercel.app)",
         Accept: "text/html,application/xhtml+xml",
       },
     });

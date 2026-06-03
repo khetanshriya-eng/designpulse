@@ -38,7 +38,7 @@ export function CategoryNav({ categories, storyCount }: Props) {
       // while swiping. Bug report 2026-05-29.
       // touch-action: pan-x tells mobile browsers any swipe on the nav is
       // horizontal-only; vertical swipes pass through to the page scroll.
-      className="border-t border-rule overflow-x-auto overflow-y-hidden [touch-action:pan-x]"
+      className="bg-paper border-b border-rule overflow-x-auto overflow-y-hidden [touch-action:pan-x]"
     >
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-10 gap-6">
         <ul className="flex items-center gap-5 sm:gap-7 text-[13px] whitespace-nowrap">

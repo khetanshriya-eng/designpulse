@@ -3,6 +3,7 @@ import type { Article } from "@/data/articles";
 import { SourceBadge } from "./SourceBadge";
 import { CategoryDot } from "./CategoryDot";
 import { ArticleImage } from "./ArticleImage";
+import { PixelCard } from "./PixelCard";
 import { formatRelativeTime, formatReadTime } from "@/lib/format";
 
 type Variant = "default" | "horizontal" | "compact" | "medium";
@@ -22,25 +23,20 @@ export function ArticleCard({ article, variant = "default" }: Props) {
 function DefaultCard({ article }: { article: Article }) {
   const readTime = formatReadTime(article);
   return (
-    <Link
-      href={article.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group block"
-    >
+    <PixelCard href={article.url} category={article.category}>
       <ArticleImage article={article} aspect="video" size="md" />
-      <div className="pt-3.5 flex flex-col gap-2">
+      <div className="p-4 flex flex-col gap-2 flex-1">
         <div className="flex items-center justify-between gap-3">
           <SourceBadge sourceId={article.sourceId} />
           <CategoryDot category={article.category} />
         </div>
-        <h3 className="font-heading text-[1rem] leading-snug font-bold text-ink group-hover:text-accent transition-colors">
+        <h3 className="font-heading text-[1.05rem] leading-snug font-semibold text-ink group-hover:text-accent transition-colors">
           {article.title}
         </h3>
         <p className="text-[13px] leading-relaxed text-ink-muted line-clamp-2">
           {article.summary}
         </p>
-        <div className="flex items-center gap-2 text-[11px] text-ink-subtle pt-1">
+        <div className="flex items-center gap-2 text-[11px] text-ink-subtle pt-1 mt-auto">
           <span>{formatRelativeTime(article.publishedAt)}</span>
           {readTime && (
             <>
@@ -50,29 +46,24 @@ function DefaultCard({ article }: { article: Article }) {
           )}
         </div>
       </div>
-    </Link>
+    </PixelCard>
   );
 }
 
 function MediumCard({ article }: { article: Article }) {
   const readTime = formatReadTime(article);
   return (
-    <Link
-      href={article.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group block"
-    >
+    <PixelCard href={article.url} category={article.category}>
       <ArticleImage article={article} aspect="video" size="sm" />
-      <div className="pt-3 flex flex-col gap-1.5">
+      <div className="p-4 flex flex-col gap-1.5 flex-1">
         <div className="flex items-center justify-between gap-3">
           <SourceBadge sourceId={article.sourceId} />
           <CategoryDot category={article.category} />
         </div>
-        <h3 className="font-heading text-[0.95rem] leading-snug font-semibold text-ink group-hover:text-accent transition-colors line-clamp-3">
+        <h3 className="font-heading text-[1rem] leading-snug font-semibold text-ink group-hover:text-accent transition-colors line-clamp-3">
           {article.title}
         </h3>
-        <div className="flex items-center gap-2 text-[11px] text-ink-subtle pt-0.5">
+        <div className="flex items-center gap-2 text-[11px] text-ink-subtle pt-0.5 mt-auto">
           <span>{formatRelativeTime(article.publishedAt)}</span>
           {readTime && (
             <>
@@ -82,7 +73,7 @@ function MediumCard({ article }: { article: Article }) {
           )}
         </div>
       </div>
-    </Link>
+    </PixelCard>
   );
 }
 
