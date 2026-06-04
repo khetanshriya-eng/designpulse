@@ -61,11 +61,16 @@ export async function getEdition(date?: string): Promise<EditionView | null> {
   }
   if (!ed) return null;
 
-  const [hero, pick, mr] = await Promise.all([
+  const [hero, pick] = await Promise.all([
     ed.hero_article_id ? getArticleById(ed.hero_article_id) : Promise.resolve(null),
     ed.editors_pick_id ? getArticleById(ed.editors_pick_id) : Promise.resolve(null),
-    getMustReads(6),
   ]);
+
+  // Must-read renders as 1 large + 4 stacked = 5. Exclude hero/pick so they
+  // never repeat, and backfill (inside getMustReads) so the section is always
+  // full — never a half-empty column.
+  const excludeIds = [hero?.id, pick?.id].filter((x): x is string => !!x);
+  const mr = await getMustReads(5, excludeIds);
 
   return {
     date: ed.edition_date,
@@ -99,18 +104,47 @@ async function getArticleById(id: string): Promise<Article | null> {
   return rowToArticle(data as ArticleWithSource);
 }
 
-export async function getMustReads(limit = 5): Promise<Article[]> {
+/**
+ * Curated must-reads, backfilled to `limit` so the homepage section is always
+ * full (1 large + 4 stacked). Curated picks (is_must_read) come first; if the
+ * curator flagged fewer than `limit`, recent summarized articles fill the rest
+ * (still good articles, just not hand-picked). Excludes `excludeIds` (hero +
+ * editor's pick) so nothing repeats.
+ */
+export async function getMustReads(
+  limit = 5,
+  excludeIds: string[] = []
+): Promise<Article[]> {
   const sb = createPublicClient();
-  const { data, error } = await sb
+  let q = sb
     .from("articles")
     .select(SELECT)
     .eq("is_must_read", true)
     .not("summary", "is", null)
     .neq("summary", "")
     .order("published_at", { ascending: false, nullsFirst: false })
-    .limit(limit);
+    .limit(limit + excludeIds.length);
+  if (excludeIds.length) q = q.not("id", "in", `(${excludeIds.join(",")})`);
+  const { data, error } = await q;
   if (error) throw error;
-  return rowsToArticles((data ?? []) as ArticleWithSource[]);
+
+  const picked = ((data ?? []) as ArticleWithSource[]).filter(
+    (r) => !excludeIds.includes(r.id)
+  );
+
+  // Backfill from recent articles if the curator under-filled.
+  if (picked.length < limit) {
+    const haveIds = new Set<string>([...excludeIds, ...picked.map((r) => r.id)]);
+    const pool = await fetchLatestPool(limit * 5, [...haveIds], 30);
+    for (const row of pool) {
+      if (picked.length >= limit) break;
+      if (haveIds.has(row.id)) continue;
+      picked.push(row);
+      haveIds.add(row.id);
+    }
+  }
+
+  return rowsToArticles(picked.slice(0, limit));
 }
 
 /**
@@ -227,11 +261,10 @@ export async function getByCategory(
     .eq("category", category)
     .not("summary", "is", null)
     .neq("summary", "")
-    // Require a real publish date so category previews never lead with an
-    // article whose date is unknown (we'd otherwise fall back to fetched_at
-    // for display, which is misleading — see bug report 2026-05-29 on
-    // Prototypr toolbox items dated 17 May via fetched_at fallback).
-    .not("published_at", "is", null)
+    // nullsFirst:false keeps dated (fresh) articles in the lead and lets
+    // null-dated ones backfill the tail — so a thin category still fills its
+    // 2-card preview rather than showing a lonely single card, while the
+    // lead card is never a stale fetched_at fallback.
     .order("published_at", { ascending: false, nullsFirst: false })
     .limit(poolSize + excludeIds.length);
   if (excludeIds.length) q = q.not("id", "in", `(${excludeIds.join(",")})`);

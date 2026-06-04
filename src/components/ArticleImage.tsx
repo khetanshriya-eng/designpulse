@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import type { Article } from "@/data/articles";
-import { sourceById, CATEGORY_META, type SourceCategory } from "@/data/sources";
-import { faviconUrl } from "@/lib/source-domain";
+import { CATEGORY_META } from "@/data/sources";
+import { PixelMosaic } from "./PixelMosaic";
 
 type Aspect = "video" | "square" | "wide" | "portrait";
 type Size = "sm" | "md" | "lg";
@@ -29,32 +29,11 @@ const ASPECT: Record<Aspect, string> = {
   portrait: "aspect-[4/5]",
 };
 
-/**
- * Per-category accent for the empty-state fallback. The fallback uses
- * `bg-paper-tint` as its surface (which themes correctly), and overlays
- * the category dot color as a low-opacity favicon + a thin category
- * label. This way the placeholder reads correctly in both light and
- * dark modes without per-theme palettes.
- *
- * The accent values map to the same CSS custom properties that drive
- * the category dots in the rest of the UI, kept in sync via this table.
- */
-const CATEGORY_ACCENT_VAR: Record<SourceCategory, string> = {
-  "design-tools":   "var(--color-cat-design)",
-  "ux-thinking":    "var(--color-cat-thinking)",
-  inspiration:      "var(--color-cat-inspiration)",
-  youtube:          "var(--color-cat-youtube)",
-  product:          "var(--color-cat-product)",
-  "tech-news":      "var(--color-cat-tech)",
-  "ai-tools":       "var(--color-cat-ai)",
-  newsletters:      "var(--color-cat-newsletters)",
-  podcasts:         "var(--color-cat-podcasts)",
-};
-
-const FAVICON_SIZE: Record<Size, string> = {
-  sm: "w-10 h-10",
-  md: "w-16 h-16",
-  lg: "w-20 h-20",
+// Mosaic sigil size per card size, as a fraction of the fallback area.
+const MOSAIC_SIZE: Record<Size, string> = {
+  sm: "w-[46%] max-w-[72px]",
+  md: "w-[42%] max-w-[112px]",
+  lg: "w-[38%] max-w-[150px]",
 };
 
 export function ArticleImage({
@@ -65,7 +44,6 @@ export function ArticleImage({
   fill = false,
 }: Props) {
   const [failed, setFailed] = useState(false);
-  const source = sourceById(article.sourceId);
   const hasImage = !!article.thumbnailUrl && !failed;
   const aspectClass = ASPECT[aspect];
   const isVideoOrPod =
@@ -96,31 +74,27 @@ export function ArticleImage({
     );
   }
 
-  // Minimal fallback. paper-tint bg themes automatically; the favicon and
-  // category label use the category accent var which works on either bg.
-  const accentVar = CATEGORY_ACCENT_VAR[article.category];
-  const categoryLabel = (
-    CATEGORY_META[article.category]?.label ?? article.category.replace(/-/g, " ")
-  );
-  const favicon = faviconUrl(source);
+  // No-image fallback: a generative pixel mosaic seeded by the article id,
+  // in the category color, on a fixed warm-tint tile (fixed, not themed,
+  // because it lives inside the always-cream card). Replaces the old faded
+  // favicon — reads as a designed sigil, not a missing image.
+  const categoryLabel =
+    CATEGORY_META[article.category]?.label ?? article.category.replace(/-/g, " ");
 
   return (
     <div
       data-image="fallback"
-      className={`${containerSizing} overflow-hidden flex flex-col items-center justify-center bg-paper-tint ${className}`}
+      className={`${containerSizing} overflow-hidden flex flex-col items-center justify-center gap-2 ${className}`}
+      style={{ background: "#efe9db" }}
     >
-      {favicon && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={favicon}
-          alt=""
-          aria-hidden
-          className={`${FAVICON_SIZE[size]} rounded-full opacity-30`}
-        />
-      )}
+      <PixelMosaic
+        seed={article.id || article.url}
+        category={article.category}
+        className={MOSAIC_SIZE[size]}
+      />
       <span
-        className="mt-3 text-[10px] font-bold uppercase tracking-[0.2em]"
-        style={{ color: accentVar }}
+        className="font-pixel text-[10px] font-bold uppercase tracking-[0.18em]"
+        style={{ color: CATEGORY_META[article.category].dotVar }}
       >
         {categoryLabel}
       </span>

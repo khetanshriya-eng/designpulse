@@ -31,7 +31,7 @@ export function HeroCard({ article }: { article: Article }) {
         </div>
         <div className="order-2 flex flex-col justify-center gap-4 p-6 sm:p-8">
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="inline-flex items-center bg-lime text-ink px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] font-heading font-bold">
+            <span className="inline-flex items-center bg-lime text-ink px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] font-pixel font-bold">
               Top story
             </span>
             <CategoryDot category={article.category} />

@@ -18,9 +18,16 @@
  * compile to `var(--color-*)`.
  */
 @theme {
-  /* Typography. font-heading → pixel display; font-sans → mono reading layer. */
-  --font-heading: var(--font-pixel), "Pixelify Sans", ui-monospace, monospace;
+  /*
+   * Three faces, three jobs:
+   *   font-heading (Space Grotesk) → headlines + section titles (readable)
+   *   font-sans    (Space Mono)    → summaries, metadata, body (default)
+   *   font-pixel   (Pixelify Sans) → chrome only: logo, badges, kickers, nav
+   * Headlines are NOT pixel — that hurt comprehension. Pixel stays in chrome.
+   */
+  --font-heading: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-mono), "Space Mono", ui-monospace, monospace;
+  --font-pixel: var(--font-pixelify), "Pixelify Sans", ui-monospace, monospace;
 
   /* ── Morning (light) palette — warm paper zine ── */
   --color-paper: #f5f0e8;        /* page canvas */
@@ -103,7 +110,9 @@ html[data-theme="dark"] {
   --color-rule-strong: #f5f0e8;
 
   --card-border: #2a2050;
-  --card-shadow: #000000;
+  /* A visible indigo offset — black is invisible on the near-black canvas,
+     which hid the hover lift at night. This reads as a solid pixel offset. */
+  --card-shadow: #4733a0;
   --shadow-offset: 5px;
   --nav-bg: #1a1340;             /* dark bar at night */
   --nav-ink: #f5f0e8;

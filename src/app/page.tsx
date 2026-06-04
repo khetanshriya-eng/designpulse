@@ -89,16 +89,16 @@ export default async function Home() {
         </section>
       )}
 
-      {/* Category grids, two pairs. If only one side of a pair has content,
-          fall back to a single column so we don't render an awkward empty
-          half. The category page itself still has the full content. */}
-      <CategoryPair
-        left={{ category: "design-tools", articles: designTools }}
-        right={{ category: "ai-tools", articles: aiTools }}
-      />
-      <CategoryPair
-        left={{ category: "ux-thinking", articles: uxThinking }}
-        right={{ category: "tech-news", articles: techNews }}
+      {/* Category previews — only blocks that filled their 2-card preview are
+          shown, laid out 2-up. An odd trailing block spans full width so
+          there's never a lonely card or an empty half. */}
+      <CategorySections
+        blocks={[
+          { category: "design-tools", articles: designTools },
+          { category: "ux-thinking", articles: uxThinking },
+          { category: "ai-tools", articles: aiTools },
+          { category: "tech-news", articles: techNews },
+        ]}
       />
 
       {/* Inspiration */}
@@ -157,32 +157,29 @@ function EmptyState({ reason }: { reason: string }) {
 }
 
 /**
- * Paired category grid. Renders nothing if both sides are empty; renders
- * a single full-width column if only one side has content; renders a
- * 2-up grid when both have content. This keeps the page from showing
- * an awkward "left-only" half-pair when a category is still ramping up
- * (e.g. fresh sources whose articles haven't been summarized yet).
+ * Category previews laid out for completeness. Only blocks that filled their
+ * full 2-card preview are shown (a category with <2 is dropped rather than
+ * rendered as a lonely card). Blocks render 2-up; if an odd number qualify,
+ * the last one spans the full width so there's never an empty half-cell.
  */
-function CategoryPair({
-  left,
-  right,
+function CategorySections({
+  blocks,
 }: {
-  left: { category: SourceCategory; articles: Article[] };
-  right: { category: SourceCategory; articles: Article[] };
+  blocks: { category: SourceCategory; articles: Article[] }[];
 }) {
-  const cards = [left, right].filter((c) => c.articles.length > 0);
-  if (cards.length === 0) return null;
-  const gridClass =
-    cards.length === 2 ? "grid lg:grid-cols-2 gap-10" : "grid";
+  const full = blocks.filter((b) => b.articles.length >= 2);
+  if (full.length === 0) return null;
+  const lastIsOdd = full.length % 2 === 1;
   return (
     <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pb-14">
-      <div className={gridClass}>
-        {cards.map((c) => (
-          <CategoryGrid
-            key={c.category}
-            category={c.category}
-            articles={c.articles}
-          />
+      <div className="grid lg:grid-cols-2 gap-x-10 gap-y-12">
+        {full.map((b, i) => (
+          <div
+            key={b.category}
+            className={lastIsOdd && i === full.length - 1 ? "lg:col-span-2" : ""}
+          >
+            <CategoryGrid category={b.category} articles={b.articles} />
+          </div>
         ))}
       </div>
     </section>

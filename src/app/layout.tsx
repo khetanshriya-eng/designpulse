@@ -1,19 +1,28 @@
 import type { Metadata } from "next";
-import { Pixelify_Sans, Space_Mono } from "next/font/google";
+import { Pixelify_Sans, Space_Grotesk, Space_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { pickTheme } from "@/lib/theme";
 
-// Pixel display face for headlines, labels, nav, badges.
+// Pixel face — chrome ONLY (logo, badges, kickers, nav). Never headlines:
+// it hurts comprehension at reading sizes.
 const pixel = Pixelify_Sans({
-  variable: "--font-pixel",
+  variable: "--font-pixelify",
   subsets: ["latin"],
   display: "swap",
 });
 
-// Clean monospace reading layer for summaries, metadata, body copy.
+// Headline face — clean + characterful, the sibling of Space Mono so the
+// trio (pixel / grotesk / mono) reads as one intentional system.
+const grotesk = Space_Grotesk({
+  variable: "--font-grotesk",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+// Reading layer — summaries, metadata, body copy.
 const mono = Space_Mono({
   variable: "--font-mono",
   weight: ["400", "700"],
@@ -46,7 +55,7 @@ export default async function RootLayout({
     <html
       lang="en"
       data-theme={theme}
-      className={`${pixel.variable} ${mono.variable} h-full antialiased`}
+      className={`${pixel.variable} ${grotesk.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-paper text-ink">
         <Navigation />

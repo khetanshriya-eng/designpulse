@@ -30,7 +30,7 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
           <div className="col-span-2 md:col-span-1">
             <span
-              className="font-heading pixel-crisp font-bold text-[1.4rem] leading-none lowercase tracking-tight"
+              className="font-pixel pixel-crisp font-bold text-[1.4rem] leading-none lowercase tracking-tight"
               style={{ color: "var(--color-lime)", textShadow: "2px 2px 0 #000" }}
             >
               designator

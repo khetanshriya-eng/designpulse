@@ -90,7 +90,7 @@ function NavLink({
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className={`inline-flex items-center h-10 transition-colors ${activeClasses}`}
+      className={`font-pixel inline-flex items-center h-10 transition-colors ${activeClasses}`}
     >
       {label}
     </Link>

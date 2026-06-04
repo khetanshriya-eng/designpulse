@@ -46,7 +46,7 @@ export async function Navigation() {
                 {/* Pixel wordmark. Swap for an <img src="/designator-logo.png">
                     if you drop your exact asset into /public. */}
                 <span
-                  className="font-heading pixel-crisp font-bold text-[1.4rem] leading-none lowercase tracking-tight"
+                  className="font-pixel pixel-crisp font-bold text-[1.4rem] leading-none lowercase tracking-tight"
                   style={{
                     color: "var(--color-lime)",
                     textShadow: "2px 2px 0 #1a1340",
@@ -66,7 +66,7 @@ export async function Navigation() {
             <div className="flex items-center gap-2 sm:gap-4">
               <Link
                 href="/sources"
-                className="hidden sm:inline-block font-heading text-[14px] opacity-80 hover:opacity-100 transition-opacity"
+                className="hidden sm:inline-block font-pixel text-[14px] opacity-80 hover:opacity-100 transition-opacity"
               >
                 Sources
               </Link>
