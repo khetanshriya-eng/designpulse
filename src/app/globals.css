@@ -20,12 +20,11 @@
 @theme {
   /*
    * Three faces, three jobs:
-   *   font-heading (Space Grotesk) → headlines + section titles (readable)
-   *   font-sans    (Space Mono)    → summaries, metadata, body (default)
-   *   font-pixel   (Pixelify Sans) → chrome only: logo, badges, kickers, nav
-   * Headlines are NOT pixel — that hurt comprehension. Pixel stays in chrome.
+   *   font-heading (Jersey 10)    → headlines + section titles (condensed pixel)
+   *   font-sans    (Space Mono)   → summaries, metadata, body (default)
+   *   font-pixel   (Pixelify Sans)→ chrome accents: badges, kickers, nav, logo
    */
-  --font-heading: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-jersey), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-mono), "Space Mono", ui-monospace, monospace;
   --font-pixel: var(--font-pixelify), "Pixelify Sans", ui-monospace, monospace;
 
@@ -135,10 +134,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Headings use the pixel display face. */
+/* Headings use the Jersey 10 display face. It's condensed, so a hair of
+   tracking + relaxed leading keeps headlines legible at reading sizes. */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-  letter-spacing: 0;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
 }
 
 /* ─────────────────────────────────────────────

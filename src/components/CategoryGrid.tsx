@@ -16,23 +16,23 @@ export function CategoryGrid({ category, articles }: Props) {
       aria-labelledby={`cat-${category}-heading`}
       className="flex flex-col"
     >
-      <header className="flex items-center justify-between mb-4 rule-strong-top pt-3">
+      <header className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <span
-            className="inline-block w-1.5 h-1.5 rounded-full"
+            className="inline-block w-2 h-2"
             style={{ background: meta.dotVar }}
             aria-hidden
           />
           <h2
             id={`cat-${category}-heading`}
-            className="font-heading text-[1.05rem] sm:text-[1.15rem] font-extrabold tracking-tight text-ink leading-none"
+            className="font-heading text-[1.2rem] sm:text-[1.35rem] tracking-tight text-ink leading-none"
           >
             {meta.label}
           </h2>
         </div>
         <Link
           href={`/category/${category}`}
-          className="text-[12px] text-ink-muted hover:text-accent transition-colors"
+          className="font-pixel text-[12px] text-ink-muted hover:text-accent transition-colors"
         >
           More →
         </Link>
