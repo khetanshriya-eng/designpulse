@@ -55,8 +55,23 @@ export default async function RootLayout({
     <html
       lang="en"
       data-theme={theme}
+      data-auto-theme={theme}
       className={`${pixel.variable} ${jersey.variable} ${mono.variable} h-full antialiased`}
     >
+      <head>
+        {/*
+          Apply a saved manual theme override before first paint, so a user who
+          flipped the toggle doesn't see a flash of the geo-picked theme. Kept
+          tiny + synchronous in <head>. data-auto-theme retains the geo pick so
+          the toggle's "reset to auto" works.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var t=localStorage.getItem('designator-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}}catch(e){}",
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-paper text-ink">
         <Navigation />
         <main className="flex-1">{children}</main>

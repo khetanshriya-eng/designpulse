@@ -1,9 +1,15 @@
 import Link from "next/link";
 import type { SourceCategory } from "@/data/sources";
 import { formatEditionDate } from "@/lib/format";
-import { listEditionDates, getArticleCount } from "@/lib/data/queries";
+import {
+  listEditionDates,
+  getArticleCount,
+  getRecentHeadlines,
+} from "@/lib/data/queries";
 import { SearchTrigger } from "./SearchTrigger";
 import { CategoryNav } from "./CategoryNav";
+import { Marquee } from "./Marquee";
+import { ThemeToggle } from "./ThemeToggle";
 
 const NAV_CATEGORIES: SourceCategory[] = [
   "design-tools",
@@ -20,13 +26,16 @@ export async function Navigation() {
   // header still renders something sensible before the first edition exists.
   let editionDate: string;
   let storyCount = 0;
+  let headlines: { title: string; url: string }[] = [];
   try {
-    const [dates, count] = await Promise.all([
+    const [dates, count, ticker] = await Promise.all([
       listEditionDates(1),
       getArticleCount(),
+      getRecentHeadlines(15),
     ]);
     editionDate = dates[0] ?? new Date().toISOString().slice(0, 10);
     storyCount = count;
+    headlines = ticker;
   } catch {
     editionDate = new Date().toISOString().slice(0, 10);
   }
@@ -63,18 +72,22 @@ export async function Navigation() {
               </Link>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-1 sm:gap-3">
               <Link
                 href="/sources"
                 className="hidden sm:inline-block font-pixel text-[14px] opacity-80 hover:opacity-100 transition-opacity"
               >
                 Sources
               </Link>
+              <ThemeToggle />
               <SearchTrigger />
             </div>
           </div>
         </div>
       </div>
+
+      {/* Scrolling headline ticker under the bar. */}
+      <Marquee items={headlines} />
 
       {/* Category nav row — links on the left, story-count meter on the right.
           Client component so it can highlight the active path. */}

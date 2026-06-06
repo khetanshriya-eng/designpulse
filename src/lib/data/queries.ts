@@ -276,6 +276,29 @@ export async function getByCategory(
   return rowsToArticles(diversifyBySource(pool, limit, 1));
 }
 
+/**
+ * Lightweight recent headlines (title + url only) for the nav marquee ticker.
+ * Dated, summarized articles, newest first.
+ */
+export async function getRecentHeadlines(
+  limit = 15
+): Promise<{ title: string; url: string }[]> {
+  const sb = createPublicClient();
+  const { data, error } = await sb
+    .from("articles")
+    .select("title, original_url")
+    .not("summary", "is", null)
+    .neq("summary", "")
+    .not("published_at", "is", null)
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .limit(limit);
+  if (error) throw error;
+  return ((data ?? []) as { title: string; original_url: string }[]).map((r) => ({
+    title: r.title,
+    url: r.original_url,
+  }));
+}
+
 /** Full category page — bigger N, paginated by offset. */
 export async function getCategoryPage(
   category: SourceCategory,

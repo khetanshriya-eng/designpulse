@@ -72,6 +72,7 @@
   --shadow-offset: 4px;
   --nav-bg: #5b3df5;           /* purple bar in morning */
   --nav-ink: #f5f0e8;          /* light text on the bar */
+  --marquee-bg: #4a2fd0;       /* slightly darker than the nav bar */
   --confetti-opacity: 0.08;
 
   /* Bright category stripe colors (for the 4px card top-edge accent). These
@@ -115,6 +116,7 @@ html[data-theme="dark"] {
   --shadow-offset: 5px;
   --nav-bg: #1a1340;             /* dark bar at night */
   --nav-ink: #f5f0e8;
+  --marquee-bg: #14102e;         /* a touch darker than the nav bar */
   --confetti-opacity: 0.15;
 }
 
@@ -200,9 +202,44 @@ h1, h2, h3, h4, h5, h6 {
   );
 }
 
-/* Hard top rule (kept from prior design, used by SectionHeader). */
+/* Hard top rule (kept from prior design, used by the sources page). */
 .rule-strong-top {
   border-top: 2px solid var(--color-rule-strong);
+}
+
+/* Marquee headline ticker. Content is duplicated, so -50% loops seamlessly. */
+.marquee-track {
+  animation: marquee-scroll 70s linear infinite;
+}
+.marquee-strip:hover .marquee-track {
+  animation-play-state: paused;
+}
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Blinking pixel cursor after the active nav tab — terminal-prompt feel. */
+.nav-cursor {
+  animation: pixel-blink 1s step-start infinite;
+}
+@keyframes pixel-blink {
+  50% { opacity: 0; }
+}
+
+/* Full-screen pixel-wipe played on theme toggle. */
+.theme-wipe {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--color-accent);
+  pointer-events: none;
+  animation: theme-wipe 0.5s steps(12) forwards;
+}
+@keyframes theme-wipe {
+  0% { clip-path: inset(0 100% 0 0); }
+  50% { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(0 0 0 100%); }
 }
 
 /* Crisp pixel rendering — reserved for the logo / large display text where

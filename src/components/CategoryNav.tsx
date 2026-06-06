@@ -93,6 +93,15 @@ function NavLink({
       className={`font-pixel inline-flex items-center h-10 transition-colors ${activeClasses}`}
     >
       {label}
+      {active && (
+        <span
+          className="nav-cursor ml-1 -mr-1"
+          style={{ color: "var(--color-lime)" }}
+          aria-hidden
+        >
+          ▮
+        </span>
+      )}
     </Link>
   );
 }
