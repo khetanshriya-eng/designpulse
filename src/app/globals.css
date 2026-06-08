@@ -140,6 +140,9 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Suppress the browser's own pull-to-refresh so our custom one owns the
+     gesture (PullToRefresh.tsx). `contain` keeps normal scroll/bounce. */
+  overscroll-behavior-y: contain;
 }
 
 /* Headings use the Jersey 10 display face. It's a single-weight (400) pixel
@@ -292,6 +295,32 @@ h1, h2, h3, h4, h5, h6 {
 @keyframes confetti-drift {
   from { transform: translate(0, 0) rotate(0deg); }
   to { transform: translate(10px, -24px) rotate(35deg); }
+}
+
+/* Pull-to-refresh bar (PullToRefresh.tsx) — grows from the top with the pull. */
+.ptr-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--color-paper-tint);
+  border-bottom: 2px solid var(--card-border);
+}
+.ptr-fire {
+  transform-box: fill-box;
+  transform-origin: left center;
+}
+.ptr-fire.on {
+  animation: fire-flicker 0.26s ease-in-out infinite;
+}
+@keyframes fire-flicker {
+  0%, 100% { opacity: 1; transform: scaleX(1); }
+  50% { opacity: 0.6; transform: scaleX(1.25); }
 }
 
 /* Logo glitch-jitter on hover — cycles the offset shadow through accents. */
