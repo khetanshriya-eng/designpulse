@@ -74,7 +74,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-paper text-ink">
+      <body className="min-h-full flex flex-col text-ink">
         <PixelConfetti />
         <Navigation />
         <main className="flex-1">{children}</main>

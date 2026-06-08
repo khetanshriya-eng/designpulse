@@ -120,8 +120,13 @@ html[data-theme="dark"] {
   --confetti-opacity: 0.38;
 }
 
-html,
-body {
+/*
+ * Background lives on <html> ONLY — NOT body. The confetti layer sits at
+ * z-index:-1, which paints between the html background and body content; an
+ * opaque body background would paint over it and hide it entirely. Keeping
+ * body transparent lets the confetti show through in the gaps + margins.
+ */
+html {
   background: var(--color-paper);
   color: var(--color-ink);
   color-scheme: light;
@@ -131,6 +136,7 @@ html[data-theme="dark"] {
 }
 
 body {
+  color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
