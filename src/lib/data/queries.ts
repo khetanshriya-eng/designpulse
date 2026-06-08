@@ -9,6 +9,7 @@
  * summary isn't ready to be shown to a reader. The summarizer fills these in.
  */
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { createPublicClient } from "@/lib/db/client";
 import type { SourceCategory } from "@/data/sources";
 import {
@@ -80,17 +81,28 @@ export async function getEdition(date?: string): Promise<EditionView | null> {
   };
 }
 
-/** Edition dates available in the DB, newest first — used by the date picker. */
-export async function listEditionDates(limit = 30): Promise<string[]> {
-  const sb = createPublicClient();
-  const { data, error } = await sb
-    .from("editions")
-    .select("edition_date")
-    .order("edition_date", { ascending: false })
-    .limit(limit);
-  if (error) throw error;
-  return (data ?? []).map((r) => r.edition_date);
-}
+/**
+ * Edition dates available in the DB, newest first.
+ *
+ * Cached (10 min): this + getArticleCount + getRecentHeadlines run on EVERY
+ * navigation via the root-layout <Navigation>, so caching them is the biggest
+ * tab-to-tab / page-to-page speedup — each navigation then only pays for the
+ * page's own query. Data changes twice daily, so 10-min staleness is fine.
+ */
+export const listEditionDates = unstable_cache(
+  async (limit = 30): Promise<string[]> => {
+    const sb = createPublicClient();
+    const { data, error } = await sb
+      .from("editions")
+      .select("edition_date")
+      .order("edition_date", { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return (data ?? []).map((r) => r.edition_date);
+  },
+  ["edition-dates"],
+  { revalidate: 600 }
+);
 
 async function getArticleById(id: string): Promise<Article | null> {
   const sb = createPublicClient();
@@ -280,24 +292,25 @@ export async function getByCategory(
  * Lightweight recent headlines (title + url only) for the nav marquee ticker.
  * Dated, summarized articles, newest first.
  */
-export async function getRecentHeadlines(
-  limit = 15
-): Promise<{ title: string; url: string }[]> {
-  const sb = createPublicClient();
-  const { data, error } = await sb
-    .from("articles")
-    .select("title, original_url")
-    .not("summary", "is", null)
-    .neq("summary", "")
-    .not("published_at", "is", null)
-    .order("published_at", { ascending: false, nullsFirst: false })
-    .limit(limit);
-  if (error) throw error;
-  return ((data ?? []) as { title: string; original_url: string }[]).map((r) => ({
-    title: r.title,
-    url: r.original_url,
-  }));
-}
+export const getRecentHeadlines = unstable_cache(
+  async (limit = 15): Promise<{ title: string; url: string }[]> => {
+    const sb = createPublicClient();
+    const { data, error } = await sb
+      .from("articles")
+      .select("title, original_url")
+      .not("summary", "is", null)
+      .neq("summary", "")
+      .not("published_at", "is", null)
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .limit(limit);
+    if (error) throw error;
+    return ((data ?? []) as { title: string; original_url: string }[]).map(
+      (r) => ({ title: r.title, url: r.original_url })
+    );
+  },
+  ["recent-headlines"],
+  { revalidate: 600 }
+);
 
 /** Full category page — bigger N, paginated by offset. */
 export async function getCategoryPage(
@@ -352,14 +365,18 @@ export async function searchArticles(
   return rowsToArticles((data ?? []) as ArticleWithSource[]);
 }
 
-/** Total article count for the edition strap copy ("N stories curated"). */
-export async function getArticleCount(): Promise<number> {
-  const sb = createPublicClient();
-  const { count, error } = await sb
-    .from("articles")
-    .select("*", { count: "exact", head: true })
-    .not("summary", "is", null)
-    .neq("summary", "");
-  if (error) throw error;
-  return count ?? 0;
-}
+/** Total article count for the nav "N stories curated" meter. Cached (10 min). */
+export const getArticleCount = unstable_cache(
+  async (): Promise<number> => {
+    const sb = createPublicClient();
+    const { count, error } = await sb
+      .from("articles")
+      .select("*", { count: "exact", head: true })
+      .not("summary", "is", null)
+      .neq("summary", "");
+    if (error) throw error;
+    return count ?? 0;
+  },
+  ["article-count"],
+  { revalidate: 600 }
+);
