@@ -10,18 +10,30 @@ export function ScrollTop() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setShow(window.scrollY > window.innerHeight);
+    // On touch devices the scroller is #app-scroll, not the document.
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
+    const sc = coarse ? document.getElementById("app-scroll") : null;
+    const src: HTMLElement | Window = sc ?? window;
+    const top = () => (sc ? sc.scrollTop : window.scrollY);
+    const onScroll = () => setShow(top() > window.innerHeight);
     onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    src.addEventListener("scroll", onScroll as EventListener, { passive: true });
+    return () => src.removeEventListener("scroll", onScroll as EventListener);
   }, []);
 
   if (!show) return null;
 
+  const scrollToTop = () => {
+    const sc = window.matchMedia("(pointer: coarse)").matches
+      ? document.getElementById("app-scroll")
+      : null;
+    (sc ?? window).scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <button
       type="button"
-      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      onClick={scrollToTop}
       aria-label="Back to top"
       className="fixed bottom-5 right-5 z-40 grid place-items-center w-11 h-11 border-[3px] text-[color:var(--nav-ink)] shadow-[3px_3px_0_var(--card-shadow)] transition-transform hover:-translate-y-0.5 active:translate-y-0.5"
       style={{ background: "var(--color-accent)", borderColor: "var(--card-border)" }}

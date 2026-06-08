@@ -5,7 +5,6 @@ import "./globals.css";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { ScrollTop } from "@/components/ScrollTop";
-import { PixelConfetti } from "@/components/PixelConfetti";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { pickTheme } from "@/lib/theme";
 
@@ -75,13 +74,22 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col text-ink">
-        <PixelConfetti />
+      <body className="text-ink">
+        {/* Fixed overlays live outside the scroll container (viewport-fixed). */}
         <PullToRefresh />
-        <Navigation />
-        <main className="flex-1">{children}</main>
-        <Footer />
         <ScrollTop />
+        {/*
+          On touch devices the page scrolls inside this container, not the
+          document — that's what lets our pull-to-refresh own the gesture
+          instead of the browser's native one (see globals.css `.app-scroll`).
+          On desktop it's an inert passthrough and the document scrolls
+          normally (keyboard scroll preserved).
+        */}
+        <div id="app-scroll" className="app-scroll min-h-full flex flex-col">
+          <Navigation />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </div>
       </body>
     </html>
   );

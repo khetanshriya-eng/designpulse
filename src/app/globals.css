@@ -73,7 +73,6 @@
   --nav-bg: #5b3df5;           /* purple bar in morning */
   --nav-ink: #f5f0e8;          /* light text on the bar */
   --marquee-bg: #4a2fd0;       /* slightly darker than the nav bar */
-  --confetti-opacity: 0.18;
 
   /* Bright category stripe colors (for the 4px card top-edge accent). These
      are the vivid spec values; the deeper --color-cat-* above are for small
@@ -117,14 +116,12 @@ html[data-theme="dark"] {
   --nav-bg: #1a1340;             /* dark bar at night */
   --nav-ink: #f5f0e8;
   --marquee-bg: #14102e;         /* a touch darker than the nav bar */
-  --confetti-opacity: 0.38;
 }
 
 /*
- * Background lives on <html> ONLY — NOT body. The confetti layer sits at
- * z-index:-1, which paints between the html background and body content; an
- * opaque body background would paint over it and hide it entirely. Keeping
- * body transparent lets the confetti show through in the gaps + margins.
+ * Background lives on <html> so it always fills the viewport — including on
+ * touch devices where <body> is overflow:hidden and the real scrolling happens
+ * inside #app-scroll (see the pointer:coarse block below).
  */
 html {
   background: var(--color-paper);
@@ -140,9 +137,27 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Suppress the browser's own pull-to-refresh so our custom one owns the
-     gesture (PullToRefresh.tsx). `contain` keeps normal scroll/bounce. */
-  overscroll-behavior-y: contain;
+}
+
+/*
+ * Touch devices only: move scrolling off the document into #app-scroll, so the
+ * browser's native pull-to-refresh never fires (it's a document-level gesture)
+ * and our dino PTR owns it. Desktop (fine pointer) is untouched — the document
+ * scrolls normally, preserving keyboard scroll.
+ */
+@media (pointer: coarse) {
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+  .app-scroll {
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* Headings use the Jersey 10 display face. It's a single-weight (400) pixel
@@ -275,28 +290,6 @@ h1, h2, h3, h4, h5, h6 {
 .boot > *:nth-child(6) { animation-delay: 0.28s; }
 .boot > *:nth-child(n + 7) { animation-delay: 0.33s; }
 
-/* Floating pixel confetti — behind everything, visible in card gaps. */
-.confetti-layer {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  overflow: hidden;
-  opacity: var(--confetti-opacity);
-}
-.confetti-px {
-  position: absolute;
-  will-change: transform;
-  animation-name: confetti-drift;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-  animation-direction: alternate;
-}
-@keyframes confetti-drift {
-  from { transform: translate(0, 0) rotate(0deg); }
-  to { transform: translate(10px, -24px) rotate(35deg); }
-}
-
 /* Pull-to-refresh bar (PullToRefresh.tsx) — grows from the top with the pull. */
 .ptr-bar {
   position: fixed;
@@ -378,6 +371,4 @@ html[data-theme="dark"] [data-image="real"]:hover img {
     scroll-behavior: auto !important;
   }
   .surface-card:hover { transform: none; }
-  /* Confetti is decorative motion — hide it entirely, don't freeze it. */
-  .confetti-layer { display: none !important; }
 }
