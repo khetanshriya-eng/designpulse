@@ -73,7 +73,7 @@
   --nav-bg: #5b3df5;           /* purple bar in morning */
   --nav-ink: #f5f0e8;          /* light text on the bar */
   --marquee-bg: #4a2fd0;       /* slightly darker than the nav bar */
-  --confetti-opacity: 0.08;
+  --confetti-opacity: 0.18;
 
   /* Bright category stripe colors (for the 4px card top-edge accent). These
      are the vivid spec values; the deeper --color-cat-* above are for small
@@ -117,7 +117,7 @@ html[data-theme="dark"] {
   --nav-bg: #1a1340;             /* dark bar at night */
   --nav-ink: #f5f0e8;
   --marquee-bg: #14102e;         /* a touch darker than the nav bar */
-  --confetti-opacity: 0.15;
+  --confetti-opacity: 0.38;
 }
 
 html,
@@ -143,7 +143,9 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 400;
   letter-spacing: 0.01em;
-  line-height: 1.05;
+  /* Jersey 10 glyphs nearly fill the em; a too-tight line-height makes a
+     clamped line poke past the clip box. 1.2 gives clean truncation. */
+  line-height: 1.2;
 }
 
 /* ─────────────────────────────────────────────
@@ -250,8 +252,11 @@ h1, h2, h3, h4, h5, h6 {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: none; }
 }
+/* `backwards` (not `both`): hold the start state during the delay, but DON'T
+   pin the end transform afterwards — otherwise it overrides the card :hover
+   lift, making boot'd cards hover differently from the rest. */
 .boot > * {
-  animation: boot-in 0.45s ease both;
+  animation: boot-in 0.45s ease backwards;
 }
 .boot > *:nth-child(1) { animation-delay: 0.03s; }
 .boot > *:nth-child(2) { animation-delay: 0.08s; }

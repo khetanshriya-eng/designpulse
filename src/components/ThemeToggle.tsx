@@ -101,10 +101,18 @@ function SunIcon() {
 }
 
 function MoonIcon() {
-  // Clear crescent (big disc minus an offset disc). Recognizable at 18px.
+  // Blocky pixel crescent on an 8×8 grid — matches the sun's pixel style
+  // while clearly reading as a moon (fat left edge, open right).
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+    <svg width="18" height="18" viewBox="0 0 8 8" fill="currentColor" shapeRendering="crispEdges" aria-hidden>
+      <rect x="2" y="0" width="3" height="1" />
+      <rect x="1" y="1" width="3" height="1" />
+      <rect x="0" y="2" width="3" height="1" />
+      <rect x="0" y="3" width="2" height="1" />
+      <rect x="0" y="4" width="2" height="1" />
+      <rect x="0" y="5" width="3" height="1" />
+      <rect x="1" y="6" width="3" height="1" />
+      <rect x="2" y="7" width="3" height="1" />
     </svg>
   );
 }

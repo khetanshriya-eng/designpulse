@@ -36,7 +36,7 @@ export function InspirationStrip({ articles }: { articles: Article[] }) {
             <ArticleImage article={a} aspect="portrait" size="md" />
             <div className="p-3 flex flex-col gap-1.5 flex-1">
               <SourceBadge sourceId={a.sourceId} />
-              <h3 className="font-heading text-[1rem] leading-snug text-ink group-hover:text-accent transition-colors line-clamp-2">
+              <h3 className="font-heading text-[1rem] leading-[1.45] text-ink group-hover:text-accent transition-colors line-clamp-2">
                 {a.title}
               </h3>
             </div>

@@ -30,7 +30,7 @@ function DefaultCard({ article }: { article: Article }) {
           <SourceBadge sourceId={article.sourceId} />
           <CategoryDot category={article.category} />
         </div>
-        <h3 className="font-heading text-[1.2rem] leading-snug text-ink group-hover:text-accent transition-colors line-clamp-2">
+        <h3 className="font-heading text-[1.2rem] leading-[1.45] text-ink group-hover:text-accent transition-colors line-clamp-2">
           {article.title}
         </h3>
         <p className="text-[13px] leading-relaxed text-ink-muted line-clamp-2">
@@ -60,8 +60,9 @@ function MediumCard({ article }: { article: Article }) {
           <SourceBadge sourceId={article.sourceId} />
           <CategoryDot category={article.category} />
         </div>
-        {/* Reserve two lines so every category tile is the same height. */}
-        <h3 className="font-heading text-[1.15rem] leading-snug text-ink group-hover:text-accent transition-colors line-clamp-2 min-h-[2.5em]">
+        {/* Clamp to 2 lines (clean truncation). Equal tile height comes from
+            the grid stretch + meta pinned to the bottom, not a min-height. */}
+        <h3 className="font-heading text-[1.15rem] leading-[1.45] text-ink group-hover:text-accent transition-colors line-clamp-2">
           {article.title}
         </h3>
         <div className="flex items-center gap-2 text-[11px] text-ink-subtle pt-0.5 mt-auto">
@@ -97,7 +98,7 @@ function HorizontalCard({ article }: { article: Article }) {
           <SourceBadge sourceId={article.sourceId} />
           <CategoryDot category={article.category} />
         </div>
-        <h3 className="font-heading text-[1.1rem] sm:text-[1.2rem] leading-snug text-ink group-hover:text-accent transition-colors line-clamp-2">
+        <h3 className="font-heading text-[1.1rem] sm:text-[1.2rem] leading-[1.45] text-ink group-hover:text-accent transition-colors line-clamp-2">
           {article.title}
         </h3>
         <p className="hidden sm:block text-[13px] leading-relaxed text-ink-muted line-clamp-2">
