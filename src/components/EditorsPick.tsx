@@ -24,11 +24,11 @@ export function EditorsPick({ article }: { article: Article }) {
         <div className="absolute inset-x-0 bottom-0 p-6 sm:p-10 max-w-[820px]">
           <p
             id="editors-pick-heading"
-            className="font-heading text-[11px] uppercase tracking-[0.18em] font-bold text-accent-soft mb-3"
+            className="font-pixel text-[11px] uppercase tracking-[0.18em] font-bold text-accent-soft mb-3"
           >
             Editor&apos;s pick
           </p>
-          <h3 className="font-heading text-[1.6rem] sm:text-[2rem] md:text-[2.4rem] leading-[1.05] font-extrabold text-white tracking-tight">
+          <h3 className="font-heading text-[1.7rem] sm:text-[2rem] md:text-[2.25rem] leading-[1.04] text-white tracking-tight">
             {article.title}
           </h3>
           <p className="hidden sm:block mt-3 text-[14px] sm:text-[15px] leading-relaxed text-white/80 max-w-2xl">

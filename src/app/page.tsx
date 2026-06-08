@@ -66,7 +66,7 @@ export default async function Home() {
               href={`/edition/${edition.date}`}
               hrefLabel="See full edition"
             />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-7 gap-y-10">
+            <div className="boot grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-7 gap-y-10">
               {latestArticles.map((a) => (
                 <ArticleCard key={a.id} article={a} variant="default" />
               ))}
@@ -172,7 +172,7 @@ function CategorySections({
   const lastIsOdd = full.length % 2 === 1;
   return (
     <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pb-14">
-      <div className="grid lg:grid-cols-2 gap-x-10 gap-y-12">
+      <div className="boot grid lg:grid-cols-2 gap-x-10 gap-y-12">
         {full.map((b, i) => (
           <div
             key={b.category}

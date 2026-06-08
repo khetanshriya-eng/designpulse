@@ -96,7 +96,7 @@ function NavLink({
       {active && (
         <span
           className="nav-cursor ml-1 -mr-1"
-          style={{ color: "var(--color-lime)" }}
+          style={{ color: "var(--color-accent)" }}
           aria-hidden
         >
           ▮

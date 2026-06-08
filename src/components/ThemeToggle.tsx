@@ -101,15 +101,10 @@ function SunIcon() {
 }
 
 function MoonIcon() {
+  // Clear crescent (big disc minus an offset disc). Recognizable at 18px.
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor" shapeRendering="crispEdges" aria-hidden>
-      <rect x="6" y="2" width="6" height="2" />
-      <rect x="4" y="4" width="3" height="2" />
-      <rect x="3" y="6" width="2" height="6" />
-      <rect x="4" y="12" width="3" height="2" />
-      <rect x="6" y="14" width="6" height="2" />
-      <rect x="9" y="4" width="3" height="2" />
-      <rect x="10" y="12" width="3" height="2" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
     </svg>
   );
 }

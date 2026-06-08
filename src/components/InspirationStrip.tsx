@@ -30,13 +30,13 @@ export function InspirationStrip({ articles }: { articles: Article[] }) {
         href="/category/inspiration"
         hrefLabel="More inspiration"
       />
-      <div className={`grid ${colsClass} gap-4 sm:gap-5`}>
+      <div className={`boot grid ${colsClass} gap-4 sm:gap-5`}>
         {items.map((a) => (
           <PixelCard key={a.id} href={a.url} category={a.category}>
             <ArticleImage article={a} aspect="portrait" size="md" />
             <div className="p-3 flex flex-col gap-1.5 flex-1">
               <SourceBadge sourceId={a.sourceId} />
-              <h3 className="font-heading text-[14px] font-semibold leading-snug text-ink group-hover:text-accent transition-colors line-clamp-2">
+              <h3 className="font-heading text-[1rem] leading-snug text-ink group-hover:text-accent transition-colors line-clamp-2">
                 {a.title}
               </h3>
             </div>

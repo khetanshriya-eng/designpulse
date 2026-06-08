@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Article } from "@/data/articles";
-import { CATEGORY_META } from "@/data/sources";
+import { CATEGORY_META, MOSAIC_SOURCE_SLUGS } from "@/data/sources";
 import { PixelMosaic } from "./PixelMosaic";
 
 type Aspect = "video" | "square" | "wide" | "portrait";
@@ -44,7 +44,10 @@ export function ArticleImage({
   fill = false,
 }: Props) {
   const [failed, setFailed] = useState(false);
-  const hasImage = !!article.thumbnailUrl && !failed;
+  // Some sources (e.g. Hugging Face) emit generic title-banner images that
+  // look worse than the mosaic — force the fallback for those.
+  const prefersMosaic = MOSAIC_SOURCE_SLUGS.has(article.sourceId);
+  const hasImage = !!article.thumbnailUrl && !failed && !prefersMosaic;
   const aspectClass = ASPECT[aspect];
   const isVideoOrPod =
     article.contentType === "video" || article.contentType === "podcast-episode";

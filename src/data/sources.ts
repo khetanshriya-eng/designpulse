@@ -32,6 +32,12 @@ export type Source = {
   swatch: string;
   /** Resolved YouTube UC... channel id (only set for type === "youtube") */
   youtubeChannelId?: string;
+  /**
+   * Force the generative pixel mosaic instead of the feed's thumbnail.
+   * For sources whose RSS images are generic title-banner screenshots
+   * (e.g. Hugging Face blog) that look worse than a clean sigil.
+   */
+  preferMosaic?: boolean;
 };
 
 export const SOURCES: Source[] = [
@@ -112,7 +118,7 @@ export const SOURCES: Source[] = [
   { id: "importai", name: "Import AI", slug: "importai", url: "https://importai.net", feedUrl: "https://importai.net/feed", type: "newsletter", category: "ai-tools", initials: "IA", swatch: "thumb-grad-6" },
   // AI & Tools — added 2026-05-27, feeds verified live.
   { id: "openai-blog", name: "OpenAI Blog", slug: "openai-blog", url: "https://openai.com/blog", feedUrl: "https://openai.com/blog/rss.xml", type: "blog", category: "ai-tools", initials: "OA", swatch: "thumb-grad-1" },
-  { id: "huggingface", name: "Hugging Face", slug: "huggingface", url: "https://huggingface.co/blog", feedUrl: "https://huggingface.co/blog/feed.xml", type: "blog", category: "ai-tools", initials: "HF", swatch: "thumb-grad-9" },
+  { id: "huggingface", name: "Hugging Face", slug: "huggingface", url: "https://huggingface.co/blog", feedUrl: "https://huggingface.co/blog/feed.xml", type: "blog", category: "ai-tools", initials: "HF", swatch: "thumb-grad-9", preferMosaic: true },
   { id: "oneusefulthing", name: "One Useful Thing", slug: "oneusefulthing", url: "https://www.oneusefulthing.org", feedUrl: "https://www.oneusefulthing.org/feed", type: "newsletter", category: "ai-tools", initials: "1U", swatch: "thumb-grad-3" },
   { id: "mit-ai", name: "MIT Tech Review · AI", slug: "mit-ai", url: "https://www.technologyreview.com/topic/artificial-intelligence/", feedUrl: "https://www.technologyreview.com/topic/artificial-intelligence/feed", type: "publication", category: "ai-tools", initials: "MT", swatch: "thumb-grad-5" },
 
@@ -135,6 +141,11 @@ export const SOURCES: Source[] = [
   { id: "highres", name: "High Resolution", slug: "highres", url: "https://highresolution.design", type: "podcast", category: "podcasts", initials: "HR", swatch: "thumb-grad-5" },
   { id: "hackingui", name: "Hacking UI", slug: "hackingui", url: "https://hackingui.com", type: "podcast", category: "podcasts", initials: "HU", swatch: "thumb-grad-6" },
 ];
+
+/** Slugs whose articles always render the pixel mosaic, ignoring thumbnails. */
+export const MOSAIC_SOURCE_SLUGS = new Set(
+  SOURCES.filter((s) => s.preferMosaic).map((s) => s.slug)
+);
 
 export const CATEGORY_META: Record<
   SourceCategory,

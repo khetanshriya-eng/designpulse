@@ -136,12 +136,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Headings use the Jersey 10 display face. It's condensed, so a hair of
-   tracking + relaxed leading keeps headlines legible at reading sizes. */
+/* Headings use the Jersey 10 display face. It's a single-weight (400) pixel
+   font, so we pin font-weight: any bold utility would trigger ugly synthetic
+   faux-bold (the "inflated/fat" look). Hierarchy comes from size, not weight. */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
+  font-weight: 400;
   letter-spacing: 0.01em;
-  line-height: 1.1;
+  line-height: 1.05;
 }
 
 /* ─────────────────────────────────────────────
@@ -240,6 +242,35 @@ h1, h2, h3, h4, h5, h6 {
   0% { clip-path: inset(0 100% 0 0); }
   50% { clip-path: inset(0 0 0 0); }
   100% { clip-path: inset(0 0 0 100%); }
+}
+
+/* Staggered boot-up: direct children of a .boot container fade + rise in
+   with an increasing delay. Pure CSS so it runs on paint (no JS gate). */
+@keyframes boot-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+.boot > * {
+  animation: boot-in 0.45s ease both;
+}
+.boot > *:nth-child(1) { animation-delay: 0.03s; }
+.boot > *:nth-child(2) { animation-delay: 0.08s; }
+.boot > *:nth-child(3) { animation-delay: 0.13s; }
+.boot > *:nth-child(4) { animation-delay: 0.18s; }
+.boot > *:nth-child(5) { animation-delay: 0.23s; }
+.boot > *:nth-child(6) { animation-delay: 0.28s; }
+.boot > *:nth-child(n + 7) { animation-delay: 0.33s; }
+
+/* Logo glitch-jitter on hover — cycles the offset shadow through accents. */
+.logo-jitter:hover {
+  animation: logo-jitter 0.3s steps(2) infinite;
+}
+@keyframes logo-jitter {
+  0% { text-shadow: 2px 2px 0 #1a1340; }
+  25% { text-shadow: 3px 1px 0 var(--color-hot); }
+  50% { text-shadow: 1px 3px 0 var(--color-lime); }
+  75% { text-shadow: 3px 3px 0 var(--color-cyan); }
+  100% { text-shadow: 2px 2px 0 #1a1340; }
 }
 
 /* Crisp pixel rendering — reserved for the logo / large display text where

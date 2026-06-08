@@ -30,7 +30,7 @@ function DefaultCard({ article }: { article: Article }) {
           <SourceBadge sourceId={article.sourceId} />
           <CategoryDot category={article.category} />
         </div>
-        <h3 className="font-heading text-[1.05rem] leading-snug font-semibold text-ink group-hover:text-accent transition-colors">
+        <h3 className="font-heading text-[1.2rem] leading-snug text-ink group-hover:text-accent transition-colors line-clamp-2">
           {article.title}
         </h3>
         <p className="text-[13px] leading-relaxed text-ink-muted line-clamp-2">
@@ -60,7 +60,8 @@ function MediumCard({ article }: { article: Article }) {
           <SourceBadge sourceId={article.sourceId} />
           <CategoryDot category={article.category} />
         </div>
-        <h3 className="font-heading text-[1rem] leading-snug font-semibold text-ink group-hover:text-accent transition-colors line-clamp-3">
+        {/* Reserve two lines so every category tile is the same height. */}
+        <h3 className="font-heading text-[1.15rem] leading-snug text-ink group-hover:text-accent transition-colors line-clamp-2 min-h-[2.5em]">
           {article.title}
         </h3>
         <div className="flex items-center gap-2 text-[11px] text-ink-subtle pt-0.5 mt-auto">
@@ -80,29 +81,29 @@ function MediumCard({ article }: { article: Article }) {
 function HorizontalCard({ article }: { article: Article }) {
   const readTime = formatReadTime(article);
   return (
+    // Fixed-height row (image fills, text clamped) so every item in the
+    // Product / Podcasts lists is the same height.
     <Link
       href={article.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex gap-4 py-4 border-b border-rule first:border-t"
+      className="group flex gap-4 py-4 border-b border-rule first:border-t items-stretch min-h-[132px]"
     >
-      <div className="w-28 sm:w-36 shrink-0">
-        <ArticleImage article={article} aspect="square" size="sm" />
+      <div className="w-28 sm:w-32 shrink-0 relative overflow-hidden">
+        <ArticleImage article={article} fill size="sm" />
       </div>
-      <div className="flex-1 min-w-0 flex flex-col justify-between gap-2">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-3">
-            <SourceBadge sourceId={article.sourceId} />
-            <CategoryDot category={article.category} />
-          </div>
-          <h3 className="font-heading text-[0.95rem] sm:text-[1.05rem] leading-snug font-bold text-ink group-hover:text-accent transition-colors line-clamp-3">
-            {article.title}
-          </h3>
-          <p className="hidden sm:block text-[13px] leading-relaxed text-ink-muted line-clamp-2">
-            {article.summary}
-          </p>
+      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+        <div className="flex items-center gap-3">
+          <SourceBadge sourceId={article.sourceId} />
+          <CategoryDot category={article.category} />
         </div>
-        <div className="flex items-center gap-2 text-[11px] text-ink-subtle">
+        <h3 className="font-heading text-[1.1rem] sm:text-[1.2rem] leading-snug text-ink group-hover:text-accent transition-colors line-clamp-2">
+          {article.title}
+        </h3>
+        <p className="hidden sm:block text-[13px] leading-relaxed text-ink-muted line-clamp-2">
+          {article.summary}
+        </p>
+        <div className="flex items-center gap-2 text-[11px] text-ink-subtle mt-auto">
           <span>{formatRelativeTime(article.publishedAt)}</span>
           {readTime && (
             <>

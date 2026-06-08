@@ -44,10 +44,7 @@ export async function Navigation() {
     <header className="sticky top-0 z-30">
       {/* Top strip: pixel logo + edition readout + utility. Purple bar in
           morning, dark navy at night (--nav-bg). */}
-      <div
-        className="border-b-[3px] border-[color:var(--card-border)]"
-        style={{ background: "var(--nav-bg)", color: "var(--nav-ink)" }}
-      >
+      <div style={{ background: "var(--nav-bg)", color: "var(--nav-ink)" }}>
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-3 min-w-0">
@@ -55,7 +52,7 @@ export async function Navigation() {
                 {/* Pixel wordmark. Swap for an <img src="/designator-logo.png">
                     if you drop your exact asset into /public. */}
                 <span
-                  className="font-pixel pixel-crisp font-bold text-[1.4rem] leading-none lowercase tracking-tight"
+                  className="logo-jitter font-pixel pixel-crisp font-bold text-[1.4rem] leading-none lowercase tracking-tight"
                   style={{
                     color: "var(--color-lime)",
                     textShadow: "2px 2px 0 #1a1340",

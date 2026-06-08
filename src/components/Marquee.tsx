@@ -39,7 +39,7 @@ export function Marquee({ items }: { items: Item[] }) {
   if (!items.length) return null;
   return (
     <div
-      className="marquee-strip overflow-hidden border-b-[3px] border-[color:var(--card-border)]"
+      className="marquee-strip overflow-hidden"
       style={{ background: "var(--marquee-bg)" }}
       aria-label="Latest headlines"
     >

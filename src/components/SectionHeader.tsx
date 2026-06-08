@@ -23,7 +23,7 @@ export function SectionHeader({ kicker, title, description, href, hrefLabel }: P
             {kicker}
           </p>
         )}
-        <h2 className="font-heading text-[1.5rem] sm:text-[1.75rem] font-bold tracking-tight text-ink leading-tight">
+        <h2 className="font-heading text-[1.6rem] sm:text-[1.85rem] tracking-tight text-ink leading-tight">
           {title}
         </h2>
         {description && (

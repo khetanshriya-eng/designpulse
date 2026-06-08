@@ -40,7 +40,7 @@ export function HeroCard({ article }: { article: Article }) {
               {formatRelativeTime(article.publishedAt)}
             </span>
           </div>
-          <h1 className="font-heading text-[1.85rem] sm:text-[2.25rem] md:text-[2.5rem] leading-[1.05] font-bold text-ink tracking-tight group-hover:text-accent transition-colors">
+          <h1 className="font-heading text-[1.7rem] sm:text-[2rem] md:text-[2.2rem] leading-[1.04] text-ink tracking-tight group-hover:text-accent transition-colors">
             {article.title}
           </h1>
           <p className="text-[15px] leading-relaxed text-ink-muted max-w-prose">
