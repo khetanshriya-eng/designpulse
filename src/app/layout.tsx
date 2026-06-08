@@ -5,6 +5,7 @@ import "./globals.css";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { ScrollTop } from "@/components/ScrollTop";
+import { PixelConfetti } from "@/components/PixelConfetti";
 import { pickTheme } from "@/lib/theme";
 
 // Pixel face — chrome accents (logo, badges, kickers, nav).
@@ -74,6 +75,7 @@ export default async function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-paper text-ink">
+        <PixelConfetti />
         <Navigation />
         <main className="flex-1">{children}</main>
         <Footer />

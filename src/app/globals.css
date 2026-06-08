@@ -261,6 +261,28 @@ h1, h2, h3, h4, h5, h6 {
 .boot > *:nth-child(6) { animation-delay: 0.28s; }
 .boot > *:nth-child(n + 7) { animation-delay: 0.33s; }
 
+/* Floating pixel confetti — behind everything, visible in card gaps. */
+.confetti-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: var(--confetti-opacity);
+}
+.confetti-px {
+  position: absolute;
+  will-change: transform;
+  animation-name: confetti-drift;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+@keyframes confetti-drift {
+  from { transform: translate(0, 0) rotate(0deg); }
+  to { transform: translate(10px, -24px) rotate(35deg); }
+}
+
 /* Logo glitch-jitter on hover — cycles the offset shadow through accents. */
 .logo-jitter:hover {
   animation: logo-jitter 0.3s steps(2) infinite;
@@ -316,4 +338,6 @@ html[data-theme="dark"] [data-image="real"]:hover img {
     scroll-behavior: auto !important;
   }
   .surface-card:hover { transform: none; }
+  /* Confetti is decorative motion — hide it entirely, don't freeze it. */
+  .confetti-layer { display: none !important; }
 }

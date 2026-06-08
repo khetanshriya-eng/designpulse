@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TypewriterText } from "./TypewriterText";
 
 type Props = {
   kicker?: string;
@@ -24,7 +25,7 @@ export function SectionHeader({ kicker, title, description, href, hrefLabel }: P
           </p>
         )}
         <h2 className="font-heading text-[1.6rem] sm:text-[1.85rem] tracking-tight text-ink leading-tight">
-          {title}
+          <TypewriterText text={title} />
         </h2>
         {description && (
           <p className="mt-1.5 text-[13px] text-ink-muted max-w-prose">
