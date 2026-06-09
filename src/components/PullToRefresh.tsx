@@ -1,38 +1,47 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 /**
- * Mobile pull-to-refresh with a pixel T-rex that breathes fire once you pull
- * past the threshold. Touch-only (skips on fine pointers). At scroll-top, a
- * downward drag grows a top bar with the dino; releasing past the threshold
- * fires router.refresh() (re-runs server components → fresh feed) while the
- * dino flames until it completes.
+ * Mobile pull-to-refresh with an animated pixel T-rex that breathes fire while
+ * the feed refreshes. Touch-only.
  *
- * Native browser pull-to-refresh is suppressed via overscroll-behavior-y on
- * the body (globals.css) plus preventDefault while we're actively pulling.
+ * Why it now behaves like a real loader:
+ *  - On touch devices scrolling lives in #app-scroll (not the document), so
+ *    the browser's native pull-to-refresh never fires and we own the gesture.
+ *  - On release past the threshold we run router.refresh() AND hold the loader
+ *    for a minimum duration, so even an instant refresh shows a clear, animated
+ *    loading state (bobbing dino + billowing fire + pulsing dots) instead of a
+ *    flash.
  */
 const THRESHOLD = 64;
 const MAX = 96;
+const MIN_VISIBLE_MS = 1100;
 
 export function PullToRefresh() {
   const router = useRouter();
   const [pull, setPull] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
   const [pending, startTransition] = useTransition();
   const pullRef = useRef(0);
   const startY = useRef<number | null>(null);
-  const pendingRef = useRef(false);
+  const busyRef = useRef(false); // refreshing || pending, for touch handlers
 
   useEffect(() => {
-    pendingRef.current = pending;
-  }, [pending]);
+    busyRef.current = refreshing || pending;
+  }, [refreshing, pending]);
+
+  const triggerRefresh = useCallback(() => {
+    setRefreshing(true);
+    startTransition(() => router.refresh());
+    window.setTimeout(() => setRefreshing(false), MIN_VISIBLE_MS);
+  }, [router]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!window.matchMedia("(pointer: coarse)").matches) return;
 
-    // On touch devices the scroll lives in #app-scroll, not the document.
     const sc = document.getElementById("app-scroll");
     const scrollTop = () => (sc ? sc.scrollTop : window.scrollY);
     const target: HTMLElement | Window = sc ?? window;
@@ -43,7 +52,7 @@ export function PullToRefresh() {
     };
 
     const onStart = (e: TouchEvent) => {
-      if (scrollTop() > 0 || pendingRef.current) {
+      if (scrollTop() > 0 || busyRef.current) {
         startY.current = null;
         return;
       }
@@ -69,9 +78,7 @@ export function PullToRefresh() {
       const reached = pullRef.current >= THRESHOLD;
       startY.current = null;
       set(0);
-      if (reached && !pendingRef.current) {
-        startTransition(() => router.refresh());
-      }
+      if (reached && !busyRef.current) triggerRefresh();
     };
 
     target.addEventListener("touchstart", onStart as EventListener, { passive: true });
@@ -84,55 +91,72 @@ export function PullToRefresh() {
       target.removeEventListener("touchend", onEnd as EventListener);
       target.removeEventListener("touchcancel", onEnd as EventListener);
     };
-  }, [router, startTransition]);
+  }, [triggerRefresh]);
 
-  const height = pending ? 76 : pull;
+  const loading = refreshing || pending;
+  const height = loading ? 88 : pull;
   if (height <= 0) return null;
-  const firing = pending || pull >= THRESHOLD;
 
+  const ready = pull >= THRESHOLD; // armed but not yet released
   return (
     <div className="ptr-bar" style={{ height }} aria-hidden>
-      <DinoFlame firing={firing} opacity={pending ? 1 : Math.min(1, pull / THRESHOLD)} />
+      <div className="flex flex-col items-center gap-1.5">
+        <Dino
+          loading={loading}
+          firing={loading || ready}
+          opacity={loading ? 1 : Math.min(1, pull / THRESHOLD)}
+        />
+        {loading && (
+          <div className="flex gap-1.5">
+            <span className="ptr-dot" />
+            <span className="ptr-dot" />
+            <span className="ptr-dot" />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-// Pixel T-rex facing right ('#' = body). 18 wide: tail (left), body, raised
-// neck + head with an eye notch (right), two legs, a little arm. Fire jets
-// from the mouth when firing.
+// Pixel T-rex facing right ('#' = body). Bobs while loading; fire billows.
 const DINO = [
-  "..............####.",
-  ".............#####.",
-  ".............##.##.",  // eye notch
-  ".............#####.",
-  ".............#####.",
-  "###..........#####.",  // tail tip + head
-  ".####.......######.",
-  "..#####....#######.",
-  "...###############.",  // back
-  "....##############.",
-  "....##############.",
-  "....#####.#######..",  // arm notch
-  "....##############.",
-  "....#############..",
-  "....####....####...",  // two legs
-  "....###.....###....",
-  "....##......###....",
-  "...###......####...",  // feet
+  ".........######",
+  ".........######",
+  ".........##.###", // eye notch
+  ".........######",
+  ".........#####.",
+  "##.......######", // tail tip + head; mouth opens to the right
+  ".####...#######",
+  "..############.",
+  "...###########.",
+  "...###########.",
+  "...######.####.", // arm notch
+  "...###########.",
+  "...##.....###..", // legs
+  "...##.....##...",
+  "..###.....###..", // feet
 ];
 
-// [x, y, color] flame pixels jetting right from the mouth.
+// [x, y, color] flame jetting right from the mouth.
 const FIRE: [number, number, string][] = [
-  [18, 3, "#ffd23f"], [18, 4, "#ff8a00"], [19, 4, "#ffd23f"],
-  [18, 5, "#ff8a00"], [19, 5, "#ff3b1f"], [20, 4, "#ff3b1f"],
-  [18, 6, "#ffd23f"], [19, 6, "#ff8a00"], [20, 5, "#ff3b1f"], [21, 5, "#ff3b1f"],
+  [15, 4, "#ffd23f"], [15, 5, "#ff8a00"], [16, 5, "#ffd23f"],
+  [15, 6, "#ff8a00"], [16, 6, "#ff3b1f"], [17, 5, "#ff3b1f"],
+  [16, 4, "#ffd23f"], [17, 6, "#ff3b1f"], [18, 5, "#ff3b1f"],
 ];
 
-function DinoFlame({ firing, opacity }: { firing: boolean; opacity: number }) {
+function Dino({
+  loading,
+  firing,
+  opacity,
+}: {
+  loading: boolean;
+  firing: boolean;
+  opacity: number;
+}) {
   return (
     <svg
-      viewBox="0 0 23 18"
-      className="h-12 w-auto"
+      viewBox="0 0 20 15"
+      className={`h-12 w-auto${loading ? " dino-bob" : ""}`}
       style={{ color: "var(--color-ink)", opacity }}
       shapeRendering="crispEdges"
       aria-hidden
