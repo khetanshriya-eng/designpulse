@@ -117,8 +117,10 @@ export function SearchTrigger() {
             tabIndex={-1}
           />
 
-          {/* Panel */}
-          <div className="relative w-full max-w-[600px] bg-paper rounded-xl shadow-2xl ring-1 ring-rule overflow-hidden">
+          {/* Panel. text-ink is explicit: the trigger lives in the purple nav
+              (light text), and without this the modal would inherit that light
+              color and the typed query would be invisible on the cream panel. */}
+          <div className="relative w-full max-w-[600px] bg-paper text-ink rounded-xl shadow-2xl ring-1 ring-rule overflow-hidden">
             <div className="flex items-center gap-3 px-5 py-4">
               <SearchIcon />
               <input
@@ -126,7 +128,7 @@ export function SearchTrigger() {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search articles, sources, topics…"
-                className="flex-1 bg-transparent outline-none text-[15px] placeholder:text-ink-subtle"
+                className="flex-1 bg-transparent outline-none text-[15px] text-ink placeholder:text-ink-subtle"
                 aria-label="Search query"
               />
               <kbd className="hidden sm:inline-block text-[10px] uppercase tracking-wider text-ink-subtle bg-paper-tint rounded px-1.5 py-0.5">
@@ -165,7 +167,7 @@ export function SearchTrigger() {
                         className="block px-4 py-3.5 hover:bg-paper-tint transition-colors"
                       >
                         <div className="flex items-baseline justify-between gap-3">
-                          <p className="font-heading font-semibold text-[14.5px] text-ink leading-snug line-clamp-2">
+                          <p className="font-heading text-[15px] text-ink leading-[1.4] line-clamp-2">
                             {r.title}
                           </p>
                           <span className="shrink-0 text-[10px] uppercase tracking-[0.14em] text-ink-subtle">

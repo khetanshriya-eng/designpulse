@@ -85,7 +85,7 @@ export default async function RootLayout({
           On desktop it's an inert passthrough and the document scrolls
           normally (keyboard scroll preserved).
         */}
-        <div id="app-scroll" className="app-scroll min-h-full flex flex-col">
+        <div id="app-scroll" className="app-scroll min-h-screen flex flex-col">
           <Navigation />
           <main className="flex-1">{children}</main>
           <Footer />

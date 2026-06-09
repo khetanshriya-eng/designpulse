@@ -92,6 +92,14 @@ export function Footer() {
                   About Designator
                 </Link>
               </li>
+              <li>
+                <a
+                  href="mailto:designatorapp@gmail.com?subject=Designator%20feedback&body=What's%20working%2C%20what's%20not%3F"
+                  className="text-white/70 hover:text-[color:var(--color-lime)] transition-colors"
+                >
+                  Share feedback
+                </a>
+              </li>
             </ul>
           </div>
         </div>
