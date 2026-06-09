@@ -19,7 +19,7 @@ const STORAGE_KEY = "designator-theme";
  */
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("light");
-  const [wiping, setWiping] = useState(false);
+  const [dissolving, setDissolving] = useState(false);
 
   // Sync the icon from whatever the pre-paint script / server settled on.
   // Deliberately post-mount: SSR and first client render both show the light
@@ -31,10 +31,16 @@ export function ThemeToggle() {
     setTheme(current);
   }, []);
 
-  function apply(next: Theme) {
-    document.documentElement.dataset.theme = next;
-    setTheme(next);
-    setWiping(true);
+  // Run a pixel-dissolve while swapping: tiles assemble (scatter) to cover the
+  // screen, the theme flips under cover (~midpoint), then they disperse to
+  // reveal the new theme.
+  function runWithDissolve(next: Theme) {
+    setDissolving(true);
+    window.setTimeout(() => {
+      document.documentElement.dataset.theme = next;
+      setTheme(next);
+    }, 300);
+    window.setTimeout(() => setDissolving(false), 950);
   }
 
   function toggle() {
@@ -44,7 +50,7 @@ export function ThemeToggle() {
     } catch {
       /* ignore storage failures */
     }
-    apply(next);
+    runWithDissolve(next);
   }
 
   function resetToAuto() {
@@ -55,7 +61,7 @@ export function ThemeToggle() {
     }
     const auto =
       (document.documentElement.dataset.autoTheme as Theme) ?? "light";
-    apply(auto);
+    runWithDissolve(auto);
   }
 
   const isDark = theme === "dark";
@@ -72,14 +78,38 @@ export function ThemeToggle() {
       >
         {isDark ? <MoonIcon /> : <SunIcon />}
       </button>
-      {wiping && (
-        <div
-          className="theme-wipe"
-          onAnimationEnd={() => setWiping(false)}
-          aria-hidden
-        />
-      )}
+      {dissolving && <PixelDissolve />}
     </>
+  );
+}
+
+/**
+ * Full-screen grid of tiny tiles that pop in/out on staggered random delays —
+ * a pixel "dissolve" that reads as the screen reassembling from pixels.
+ */
+function PixelDissolve() {
+  // Computed once (lazy init, off the render path): grid size + per-tile delays.
+  const [{ cols, rows, delays }] = useState(() => {
+    const c = 16;
+    const r =
+      typeof window !== "undefined"
+        ? Math.max(8, Math.round((c * window.innerHeight) / window.innerWidth))
+        : 26;
+    const delays = Array.from({ length: c * r }, () =>
+      Number((Math.random() * 0.28).toFixed(3))
+    );
+    return { cols: c, rows: r, delays };
+  });
+  return (
+    <div
+      className="dissolve-layer"
+      style={{ ["--cols" as string]: cols, ["--rows" as string]: rows }}
+      aria-hidden
+    >
+      {delays.map((d, i) => (
+        <span key={i} className="dissolve-px" style={{ animationDelay: `${d}s` }} />
+      ))}
+    </div>
   );
 }
 

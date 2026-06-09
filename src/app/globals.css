@@ -255,19 +255,26 @@ h1, h2, h3, h4, h5, h6 {
   50% { opacity: 0; }
 }
 
-/* Full-screen pixel-wipe played on theme toggle. */
-.theme-wipe {
+/* Pixel-dissolve played on theme toggle: a grid of tiny tiles that pop in
+   (scattered) to cover the screen, then pop out, revealing the new theme. */
+.dissolve-layer {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: var(--color-accent);
   pointer-events: none;
-  animation: theme-wipe 0.5s steps(12) forwards;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 16), 1fr);
+  grid-template-rows: repeat(var(--rows, 26), 1fr);
 }
-@keyframes theme-wipe {
-  0% { clip-path: inset(0 100% 0 0); }
-  50% { clip-path: inset(0 0 0 0); }
-  100% { clip-path: inset(0 0 0 100%); }
+.dissolve-px {
+  background: var(--color-accent);
+  animation: pixel-dissolve 0.62s ease forwards;
+}
+@keyframes pixel-dissolve {
+  0% { opacity: 0; transform: scale(0.2); }
+  30% { opacity: 1; transform: scale(1); }
+  68% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.2); }
 }
 
 /* Staggered boot-up: direct children of a .boot container fade + rise in
