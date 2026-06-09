@@ -19,7 +19,8 @@ const STORAGE_KEY = "designator-theme";
  */
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("light");
-  const [dissolving, setDissolving] = useState(false);
+  // null = no transition running; boolean = the sweep direction (reverse?).
+  const [sweep, setSweep] = useState<boolean | null>(null);
 
   // Sync the icon from whatever the pre-paint script / server settled on.
   // Deliberately post-mount: SSR and first client render both show the light
@@ -31,16 +32,17 @@ export function ThemeToggle() {
     setTheme(current);
   }, []);
 
-  // Run a pixel-dissolve while swapping: tiles assemble (scatter) to cover the
-  // screen, the theme flips under cover (~midpoint), then they disperse to
-  // reveal the new theme.
+  // Run a directional pixel sweep while swapping: tiles pop in column-by-column
+  // across the page (left→right going dark, right→left going light), the theme
+  // flips as the wave crosses, then the columns clear behind it.
   function runWithDissolve(next: Theme) {
-    setDissolving(true);
+    const reverse = next === "light"; // light sweeps the opposite way
+    setSweep(reverse);
     window.setTimeout(() => {
       document.documentElement.dataset.theme = next;
       setTheme(next);
-    }, 300);
-    window.setTimeout(() => setDissolving(false), 950);
+    }, 380);
+    window.setTimeout(() => setSweep(null), 1150);
   }
 
   function toggle() {
@@ -78,26 +80,30 @@ export function ThemeToggle() {
       >
         {isDark ? <MoonIcon /> : <SunIcon />}
       </button>
-      {dissolving && <PixelDissolve />}
+      {sweep !== null && <PixelDissolve reverse={sweep} />}
     </>
   );
 }
 
 /**
- * Full-screen grid of tiny tiles that pop in/out on staggered random delays —
- * a pixel "dissolve" that reads as the screen reassembling from pixels.
+ * Full-screen grid of tiny tiles that pop in column-by-column across the page
+ * (a pixel wave), then clear — direction set by `reverse`. A little per-tile
+ * jitter keeps it reading as moving pixels rather than a clean solid edge.
  */
-function PixelDissolve() {
+function PixelDissolve({ reverse }: { reverse: boolean }) {
   // Computed once (lazy init, off the render path): grid size + per-tile delays.
   const [{ cols, rows, delays }] = useState(() => {
-    const c = 16;
+    const c = 18;
     const r =
       typeof window !== "undefined"
         ? Math.max(8, Math.round((c * window.innerHeight) / window.innerWidth))
-        : 26;
-    const delays = Array.from({ length: c * r }, () =>
-      Number((Math.random() * 0.28).toFixed(3))
-    );
+        : 28;
+    const step = 0.03; // per-column stagger → the sweep
+    const delays = Array.from({ length: c * r }, (_, i) => {
+      const col = i % c;
+      const base = (reverse ? c - 1 - col : col) * step;
+      return Number((base + Math.random() * 0.045).toFixed(3));
+    });
     return { cols: c, rows: r, delays };
   });
   return (

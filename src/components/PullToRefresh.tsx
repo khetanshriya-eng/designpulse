@@ -94,20 +94,11 @@ export function PullToRefresh() {
   const armed = pull >= THRESHOLD; // ready to release
   return (
     <div className="ptr-bar" style={{ height }} aria-hidden>
-      <div className="flex flex-col items-center gap-2">
-        <Dino
-          loading={refreshing}
-          opacity={refreshing ? 1 : Math.min(1, pull / THRESHOLD)}
-          armed={armed}
-        />
-        {refreshing && (
-          <div className="flex gap-1.5">
-            <span className="ptr-dot" />
-            <span className="ptr-dot" />
-            <span className="ptr-dot" />
-          </div>
-        )}
-      </div>
+      <Dino
+        loading={refreshing}
+        opacity={refreshing ? 1 : Math.min(1, pull / THRESHOLD)}
+        armed={armed}
+      />
     </div>
   );
 }
@@ -122,10 +113,9 @@ function Dino({
   armed: boolean;
 }) {
   const [imgFailed, setImgFailed] = useState(false);
-  const animate = loading; // bob only while refreshing
   return (
     <div
-      className={`grid place-items-center${animate ? " dino-bob" : ""}`}
+      className={`relative grid place-items-center${loading ? " dino-bob" : ""}`}
       style={{ opacity, transform: armed && !loading ? "scale(1.06)" : undefined }}
     >
       {!imgFailed ? (
@@ -136,16 +126,19 @@ function Dino({
           alt=""
           aria-hidden
           onError={() => setImgFailed(true)}
-          className="h-14 w-auto [image-rendering:pixelated]"
+          className="h-16 w-auto [image-rendering:pixelated]"
         />
       ) : (
         <DinoSvg />
       )}
+      {/* Fire breathing from the mouth (left, since the dino faces left). */}
+      {(loading || armed) && <Fire />}
     </div>
   );
 }
 
-// Built-in fallback: a green pixel T-rex ('#' = body) on a navy ground bar.
+// Built-in fallback: a green pixel T-rex ('#' = body). Mirrored to face LEFT
+// (like the reference art) so the fire reads as coming from the mouth.
 const DINO = [
   ".........######",
   ".........######",
@@ -168,7 +161,7 @@ function DinoSvg() {
   return (
     <svg
       viewBox="0 0 16 17"
-      className="h-14 w-auto"
+      className="h-16 w-auto -scale-x-100"
       shapeRendering="crispEdges"
       aria-hidden
     >
@@ -181,8 +174,32 @@ function DinoSvg() {
           )
         )}
       </g>
-      {/* ground bar */}
       <rect x="2" y="15.6" width="12" height="1.2" fill="#2d2b52" />
+    </svg>
+  );
+}
+
+// Animated pixel flame at the dino's mouth (left edge), pointing left.
+const FLAME: [number, number, string][] = [
+  [6, 2, "#ffd23f"], [7, 2, "#ffd23f"],
+  [4, 3, "#ff8a00"], [5, 3, "#ffd23f"], [6, 3, "#ffd23f"], [7, 3, "#ff8a00"],
+  [1, 4, "#ff3b1f"], [2, 4, "#ff8a00"], [3, 4, "#ffd23f"], [4, 4, "#ffd23f"], [5, 4, "#ff8a00"], [6, 4, "#ff8a00"],
+  [3, 5, "#ff8a00"], [4, 5, "#ffd23f"], [5, 5, "#ff8a00"], [6, 5, "#ff3b1f"],
+  [5, 6, "#ff8a00"], [6, 6, "#ffd23f"], [7, 6, "#ff8a00"],
+];
+
+function Fire() {
+  return (
+    <svg
+      viewBox="0 0 9 9"
+      className="ptr-flame absolute h-9 w-auto"
+      style={{ left: "-14px", top: "18%" }}
+      shapeRendering="crispEdges"
+      aria-hidden
+    >
+      {FLAME.map(([x, y, fill], i) => (
+        <rect key={i} x={x} y={y} width="1.05" height="1.05" fill={fill} />
+      ))}
     </svg>
   );
 }
