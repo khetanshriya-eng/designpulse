@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { CATEGORY_META, type SourceCategory } from "@/data/sources";
-import { FeedbackWidget } from "./FeedbackWidget";
 
 const FOOTER_CATEGORIES: SourceCategory[] = [
   "design-tools",
@@ -92,9 +91,6 @@ export function Footer() {
                 <Link href="/about" className="text-white/70 hover:text-[color:var(--color-lime)] transition-colors">
                   About Designator
                 </Link>
-              </li>
-              <li>
-                <FeedbackWidget />
               </li>
             </ul>
           </div>

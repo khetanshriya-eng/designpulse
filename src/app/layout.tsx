@@ -6,6 +6,7 @@ import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { ScrollTop } from "@/components/ScrollTop";
 import { PullToRefresh } from "@/components/PullToRefresh";
+import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { pickTheme } from "@/lib/theme";
 
 // Pixel face — chrome accents (logo, badges, kickers, nav).
@@ -78,6 +79,7 @@ export default async function RootLayout({
         {/* Fixed overlays live outside the scroll container (viewport-fixed). */}
         <PullToRefresh />
         <ScrollTop />
+        <FeedbackWidget />
         {/*
           On touch devices the page scrolls inside this container, not the
           document — that's what lets our pull-to-refresh own the gesture

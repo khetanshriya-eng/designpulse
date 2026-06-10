@@ -27,43 +27,47 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Empty feedback" }, { status: 400 });
   }
 
+  // Always log the feedback so it's captured even if email delivery is blocked
+  // (e.g. Resend sandbox can't reach the recipient yet). The user-facing
+  // submit should never fail just because the email leg did.
+  log.info("feedback", { rating, label: LABELS[rating] ?? "—", comment });
+
   const apiKey = process.env.RESEND_API_KEY;
-  const to = process.env.FEEDBACK_EMAIL ?? "designatorapp@gmail.com";
+  // Fall back to ADMIN_EMAIL (already a verified Resend recipient for alerts)
+  // so delivery works out of the box; FEEDBACK_EMAIL overrides if set.
+  const to =
+    process.env.FEEDBACK_EMAIL ?? process.env.ADMIN_EMAIL ?? "designatorapp@gmail.com";
   const from = process.env.RESEND_FROM_EMAIL ?? "Designator <onboarding@resend.dev>";
 
-  if (!apiKey) {
-    log.warn("feedback received but RESEND_API_KEY unset", { rating, hasComment: !!comment });
-    return Response.json({ ok: true, emailed: false });
-  }
-
-  const text = [
-    `Rating: ${rating ? `${rating}/4 (${LABELS[rating]})` : "—"}`,
-    "",
-    comment || "(no comment)",
-    "",
-    `From: ${req.headers.get("user-agent") ?? "unknown"}`,
-  ].join("\n");
-
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from,
-        to,
-        subject: `Designator feedback — ${rating ? LABELS[rating] : "comment"}`,
-        text,
-      }),
-    });
-    if (!res.ok) {
-      const detail = await res.text().catch(() => "");
-      log.error("feedback email failed", { status: res.status, detail });
-      return Response.json({ error: "Send failed" }, { status: 502 });
+  if (apiKey) {
+    const text = [
+      `Rating: ${rating ? `${rating}/4 (${LABELS[rating]})` : "—"}`,
+      "",
+      comment || "(no comment)",
+      "",
+      `From: ${req.headers.get("user-agent") ?? "unknown"}`,
+    ].join("\n");
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from,
+          to,
+          subject: `Designator feedback — ${rating ? LABELS[rating] : "comment"}`,
+          text,
+        }),
+      });
+      if (!res.ok) {
+        const detail = await res.text().catch(() => "");
+        // Don't fail the request — the feedback is already logged above.
+        log.warn("feedback email not delivered", { status: res.status, detail });
+      }
+    } catch (err) {
+      log.warn("feedback email threw", { error: (err as Error).message });
     }
-    log.info("feedback emailed", { rating });
-    return Response.json({ ok: true, emailed: true });
-  } catch (err) {
-    log.error("feedback threw", { error: (err as Error).message });
-    return Response.json({ error: "Server error" }, { status: 500 });
   }
+
+  // Always succeed for the user — feedback is captured regardless of email.
+  return Response.json({ ok: true });
 }

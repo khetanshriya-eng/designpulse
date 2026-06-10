@@ -91,116 +91,39 @@ export function PullToRefresh() {
   const height = refreshing ? 96 : pull;
   if (height <= 0) return null;
 
-  const armed = pull >= THRESHOLD; // ready to release
   return (
     <div className="ptr-bar" style={{ height }} aria-hidden>
-      <Dino
+      <PixelLoader
         loading={refreshing}
         opacity={refreshing ? 1 : Math.min(1, pull / THRESHOLD)}
-        armed={armed}
       />
     </div>
   );
 }
 
-function Dino({
-  loading,
-  opacity,
-  armed,
-}: {
-  loading: boolean;
-  opacity: number;
-  armed: boolean;
-}) {
-  const [imgFailed, setImgFailed] = useState(false);
+/**
+ * A row of chunky pixel blocks that bounce in a staggered wave while loading
+ * (an arcade-loader feel). Uses the vivid category colors so it reads clearly
+ * on both the light and dark theme bars. During the pull they're static and
+ * just ramp in opacity.
+ */
+const BLOCK_COLORS = [
+  "var(--color-lime)",
+  "var(--color-cyan)",
+  "var(--color-hot)",
+  "var(--color-amber)",
+];
+
+function PixelLoader({ loading, opacity }: { loading: boolean; opacity: number }) {
   return (
-    <div
-      className={`relative grid place-items-center${loading ? " dino-bob" : ""}`}
-      style={{ opacity, transform: armed && !loading ? "scale(1.06)" : undefined }}
-    >
-      {!imgFailed ? (
-        // Drop your exact art at public/dino.png — falls back to the SVG below.
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src="/dino.png"
-          alt=""
-          aria-hidden
-          onError={() => setImgFailed(true)}
-          className="h-16 w-auto [image-rendering:pixelated]"
+    <div className="flex items-end gap-2" style={{ opacity }}>
+      {BLOCK_COLORS.map((c, i) => (
+        <span
+          key={i}
+          className={`pix-block${loading ? " run" : ""}`}
+          style={{ background: c, animationDelay: `${i * 0.1}s` }}
         />
-      ) : (
-        <DinoSvg />
-      )}
-      {/* While refreshing: the dino runs (bob) and breathes fire at intervals
-          (the flame's CSS cycles it on/off). No fire during the pull itself. */}
-      {loading && <Fire />}
-    </div>
-  );
-}
-
-// Built-in fallback: a green pixel T-rex ('#' = body). Mirrored to face LEFT
-// (like the reference art) so the fire reads as coming from the mouth.
-const DINO = [
-  ".........######",
-  ".........######",
-  ".........##.###",
-  ".........######",
-  ".........#####.",
-  "##.......######",
-  ".####...#######",
-  "..############.",
-  "...###########.",
-  "...###########.",
-  "...######.####.",
-  "...###########.",
-  "...##.....###..",
-  "...##.....##...",
-  "..###.....###..",
-];
-
-function DinoSvg() {
-  return (
-    <svg
-      viewBox="0 0 16 17"
-      className="h-16 w-auto -scale-x-100"
-      shapeRendering="crispEdges"
-      aria-hidden
-    >
-      <g style={{ filter: "drop-shadow(0 1px 0 #2d2b52) drop-shadow(1px 0 0 #2d2b52) drop-shadow(-1px 0 0 #2d2b52) drop-shadow(0 -1px 0 #2d2b52)" }}>
-        {DINO.flatMap((row, y) =>
-          row.split("").map((c, x) =>
-            c === "#" ? (
-              <rect key={`${x}-${y}`} x={x} y={y} width="1.02" height="1.02" fill="#7fd6b0" />
-            ) : null
-          )
-        )}
-      </g>
-      <rect x="2" y="15.6" width="12" height="1.2" fill="#2d2b52" />
-    </svg>
-  );
-}
-
-// Animated pixel flame at the dino's mouth (left edge), pointing left.
-const FLAME: [number, number, string][] = [
-  [6, 2, "#ffd23f"], [7, 2, "#ffd23f"],
-  [4, 3, "#ff8a00"], [5, 3, "#ffd23f"], [6, 3, "#ffd23f"], [7, 3, "#ff8a00"],
-  [1, 4, "#ff3b1f"], [2, 4, "#ff8a00"], [3, 4, "#ffd23f"], [4, 4, "#ffd23f"], [5, 4, "#ff8a00"], [6, 4, "#ff8a00"],
-  [3, 5, "#ff8a00"], [4, 5, "#ffd23f"], [5, 5, "#ff8a00"], [6, 5, "#ff3b1f"],
-  [5, 6, "#ff8a00"], [6, 6, "#ffd23f"], [7, 6, "#ff8a00"],
-];
-
-function Fire() {
-  return (
-    <svg
-      viewBox="0 0 9 9"
-      className="ptr-flame absolute h-9 w-auto"
-      style={{ left: "-14px", top: "18%" }}
-      shapeRendering="crispEdges"
-      aria-hidden
-    >
-      {FLAME.map(([x, y, fill], i) => (
-        <rect key={i} x={x} y={y} width="1.05" height="1.05" fill={fill} />
       ))}
-    </svg>
+    </div>
   );
 }

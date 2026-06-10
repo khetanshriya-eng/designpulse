@@ -47,9 +47,11 @@ export function FeedbackWidget() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-white/70 hover:text-[color:var(--color-lime)] transition-colors"
+        aria-label="Share feedback"
+        className="surface-card fixed bottom-5 left-5 z-40 inline-flex items-center gap-2 px-3 py-2 font-pixel text-[12px] uppercase tracking-[0.06em] text-ink"
       >
-        Share feedback
+        <PixelFace mood={3} />
+        <span className="hidden sm:inline">Feedback</span>
       </button>
 
       {open && (

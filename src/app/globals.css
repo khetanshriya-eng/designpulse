@@ -313,29 +313,20 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--color-paper-tint);
   border-bottom: 2px solid var(--card-border);
 }
-/* Breathing fire at the dino's mouth — puffs at intervals (off most of the
-   time, then a short flickering burst), so the dino runs and breathes fire
-   periodically rather than constantly. */
-.ptr-flame {
-  transform-box: fill-box;
-  transform-origin: right center;
-  animation: flame-breath 1.8s ease-in-out infinite;
+/* Pull-to-refresh loader: chunky pixel blocks that bounce in a staggered
+   wave while refreshing. Sharp-cornered (pixel), vivid so they read on either
+   theme. */
+.pix-block {
+  width: 12px;
+  height: 12px;
+  flex: none;
 }
-@keyframes flame-breath {
-  0%, 58%, 100% { opacity: 0; transform: scaleX(0.25); }
-  64% { opacity: 1; transform: scaleX(1); }
-  74% { opacity: 1; transform: scaleX(1.3); }
-  84% { opacity: 1; transform: scaleX(1); }
-  92% { opacity: 0.5; transform: scaleX(0.6); }
+.pix-block.run {
+  animation: pix-bounce 0.6s ease-in-out infinite;
 }
-
-/* Dino hops while the feed refreshes — reads as active "running". */
-.dino-bob {
-  animation: dino-bob 0.42s steps(2, end) infinite;
-}
-@keyframes dino-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+@keyframes pix-bounce {
+  0%, 100% { transform: translateY(5px); }
+  50% { transform: translateY(-7px); }
 }
 
 /* Logo glitch-jitter on hover — cycles the offset shadow through accents. */
