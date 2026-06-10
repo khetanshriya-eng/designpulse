@@ -255,26 +255,28 @@ h1, h2, h3, h4, h5, h6 {
   50% { opacity: 0; }
 }
 
-/* Pixel-dissolve played on theme toggle: a grid of tiny tiles that pop in
-   (scattered) to cover the screen, then pop out, revealing the new theme. */
-.dissolve-layer {
+/* Clean rectangle wipe on theme toggle: a solid accent panel sweeps in to
+   cover the page, then out — direction set by the `rev` modifier. */
+.theme-wipe {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  pointer-events: none;
-  display: grid;
-  grid-template-columns: repeat(var(--cols, 16), 1fr);
-  grid-template-rows: repeat(var(--rows, 26), 1fr);
-}
-.dissolve-px {
   background: var(--color-accent);
-  animation: pixel-dissolve 0.62s ease forwards;
+  pointer-events: none;
+  animation: theme-wipe 0.5s ease forwards;
 }
-@keyframes pixel-dissolve {
-  0% { opacity: 0; transform: scale(0.2); }
-  30% { opacity: 1; transform: scale(1); }
-  68% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(0.2); }
+@keyframes theme-wipe {
+  0% { clip-path: inset(0 100% 0 0); }
+  50% { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(0 0 0 100%); }
+}
+.theme-wipe.rev {
+  animation-name: theme-wipe-rev;
+}
+@keyframes theme-wipe-rev {
+  0% { clip-path: inset(0 0 0 100%); }
+  50% { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(0 100% 0 0); }
 }
 
 /* Staggered boot-up: direct children of a .boot container fade + rise in
@@ -311,15 +313,20 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--color-paper-tint);
   border-bottom: 2px solid var(--card-border);
 }
-/* Breathing fire at the dino's mouth — flickers + licks outward. */
+/* Breathing fire at the dino's mouth — puffs at intervals (off most of the
+   time, then a short flickering burst), so the dino runs and breathes fire
+   periodically rather than constantly. */
 .ptr-flame {
   transform-box: fill-box;
   transform-origin: right center;
-  animation: flame-flicker 0.22s ease-in-out infinite;
+  animation: flame-breath 1.8s ease-in-out infinite;
 }
-@keyframes flame-flicker {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.28, 0.9); }
+@keyframes flame-breath {
+  0%, 58%, 100% { opacity: 0; transform: scaleX(0.25); }
+  64% { opacity: 1; transform: scaleX(1); }
+  74% { opacity: 1; transform: scaleX(1.3); }
+  84% { opacity: 1; transform: scaleX(1); }
+  92% { opacity: 0.5; transform: scaleX(0.6); }
 }
 
 /* Dino hops while the feed refreshes — reads as active "running". */

@@ -32,17 +32,17 @@ export function ThemeToggle() {
     setTheme(current);
   }, []);
 
-  // Run a directional pixel sweep while swapping: tiles pop in column-by-column
-  // across the page (left→right going dark, right→left going light), the theme
-  // flips as the wave crosses, then the columns clear behind it.
+  // Clean rectangle wipe across the page while swapping: a solid accent panel
+  // sweeps in to cover, the theme flips under cover (~midpoint), then it sweeps
+  // out — left→right going dark, right→left going light.
   function runWithDissolve(next: Theme) {
-    const reverse = next === "light"; // light sweeps the opposite way
+    const reverse = next === "light";
     setSweep(reverse);
     window.setTimeout(() => {
       document.documentElement.dataset.theme = next;
       setTheme(next);
-    }, 380);
-    window.setTimeout(() => setSweep(null), 1150);
+    }, 250);
+    window.setTimeout(() => setSweep(null), 700);
   }
 
   function toggle() {
@@ -80,42 +80,14 @@ export function ThemeToggle() {
       >
         {isDark ? <MoonIcon /> : <SunIcon />}
       </button>
-      {sweep !== null && <PixelDissolve reverse={sweep} />}
+      {sweep !== null && (
+        <div
+          className={`theme-wipe${sweep ? " rev" : ""}`}
+          onAnimationEnd={() => setSweep(null)}
+          aria-hidden
+        />
+      )}
     </>
-  );
-}
-
-/**
- * Full-screen grid of tiny tiles that pop in column-by-column across the page
- * (a pixel wave), then clear — direction set by `reverse`. A little per-tile
- * jitter keeps it reading as moving pixels rather than a clean solid edge.
- */
-function PixelDissolve({ reverse }: { reverse: boolean }) {
-  // Computed once (lazy init, off the render path): grid size + per-tile delays.
-  const [{ cols, rows, delays }] = useState(() => {
-    const c = 18;
-    const r =
-      typeof window !== "undefined"
-        ? Math.max(8, Math.round((c * window.innerHeight) / window.innerWidth))
-        : 28;
-    const step = 0.03; // per-column stagger → the sweep
-    const delays = Array.from({ length: c * r }, (_, i) => {
-      const col = i % c;
-      const base = (reverse ? c - 1 - col : col) * step;
-      return Number((base + Math.random() * 0.045).toFixed(3));
-    });
-    return { cols: c, rows: r, delays };
-  });
-  return (
-    <div
-      className="dissolve-layer"
-      style={{ ["--cols" as string]: cols, ["--rows" as string]: rows }}
-      aria-hidden
-    >
-      {delays.map((d, i) => (
-        <span key={i} className="dissolve-px" style={{ animationDelay: `${d}s` }} />
-      ))}
-    </div>
   );
 }
 

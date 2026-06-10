@@ -131,8 +131,9 @@ function Dino({
       ) : (
         <DinoSvg />
       )}
-      {/* Fire breathing from the mouth (left, since the dino faces left). */}
-      {(loading || armed) && <Fire />}
+      {/* While refreshing: the dino runs (bob) and breathes fire at intervals
+          (the flame's CSS cycles it on/off). No fire during the pull itself. */}
+      {loading && <Fire />}
     </div>
   );
 }

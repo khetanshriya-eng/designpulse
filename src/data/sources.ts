@@ -134,12 +134,16 @@ export const SOURCES: Source[] = [
   { id: "designdetails", name: "Design Details", slug: "designdetails", url: "https://designdetails.fm", type: "podcast", category: "podcasts", initials: "DD", swatch: "thumb-grad-1" },
   { id: "99pi", name: "99% Invisible", slug: "99pi", url: "https://99percentinvisible.org", feedUrl: "https://99percentinvisible.org/feed/", type: "podcast", category: "podcasts", initials: "99", swatch: "thumb-grad-9" },
   { id: "designmatters", name: "Design Matters", slug: "designmatters", url: "https://designmattersmedia.com", type: "podcast", category: "podcasts", initials: "DM", swatch: "thumb-grad-4" },
-  { id: "uibreakfast", name: "UI Breakfast", slug: "uibreakfast", url: "https://uibreakfast.com/podcast", type: "podcast", category: "podcasts", initials: "UB", swatch: "thumb-grad-4" },
+  { id: "uibreakfast", name: "UI Breakfast", slug: "uibreakfast", url: "https://uibreakfast.com/podcast", feedUrl: "https://feeds.simplecast.com/4MvgQ73R", type: "podcast", category: "podcasts", initials: "UB", swatch: "thumb-grad-4" },
   { id: "honestux", name: "Honest UX Talks", slug: "honestux", url: "https://honestuxtalks.com", type: "podcast", category: "podcasts", initials: "HU", swatch: "thumb-grad-8" },
   { id: "nngpod", name: "NN/g UX Podcast", slug: "nngpod", url: "https://nngroup.com/podcast", type: "podcast", category: "podcasts", initials: "NP", swatch: "thumb-grad-2" },
-  { id: "futurpod", name: "The Futur Podcast", slug: "futurpod", url: "https://thefutur.com/podcast", type: "podcast", category: "podcasts", initials: "TF", swatch: "thumb-grad-1" },
-  { id: "highres", name: "High Resolution", slug: "highres", url: "https://highresolution.design", type: "podcast", category: "podcasts", initials: "HR", swatch: "thumb-grad-5" },
-  { id: "hackingui", name: "Hacking UI", slug: "hackingui", url: "https://hackingui.com", type: "podcast", category: "podcasts", initials: "HU", swatch: "thumb-grad-6" },
+  // Active podcast feeds added 2026-06-01 (verified live RSS) so the section
+  // stays fresh — previously only 99pi + UI Breakfast actually pulled.
+  { id: "uxpodcast", name: "UX Podcast", slug: "uxpodcast", url: "https://uxpodcast.com", feedUrl: "https://uxpodcast.com/feed/podcast/", type: "podcast", category: "podcasts", initials: "UX", swatch: "thumb-grad-3" },
+  { id: "boagworld", name: "Boagworld UX Show", slug: "boagworld", url: "https://boagworld.com/show/", feedUrl: "https://boagworld.com/feed/podcast/", type: "podcast", category: "podcasts", initials: "Bw", swatch: "thumb-grad-5" },
+  { id: "shoptalk", name: "ShopTalk Show", slug: "shoptalk", url: "https://shoptalkshow.com", feedUrl: "https://shoptalkshow.com/feed/podcast/", type: "podcast", category: "podcasts", initials: "ST", swatch: "thumb-grad-6" },
+  { id: "smashingpod", name: "Smashing Podcast", slug: "smashingpod", url: "https://podcast.smashingmagazine.com", feedUrl: "https://podcast.smashingmagazine.com/rss", type: "podcast", category: "podcasts", initials: "SP", swatch: "thumb-grad-2" },
+  { id: "a16zpod", name: "a16z Podcast", slug: "a16zpod", url: "https://a16z.com/podcasts/", feedUrl: "https://feeds.simplecast.com/JGE3yC0V", type: "podcast", category: "podcasts", initials: "A1", swatch: "thumb-grad-7" },
 ];
 
 /** Slugs whose articles always render the pixel mosaic, ignoring thumbnails. */

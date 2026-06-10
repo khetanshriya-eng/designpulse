@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CATEGORY_META, type SourceCategory } from "@/data/sources";
+import { FeedbackWidget } from "./FeedbackWidget";
 
 const FOOTER_CATEGORIES: SourceCategory[] = [
   "design-tools",
@@ -93,12 +94,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a
-                  href="mailto:designatorapp@gmail.com?subject=Designator%20feedback&body=What's%20working%2C%20what's%20not%3F"
-                  className="text-white/70 hover:text-[color:var(--color-lime)] transition-colors"
-                >
-                  Share feedback
-                </a>
+                <FeedbackWidget />
               </li>
             </ul>
           </div>
