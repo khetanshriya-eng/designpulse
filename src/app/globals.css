@@ -313,20 +313,19 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--color-paper-tint);
   border-bottom: 2px solid var(--card-border);
 }
-/* Pull-to-refresh loader: chunky pixel blocks that bounce in a staggered
-   wave while refreshing. Sharp-cornered (pixel), vivid so they read on either
-   theme. */
-.pix-block {
-  width: 12px;
-  height: 12px;
-  flex: none;
+/* Pull-to-refresh loader: a dynamic pixel Rorschach. Each mirrored cell-pair
+   fades + scales on its own timing (set inline), so the symmetric inkblot
+   shimmers and morphs while refreshing. */
+.ror-cell {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-name: ror-pulse;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
 }
-.pix-block.run {
-  animation: pix-bounce 0.6s ease-in-out infinite;
-}
-@keyframes pix-bounce {
-  0%, 100% { transform: translateY(5px); }
-  50% { transform: translateY(-7px); }
+@keyframes ror-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.12; transform: scale(0.3); }
 }
 
 /* Logo glitch-jitter on hover — cycles the offset shadow through accents. */
