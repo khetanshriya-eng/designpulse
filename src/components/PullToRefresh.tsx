@@ -140,7 +140,7 @@ function PixelLoader({ loading, opacity }: { loading: boolean; opacity: number }
     <svg
       viewBox={`0 0 ${ROR_W} ${ROR_H}`}
       className="h-12 w-auto"
-      style={{ color: "var(--color-ink)", opacity }}
+      style={{ color: "var(--color-accent)", opacity }}
       shapeRendering="crispEdges"
       aria-hidden
     >

@@ -58,14 +58,20 @@ export async function POST(req: NextRequest) {
           text,
         }),
       });
+      const detail = await res.text().catch(() => "");
       if (!res.ok) {
-        const detail = await res.text().catch(() => "");
         // Don't fail the request — the feedback is already logged above.
-        log.warn("feedback email not delivered", { status: res.status, detail });
+        log.warn("feedback email NOT delivered", { to, status: res.status, detail });
+      } else {
+        // detail contains Resend's {"id": "..."} — check the Resend dashboard
+        // → Emails for delivery status (delivered / bounced / spam).
+        log.info("feedback email accepted by Resend", { to, detail });
       }
     } catch (err) {
-      log.warn("feedback email threw", { error: (err as Error).message });
+      log.warn("feedback email threw", { to, error: (err as Error).message });
     }
+  } else {
+    log.warn("feedback email skipped — no RESEND_API_KEY");
   }
 
   // Always succeed for the user — feedback is captured regardless of email.

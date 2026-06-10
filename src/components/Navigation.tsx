@@ -43,8 +43,15 @@ export async function Navigation() {
   return (
     <header className="sticky top-0 z-30">
       {/* Top strip: pixel logo + edition readout + utility. Purple bar in
-          morning, dark navy at night (--nav-bg). */}
-      <div style={{ background: "var(--nav-bg)", color: "var(--nav-ink)" }}>
+          morning, dark navy at night (--nav-bg). paddingTop extends the bar
+          under the iOS status bar / notch so the logo isn't cramped against it. */}
+      <div
+        style={{
+          background: "var(--nav-bg)",
+          color: "var(--nav-ink)",
+          paddingTop: "env(safe-area-inset-top)",
+        }}
+      >
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-3 min-w-0">

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Pixelify_Sans, Jersey_10, Space_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
@@ -37,6 +37,15 @@ export const metadata: Metadata = {
   title: "Designator · Your daily design briefing",
   description:
     "A daily briefing for product designers. Curated updates from Figma, NN/g, UX Collective, Lenny's, The Verge, and 70+ trusted sources, summarized so you stay current in under five minutes.",
+};
+
+// viewport-fit:cover enables env(safe-area-inset-*) so the sticky nav can clear
+// the iOS status bar / Dynamic Island (the #app-scroll container lets content
+// ride to the very top edge on iOS).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({
