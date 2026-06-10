@@ -36,7 +36,7 @@ export function FeedbackWidget() {
       });
       if (!res.ok) throw new Error(String(res.status));
       setStatus("done");
-      window.setTimeout(close, 1400);
+      window.setTimeout(close, 2000);
     } catch {
       setStatus("error");
     }
@@ -70,9 +70,7 @@ export function FeedbackWidget() {
           />
           <div className="relative w-full max-w-[380px] bg-paper text-ink rounded-xl ring-1 ring-rule shadow-2xl p-5">
             {status === "done" ? (
-              <p className="font-heading text-[1.2rem] text-ink py-6 text-center">
-                Thanks! <span aria-hidden>✦</span>
-              </p>
+              <ThankYou />
             ) : (
               <>
                 <p className="font-pixel text-[12px] uppercase tracking-[0.12em] text-accent">
@@ -141,6 +139,43 @@ export function FeedbackWidget() {
   );
 }
 
+/* Celebratory success state: a grinning pixel face pops in with a burst of
+   pixel sparkles flying outward. */
+const SPARKS: { dx: number; dy: number; c: string }[] = [
+  { dx: -26, dy: -20, c: "var(--color-lime)" },
+  { dx: 26, dy: -20, c: "var(--color-hot)" },
+  { dx: -32, dy: 6, c: "var(--color-cyan)" },
+  { dx: 32, dy: 6, c: "var(--color-amber)" },
+  { dx: -14, dy: -32, c: "var(--color-accent)" },
+  { dx: 14, dy: -32, c: "var(--color-lime)" },
+];
+
+function ThankYou() {
+  return (
+    <div className="py-7 flex flex-col items-center gap-3">
+      <div className="relative grid place-items-center">
+        <span className="fb-pop inline-grid">
+          <PixelFace mood={4} size={54} />
+        </span>
+        {SPARKS.map((s, i) => (
+          <span
+            key={i}
+            className="fb-spark"
+            style={{
+              ["--spark-to" as string]: `translate(${s.dx}px, ${s.dy}px)`,
+              background: s.c,
+              animationDelay: `${0.18 + i * 0.03}s`,
+            }}
+          />
+        ))}
+      </div>
+      <p className="font-heading text-[1.3rem] text-ink fb-rise">
+        Thanks for the feedback!
+      </p>
+    </div>
+  );
+}
+
 /* Blocky yellow pixel emoji; mood 1–4 sets the mouth (rough → great). */
 const HEAD = [
   "..ooooo..",
@@ -160,9 +195,9 @@ const MOUTHS: Record<number, [number, number][]> = {
   4: [[2, 6], [3, 7], [4, 7], [5, 7], [6, 6], [3, 5], [5, 5]], // grin
 };
 
-function PixelFace({ mood }: { mood: number }) {
+function PixelFace({ mood, size = 26 }: { mood: number; size?: number }) {
   return (
-    <svg width="26" height="26" viewBox="0 0 9 9" shapeRendering="crispEdges" aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 9 9" shapeRendering="crispEdges" aria-hidden>
       {HEAD.flatMap((row, y) =>
         row.split("").map((c, x) =>
           c === "." ? null : (

@@ -126,8 +126,9 @@ function PixelLoader({ loading, opacity }: { loading: boolean; opacity: number }
           out.push({
             x,
             y,
-            dur: (1 + Math.random() * 1.3).toFixed(2),
-            delay: (Math.random() * 1.1).toFixed(2),
+            // Fast, snappy shimmer.
+            dur: (0.3 + Math.random() * 0.45).toFixed(2),
+            delay: (Math.random() * 0.35).toFixed(2),
           });
         }
       }
