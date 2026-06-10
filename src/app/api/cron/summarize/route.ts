@@ -10,6 +10,7 @@
 import type { NextRequest } from "next/server";
 import { runSummarize } from "@/lib/pipeline/summarize";
 import { logger } from "@/lib/logger";
+import { checkCronAuth } from "@/lib/cron-auth";
 
 export const dynamic = "force-dynamic";
 // Hobby plan caps at 60s. The summarize runner is resumable — unsummarized
@@ -17,14 +18,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 async function handle(req: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) {
-    return Response.json({ error: "CRON_SECRET is not configured" }, { status: 503 });
-  }
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${cronSecret}`) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const denied = checkCronAuth(req);
+  if (denied) return denied;
 
   const log = logger("cron.summarize");
   try {

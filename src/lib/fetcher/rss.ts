@@ -15,7 +15,9 @@ type CustomItem = {
   author?: string | { name?: string };
 };
 
-const parser: Parser<{}, CustomItem> = new Parser({
+// Record<string, never> = "no custom feed-level fields" (what `{}` meant,
+// without the lint trap of `{}` matching any non-nullish value).
+const parser: Parser<Record<string, never>, CustomItem> = new Parser({
   // Per-source timeout. Kept tight (8s) so one slow source can't pin a
   // fetch worker for the whole Vercel 60s budget — see incident on
   // prototypr (2026-05-25) where a 20s hang ate the summarize budget.

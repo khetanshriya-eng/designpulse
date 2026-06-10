@@ -11,6 +11,7 @@
 import type { NextRequest } from "next/server";
 import { runFetch } from "@/lib/pipeline/fetch";
 import { logger } from "@/lib/logger";
+import { checkCronAuth } from "@/lib/cron-auth";
 
 export const dynamic = "force-dynamic";
 // Hobby plan caps at 60s. Fetch usually fits but a slow source can push us
@@ -18,14 +19,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 async function handle(req: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) {
-    return Response.json({ error: "CRON_SECRET is not configured" }, { status: 503 });
-  }
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${cronSecret}`) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const denied = checkCronAuth(req);
+  if (denied) return denied;
 
   const log = logger("cron.fetch");
   try {

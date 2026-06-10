@@ -87,11 +87,13 @@ export async function runCurate(opts: CurateOptions = {}): Promise<CurateResult>
     return summary;
   }
 
-  // 1. Reset all flags.
+  // 1. Reset all flags. supabase-js refuses an unfiltered UPDATE; "id is not
+  // null" is the cleanest always-true filter (clearer than the old
+  // neq-magic-UUID idiom).
   const { error: resetErr } = await supabase
     .from("articles")
     .update({ is_featured: false, is_must_read: false })
-    .neq("id", "00000000-0000-0000-0000-000000000000");
+    .not("id", "is", null);
   if (resetErr) throw resetErr;
 
   // 2. Flag hero.

@@ -1,6 +1,9 @@
 import * as cheerio from "cheerio";
 import type { FetchedItem } from "./types";
 import { readTimeMinutes, stripHtml } from "./util";
+import { logger } from "@/lib/logger";
+
+const log = logger("fetcher.enrich");
 
 const FETCH_TIMEOUT_MS = 15_000;
 const MAX_RAW_CHARS = 6000;
@@ -31,9 +34,9 @@ export async function enrichItem(item: FetchedItem): Promise<EnrichedItem> {
   }
 
   let html = "";
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     const res = await fetch(item.originalUrl, {
       signal: controller.signal,
       redirect: "follow",
@@ -43,13 +46,23 @@ export async function enrichItem(item: FetchedItem): Promise<EnrichedItem> {
         Accept: "text/html,application/xhtml+xml",
       },
     });
-    clearTimeout(timeout);
     if (!res.ok) {
+      log.debug("enrich fetch non-ok", { url: item.originalUrl, status: res.status });
       return fallback(item);
     }
     html = await res.text();
-  } catch {
+  } catch (err) {
+    // Was a silent catch — meant missing thumbnails/read-times were
+    // undiagnosable. debug level: failures here are common and expected
+    // (paywalls, bot blocks, timeouts).
+    log.debug("enrich fetch failed", {
+      url: item.originalUrl,
+      error: (err as Error).message,
+    });
     return fallback(item);
+  } finally {
+    // Always clear — previously leaked a live timer on the error path.
+    clearTimeout(timeout);
   }
 
   const $ = cheerio.load(html);

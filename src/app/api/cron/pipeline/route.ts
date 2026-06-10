@@ -17,20 +17,15 @@ import { runSummarize } from "@/lib/pipeline/summarize";
 import { runCurate } from "@/lib/pipeline/curate";
 import { logger } from "@/lib/logger";
 import { sendAdminAlert } from "@/lib/notify";
+import { checkCronAuth } from "@/lib/cron-auth";
 
 export const dynamic = "force-dynamic";
 // Hobby plan caps at 60s.
 export const maxDuration = 60;
 
 async function handle(req: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) {
-    return Response.json({ error: "CRON_SECRET is not configured" }, { status: 503 });
-  }
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${cronSecret}`) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const denied = checkCronAuth(req);
+  if (denied) return denied;
 
   const log = logger("cron.pipeline");
   const t0 = Date.now();
