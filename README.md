@@ -51,7 +51,7 @@ crons (one for the full pipeline, one for the digest send).
 
 ```bash
 curl -H "Authorization: Bearer $CRON_SECRET" \
-  https://designpulse-app.vercel.app/api/cron/pipeline
+  https://designatorapp.com/api/cron/pipeline
 ```
 
 ## Deploy to Vercel

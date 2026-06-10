@@ -26,7 +26,7 @@ async function resolveChannelId(handleUrl: string): Promise<{ id: string | null;
       redirect: "follow",
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (compatible; DesignatorBot/0.1; +https://designpulse-app.vercel.app)",
+          "Mozilla/5.0 (compatible; DesignatorBot/0.1; +https://designatorapp.com)",
         "Accept-Language": "en-US,en;q=0.9",
       },
     });

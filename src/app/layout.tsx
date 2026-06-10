@@ -34,6 +34,7 @@ const mono = Space_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://designatorapp.com"),
   title: "Designator · Your daily design briefing",
   description:
     "A daily briefing for product designers. Curated updates from Figma, NN/g, UX Collective, Lenny's, The Verge, and 70+ trusted sources, summarized so you stay current in under five minutes.",

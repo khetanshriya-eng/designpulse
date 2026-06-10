@@ -23,7 +23,7 @@ const parser: Parser<{}, CustomItem> = new Parser({
   timeout: 8_000,
   headers: {
     "User-Agent":
-      "Designator/0.1 (+https://designpulse-app.vercel.app) - friendly RSS reader",
+      "Designator/0.1 (+https://designatorapp.com) - friendly RSS reader",
     Accept: "application/rss+xml, application/atom+xml, application/xml;q=0.9, */*;q=0.8",
   },
   customFields: {
