@@ -74,8 +74,15 @@ export function ThemeToggle() {
         type="button"
         onClick={toggle}
         onDoubleClick={resetToAuto}
+        // Keyboard equivalent of double-click-reset (WCAG 2.1.1).
+        onKeyDown={(e) => {
+          if (e.shiftKey && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            resetToAuto();
+          }
+        }}
         aria-label={isDark ? "Switch to morning (light) mode" : "Switch to night (dark) mode"}
-        title="Auto-switches at sunrise/sunset · click to override · double-click for auto"
+        title="Auto-switches at sunrise/sunset · click to override · double-click or Shift+Enter for auto"
         className="p-2 rounded hover:bg-white/15 transition-colors text-[color:var(--nav-ink)]"
       >
         {isDark ? <MoonIcon /> : <SunIcon />}

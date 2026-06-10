@@ -37,49 +37,62 @@ export type EditionView = {
   mustReads: Article[];
 };
 
-export async function getEdition(date?: string): Promise<EditionView | null> {
-  const sb = createPublicClient();
+/*
+ * Page-level caching: all the read queries below are wrapped in
+ * unstable_cache(revalidate: 600). Content only changes when the cron
+ * pipeline runs (02:30 / 14:30 UTC), so 10-minute staleness is invisible —
+ * but it collapses the ~13 Supabase round-trips a cold homepage render used
+ * to make into cache reads (QA audit 2026-06-10: TTFB 1–3s → target <600ms).
+ * Cache keys include function args, so per-date / per-category entries are
+ * distinct.
+ */
+export const getEdition = unstable_cache(
+  async (date?: string): Promise<EditionView | null> => {
+    const sb = createPublicClient();
 
-  let ed;
-  if (date) {
-    const res = await sb
-      .from("editions")
-      .select("*")
-      .eq("edition_date", date)
-      .maybeSingle();
-    if (res.error) throw res.error;
-    ed = res.data;
-  }
-  if (!ed) {
-    const res = await sb
-      .from("editions")
-      .select("*")
-      .order("edition_date", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (res.error) throw res.error;
-    ed = res.data;
-  }
-  if (!ed) return null;
+    let ed;
+    if (date) {
+      const res = await sb
+        .from("editions")
+        .select("*")
+        .eq("edition_date", date)
+        .maybeSingle();
+      if (res.error) throw res.error;
+      ed = res.data;
+    }
+    if (!ed) {
+      const res = await sb
+        .from("editions")
+        .select("*")
+        .order("edition_date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (res.error) throw res.error;
+      ed = res.data;
+    }
+    if (!ed) return null;
 
-  const [hero, pick] = await Promise.all([
-    ed.hero_article_id ? getArticleById(ed.hero_article_id) : Promise.resolve(null),
-    ed.editors_pick_id ? getArticleById(ed.editors_pick_id) : Promise.resolve(null),
-  ]);
+    const [hero, pick] = await Promise.all([
+      ed.hero_article_id ? getArticleById(ed.hero_article_id) : Promise.resolve(null),
+      ed.editors_pick_id ? getArticleById(ed.editors_pick_id) : Promise.resolve(null),
+    ]);
 
-  // Must-read renders as 1 large + 4 stacked = 5. Exclude hero/pick so they
-  // never repeat, and backfill (inside getMustReads) so the section is always
-  // full — never a half-empty column.
-  const excludeIds = [hero?.id, pick?.id].filter((x): x is string => !!x);
-  const mr = await getMustReads(5, excludeIds);
+    // Must-read renders as 1 large + 4 stacked = 5. Exclude hero/pick so they
+    // never repeat, and backfill (inside getMustReads) so the section is always
+    // full — never a half-empty column.
+    const excludeIds = [hero?.id, pick?.id].filter((x): x is string => !!x);
+    const mr = await getMustReads(5, excludeIds);
 
-  return {
-    date: ed.edition_date,
-    hero,
-    editorsPick: pick,
-    mustReads: mr,
-  };
-}
+    return {
+      date: ed.edition_date,
+      hero,
+      editorsPick: pick,
+      mustReads: mr,
+    };
+  },
+  ["edition-view"],
+  { revalidate: 600 }
+);
 
 /**
  * Edition dates available in the DB, newest first.
@@ -216,23 +229,24 @@ function diversifyBySource(
  * "Recent highlights" instead of "Fresh from the past 24 hours" when
  * the data is older.
  */
-export async function getLatest(
-  limit = 6,
-  excludeIds: string[] = []
-): Promise<Article[]> {
-  const windows = [7, 14, 30]; // days, in order of preference
-  for (const days of windows) {
-    const pool = await fetchLatestPool(limit * 5, excludeIds, days);
-    const picked = diversifyBySource(pool, limit, 2);
-    if (picked.length >= limit) {
-      return rowsToArticles(picked);
+export const getLatest = unstable_cache(
+  async (limit = 6, excludeIds: string[] = []): Promise<Article[]> => {
+    const windows = [7, 14, 30]; // days, in order of preference
+    for (const days of windows) {
+      const pool = await fetchLatestPool(limit * 5, excludeIds, days);
+      const picked = diversifyBySource(pool, limit, 2);
+      if (picked.length >= limit) {
+        return rowsToArticles(picked);
+      }
     }
-  }
-  // Even with a 30-day window we can't fill the slot. Return whatever we
-  // have rather than nothing.
-  const pool = await fetchLatestPool(limit * 5, excludeIds, 30);
-  return rowsToArticles(diversifyBySource(pool, limit, 2));
-}
+    // Even with a 30-day window we can't fill the slot. Return whatever we
+    // have rather than nothing.
+    const pool = await fetchLatestPool(limit * 5, excludeIds, 30);
+    return rowsToArticles(diversifyBySource(pool, limit, 2));
+  },
+  ["latest-articles"],
+  { revalidate: 600 }
+);
 
 async function fetchLatestPool(
   poolSize: number,
@@ -260,33 +274,37 @@ async function fetchLatestPool(
  * Diversifies by source (max 1 per source) so a 2-card preview shows
  * articles from two distinct sources rather than two from the same one.
  */
-export async function getByCategory(
-  category: SourceCategory,
-  limit = 2,
-  excludeIds: string[] = []
-): Promise<Article[]> {
-  const sb = createPublicClient();
-  const poolSize = Math.max(limit * 6, 18);
-  let q = sb
-    .from("articles")
-    .select(SELECT)
-    .eq("category", category)
-    .not("summary", "is", null)
-    .neq("summary", "")
-    // nullsFirst:false keeps dated (fresh) articles in the lead and lets
-    // null-dated ones backfill the tail — so a thin category still fills its
-    // 2-card preview rather than showing a lonely single card, while the
-    // lead card is never a stale fetched_at fallback.
-    .order("published_at", { ascending: false, nullsFirst: false })
-    .limit(poolSize + excludeIds.length);
-  if (excludeIds.length) q = q.not("id", "in", `(${excludeIds.join(",")})`);
+export const getByCategory = unstable_cache(
+  async (
+    category: SourceCategory,
+    limit = 2,
+    excludeIds: string[] = []
+  ): Promise<Article[]> => {
+    const sb = createPublicClient();
+    const poolSize = Math.max(limit * 6, 18);
+    let q = sb
+      .from("articles")
+      .select(SELECT)
+      .eq("category", category)
+      .not("summary", "is", null)
+      .neq("summary", "")
+      // nullsFirst:false keeps dated (fresh) articles in the lead and lets
+      // null-dated ones backfill the tail — so a thin category still fills its
+      // 2-card preview rather than showing a lonely single card, while the
+      // lead card is never a stale fetched_at fallback.
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .limit(poolSize + excludeIds.length);
+    if (excludeIds.length) q = q.not("id", "in", `(${excludeIds.join(",")})`);
 
-  const { data, error } = await q;
-  if (error) throw error;
-  const pool = (data ?? []) as ArticleWithSource[];
-  // Category previews show 2 cards — keep them from different sources.
-  return rowsToArticles(diversifyBySource(pool, limit, 1));
-}
+    const { data, error } = await q;
+    if (error) throw error;
+    const pool = (data ?? []) as ArticleWithSource[];
+    // Category previews show 2 cards — keep them from different sources.
+    return rowsToArticles(diversifyBySource(pool, limit, 1));
+  },
+  ["by-category"],
+  { revalidate: 600 }
+);
 
 /**
  * Lightweight recent headlines (title + url only) for the nav marquee ticker.
@@ -312,30 +330,34 @@ export const getRecentHeadlines = unstable_cache(
   { revalidate: 600 }
 );
 
-/** Full category page — bigger N, paginated by offset. */
-export async function getCategoryPage(
-  category: SourceCategory,
-  opts: { limit?: number; offset?: number } = {}
-): Promise<{ items: Article[]; total: number }> {
-  const sb = createPublicClient();
-  const limit = opts.limit ?? 24;
-  const offset = opts.offset ?? 0;
+/** Full category page — bigger N, paginated by offset. Cached per page. */
+export const getCategoryPage = unstable_cache(
+  async (
+    category: SourceCategory,
+    opts: { limit?: number; offset?: number } = {}
+  ): Promise<{ items: Article[]; total: number }> => {
+    const sb = createPublicClient();
+    const limit = opts.limit ?? 24;
+    const offset = opts.offset ?? 0;
 
-  const { data, count, error } = await sb
-    .from("articles")
-    .select(SELECT, { count: "exact" })
-    .eq("category", category)
-    .not("summary", "is", null)
-    .neq("summary", "")
-    .order("published_at", { ascending: false, nullsFirst: false })
-    .range(offset, offset + limit - 1);
-  if (error) throw error;
+    const { data, count, error } = await sb
+      .from("articles")
+      .select(SELECT, { count: "exact" })
+      .eq("category", category)
+      .not("summary", "is", null)
+      .neq("summary", "")
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .range(offset, offset + limit - 1);
+    if (error) throw error;
 
-  return {
-    items: rowsToArticles((data ?? []) as ArticleWithSource[]),
-    total: count ?? 0,
-  };
-}
+    return {
+      items: rowsToArticles((data ?? []) as ArticleWithSource[]),
+      total: count ?? 0,
+    };
+  },
+  ["category-page"],
+  { revalidate: 600 }
+);
 
 /**
  * Full-text-ish search. Postgres has proper FTS but we haven't set up a

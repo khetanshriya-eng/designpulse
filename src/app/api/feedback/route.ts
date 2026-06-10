@@ -13,12 +13,57 @@ const log = logger("api.feedback");
 
 const LABELS = ["", "Rough", "Meh", "Good", "Great"]; // index = rating 1–4
 
+/**
+ * Per-IP rate limit: max 5 submissions per hour. In-memory, so it resets on
+ * cold starts and isn't shared across function instances — a deliberate
+ * tradeoff: it blunts scripted bursts (the realistic abuse: burning the
+ * Resend quota / flooding the inbox) without adding a KV dependency.
+ */
+const RATE_LIMIT = 5;
+const RATE_WINDOW_MS = 60 * 60 * 1000;
+const hits = new Map<string, number[]>();
+
+function rateLimited(ip: string): boolean {
+  const now = Date.now();
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
+  if (recent.length >= RATE_LIMIT) {
+    hits.set(ip, recent);
+    return true;
+  }
+  recent.push(now);
+  hits.set(ip, recent);
+  // Opportunistic cleanup so the map can't grow unbounded.
+  if (hits.size > 1000) {
+    for (const [k, v] of hits) {
+      if (v.every((t) => now - t >= RATE_WINDOW_MS)) hits.delete(k);
+    }
+  }
+  return false;
+}
+
 export async function POST(req: NextRequest) {
-  let body: { rating?: number; comment?: string };
+  let body: { rating?: number; comment?: string; website?: string };
   try {
     body = await req.json();
   } catch {
     return Response.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  // Honeypot: the form field is invisible to humans; bots that fill it get a
+  // fake success (don't tip them off) and nothing is sent.
+  if (body.website) {
+    log.warn("feedback honeypot tripped");
+    return Response.json({ ok: true });
+  }
+
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (rateLimited(ip)) {
+    log.warn("feedback rate limited", { ip });
+    return Response.json(
+      { error: "Too many submissions — try again later" },
+      { status: 429 }
+    );
   }
 
   const rating = Number(body.rating) || 0;
@@ -44,7 +89,8 @@ export async function POST(req: NextRequest) {
       "",
       comment || "(no comment)",
       "",
-      `From: ${req.headers.get("user-agent") ?? "unknown"}`,
+      // Newlines stripped — never let a header value inject lines into the email.
+      `From: ${(req.headers.get("user-agent") ?? "unknown").replace(/[\r\n]+/g, " ").slice(0, 300)}`,
     ].join("\n");
     try {
       const res = await fetch("https://api.resend.com/emails", {

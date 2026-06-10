@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useModalA11y } from "@/lib/use-modal-a11y";
 
 /**
- * Low-friction feedback: a quiet footer trigger opens a small modal with four
+ * Low-friction feedback: a floating trigger opens a small modal with four
  * pixel-emoji ratings + an optional comment. Submitting POSTs to /api/feedback,
  * which emails it — the user never leaves the page or opens a mail client.
+ * The hidden "website" field is a spam honeypot the API checks.
  */
 type Status = "idle" | "sending" | "done" | "error";
 
@@ -14,6 +16,8 @@ export function FeedbackWidget() {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [status, setStatus] = useState<Status>("idle");
+  const [honeypot, setHoneypot] = useState("");
+  const panelRef = useRef<HTMLDivElement>(null);
 
   function close() {
     setOpen(false);
@@ -21,9 +25,13 @@ export function FeedbackWidget() {
     window.setTimeout(() => {
       setRating(0);
       setComment("");
+      setHoneypot("");
       setStatus("idle");
     }, 200);
   }
+
+  // Focus trap + Escape + focus restoration while open.
+  useModalA11y(open, panelRef, close);
 
   async function submit() {
     if (!rating && !comment.trim()) return;
@@ -32,7 +40,7 @@ export function FeedbackWidget() {
       const res = await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rating, comment }),
+        body: JSON.stringify({ rating, comment, website: honeypot }),
       });
       if (!res.ok) throw new Error(String(res.status));
       setStatus("done");
@@ -68,9 +76,14 @@ export function FeedbackWidget() {
             style={{ backgroundColor: "var(--color-scrim)" }}
             tabIndex={-1}
           />
-          <div className="relative w-full max-w-[380px] bg-paper text-ink rounded-xl ring-1 ring-rule shadow-2xl p-5">
+          <div
+            ref={panelRef}
+            className="relative w-full max-w-[380px] bg-paper text-ink rounded-xl ring-1 ring-rule shadow-2xl p-5"
+          >
             {status === "done" ? (
-              <ThankYou />
+              <div role="status" aria-live="assertive">
+                <ThankYou />
+              </div>
             ) : (
               <>
                 <p className="font-pixel text-[12px] uppercase tracking-[0.12em] text-accent">
@@ -80,14 +93,20 @@ export function FeedbackWidget() {
                   How&apos;s Designator?
                 </h2>
 
-                <div className="flex justify-between gap-2 mb-4">
+                {/* Single-select rating → radiogroup semantics for AT. */}
+                <div
+                  role="radiogroup"
+                  aria-label="Rate your experience"
+                  className="flex justify-between gap-2 mb-4"
+                >
                   {[1, 2, 3, 4].map((n) => (
                     <button
                       key={n}
                       type="button"
+                      role="radio"
                       onClick={() => setRating(n)}
                       aria-label={["", "Rough", "Meh", "Good", "Great"][n]}
-                      aria-pressed={rating === n}
+                      aria-checked={rating === n}
                       className={`flex-1 grid place-items-center py-2 rounded-md border-2 transition-colors ${
                         rating === n
                           ? "border-[color:var(--color-accent)] bg-[color:var(--color-accent-soft)]"
@@ -102,16 +121,32 @@ export function FeedbackWidget() {
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
+                  aria-label="Additional feedback (optional)"
                   placeholder="Anything you'd change? (optional)"
                   rows={3}
                   className="w-full resize-none bg-paper-tint text-ink text-[14px] rounded-md p-3 outline-none ring-1 ring-rule focus:ring-accent placeholder:text-ink-subtle"
                 />
 
-                {status === "error" && (
-                  <p className="mt-2 text-[12px] text-accent" role="alert">
-                    Couldn&apos;t send — please try again.
-                  </p>
-                )}
+                {/* Spam honeypot: visually hidden + untabbable; bots fill it. */}
+                <input
+                  type="text"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  name="website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  className="absolute -left-[9999px] top-0 h-px w-px opacity-0"
+                />
+
+                {/* Kept mounted so the announcement isn't missed by AT. */}
+                <p
+                  className="mt-2 text-[12px] text-accent"
+                  role="alert"
+                  style={{ display: status === "error" ? undefined : "none" }}
+                >
+                  Couldn&apos;t send — please try again.
+                </p>
 
                 <div className="mt-4 flex items-center justify-end gap-3">
                   <button

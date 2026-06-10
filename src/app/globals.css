@@ -35,8 +35,9 @@
   --color-card: #fffdf7;         /* card surface — always light, both themes */
 
   --color-ink: #1a1340;          /* primary text (on canvas in morning) */
-  --color-ink-muted: #5c5470;    /* body copy */
-  --color-ink-subtle: #9b93a8;   /* timestamps, metadata */
+  --color-ink-muted: #5c5470;    /* body copy (6.3:1 on paper) */
+  --color-ink-subtle: #6f677f;   /* timestamps, metadata (4.7:1 on paper — the
+                                    old #9b93a8 was 2.6:1, failing WCAG AA) */
 
   --color-accent: #5b3df5;       /* electric purple */
   --color-accent-hover: #4a2fd0;
@@ -50,16 +51,23 @@
   --color-rule: #ddd5c6;         /* soft hairline on cream */
   --color-rule-strong: #1a1340;
 
-  /* Category accents (spec palette). Same in both themes — brand markers. */
-  --color-cat-design: #c9a200;       /* lime reads too pale as text; deepen for dots */
-  --color-cat-thinking: #7c6bf5;
-  --color-cat-inspiration: #18b07a;  /* mint, darkened for contrast */
-  --color-cat-youtube: #e60000;
-  --color-cat-product: #d6249f;      /* hot pink, darkened for contrast */
-  --color-cat-tech: #0096b3;         /* cyan, darkened for contrast */
-  --color-cat-ai: #c77b00;           /* amber, darkened for contrast */
-  --color-cat-newsletters: #b06bff;
-  --color-cat-podcasts: #e05050;     /* coral */
+  /*
+   * Category accents. Same in both themes — brand markers. These are used as
+   * TEXT (mosaic fallback labels) and small GRAPHICS (dots, mosaic fills), so
+   * every value is tuned to ≥4.5:1 on the cream surfaces (#f5f0e8/#efe9db)
+   * and ≥3:1 on the dark canvas (#0f0a2a). QA audit 2026-06-10 found the
+   * previous vivid values as low as 2.1:1 (design gold) on cream.
+   * Vivid versions live in --stripe-* below for decorative card stripes.
+   */
+  --color-cat-design: #7a6000;       /* olive gold   — 5.3:1 cream / 3.2:1 dark */
+  --color-cat-thinking: #5b48d8;     /* indigo       — 5.5:1 / 3.1:1 */
+  --color-cat-inspiration: #0d7a52;  /* deep mint    — 4.7:1 / 3.6:1 */
+  --color-cat-youtube: #cc0000;      /* red          — 5.2:1 / 3.2:1 */
+  --color-cat-product: #b51483;      /* deep pink    — 5.4:1 / 3.1:1 */
+  --color-cat-tech: #00708a;         /* deep cyan    — 5.0:1 / 3.4:1 */
+  --color-cat-ai: #9a5f00;           /* deep amber   — 4.6:1 / 3.7:1 */
+  --color-cat-newsletters: #7f43c6;  /* violet       — 5.3:1 / 3.2:1 */
+  --color-cat-podcasts: #c13434;     /* deep coral   — 4.9:1 / 3.5:1 */
 }
 
 /*
@@ -137,6 +145,18 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/*
+ * Keyboard focus indicator (WCAG 2.4.7). A chunky 2px accent outline fits the
+ * pixel aesthetic; :focus-visible keeps it off mouse/touch interactions.
+ * The white inner ring (box-shadow) keeps it visible on accent-colored
+ * surfaces like the purple nav, where an accent outline would vanish.
+ */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 1px var(--color-paper);
 }
 
 /*

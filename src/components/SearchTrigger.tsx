@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useModalA11y } from "@/lib/use-modal-a11y";
 
 type Result = {
   id: string;
@@ -20,6 +21,7 @@ export function SearchTrigger() {
   const [results, setResults] = useState<Result[]>([]);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // Reset everything and close. Handler-based reset avoids React 19's
   // set-state-in-effect warning.
@@ -30,15 +32,15 @@ export function SearchTrigger() {
     setError(null);
   }
 
-  // Global ⌘K / Ctrl+K to open search. Escape to close.
+  // Focus trap + Escape + focus restoration while open.
+  useModalA11y(open, panelRef, closeModal);
+
+  // Global ⌘K / Ctrl+K to open search.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setOpen((v) => !v);
-      } else if (e.key === "Escape") {
-        // Setting open to false inside an event handler is fine.
-        setOpen(false);
       }
     }
     window.addEventListener("keydown", onKey);
@@ -120,7 +122,10 @@ export function SearchTrigger() {
           {/* Panel. text-ink is explicit: the trigger lives in the purple nav
               (light text), and without this the modal would inherit that light
               color and the typed query would be invisible on the cream panel. */}
-          <div className="relative w-full max-w-[600px] bg-paper text-ink rounded-xl shadow-2xl ring-1 ring-rule overflow-hidden">
+          <div
+            ref={panelRef}
+            className="relative w-full max-w-[600px] bg-paper text-ink rounded-xl shadow-2xl ring-1 ring-rule overflow-hidden"
+          >
             <div className="flex items-center gap-3 px-5 py-4">
               <SearchIcon />
               <input
@@ -136,7 +141,11 @@ export function SearchTrigger() {
               </kbd>
             </div>
 
-            <div className="max-h-[60vh] overflow-y-auto border-t border-rule">
+            {/* aria-live so result/status changes are announced to AT. */}
+            <div
+              className="max-h-[60vh] overflow-y-auto border-t border-rule"
+              aria-live="polite"
+            >
               {tooShort && (
                 <p className="px-5 py-8 text-sm text-ink-subtle text-center">
                   Type at least 2 characters to search.
