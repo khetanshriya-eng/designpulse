@@ -33,11 +33,10 @@ export async function POST(req: NextRequest) {
   log.info("feedback", { rating, label: LABELS[rating] ?? "—", comment });
 
   const apiKey = process.env.RESEND_API_KEY;
-  // Fall back to ADMIN_EMAIL (already a verified Resend recipient for alerts)
-  // so delivery works out of the box; FEEDBACK_EMAIL overrides if set.
-  const to =
-    process.env.FEEDBACK_EMAIL ?? process.env.ADMIN_EMAIL ?? "designatorapp@gmail.com";
-  const from = process.env.RESEND_FROM_EMAIL ?? "Designator <onboarding@resend.dev>";
+  const to = process.env.FEEDBACK_EMAIL ?? "designatorapp@gmail.com";
+  // Send from the verified designatorapp.com domain — delivers reliably to any
+  // recipient (no more onboarding@resend.dev sandbox/spam limits).
+  const from = process.env.RESEND_FROM_EMAIL ?? "Designator <feedback@designatorapp.com>";
 
   if (apiKey) {
     const text = [
