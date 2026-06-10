@@ -27,7 +27,8 @@ export function HeroCard({ article }: { article: Article }) {
           column's height when the title/summary is long.
         */}
         <div className="relative order-1 min-h-[260px] md:min-h-[360px] overflow-hidden">
-          <ArticleImage article={article} fill size="lg" />
+          {/* priority: this is the LCP image — eager + high fetch priority. */}
+          <ArticleImage article={article} fill size="lg" priority />
         </div>
         <div className="order-2 flex flex-col justify-center gap-4 p-6 sm:p-8">
           <div className="flex items-center gap-3 flex-wrap">

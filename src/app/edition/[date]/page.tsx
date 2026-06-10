@@ -18,7 +18,8 @@ import {
   listEditionDates,
 } from "@/lib/data/queries";
 
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+// Real month/day ranges — 2026-99-99 should 404 at the regex, not hit the DB.
+const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 type Params = { date: string };
 
 export const dynamic = "force-dynamic";

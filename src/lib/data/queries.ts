@@ -52,6 +52,9 @@ export const getEdition = unstable_cache(
 
     let ed;
     if (date) {
+      // An explicitly-requested date must exist — no fallback. Otherwise
+      // /edition/<any-garbage-date> would silently render the latest edition
+      // (duplicate content under infinite URLs; QA audit 2026-06-10).
       const res = await sb
         .from("editions")
         .select("*")
@@ -59,8 +62,9 @@ export const getEdition = unstable_cache(
         .maybeSingle();
       if (res.error) throw res.error;
       ed = res.data;
-    }
-    if (!ed) {
+      if (!ed) return null;
+    } else {
+      // No date requested (homepage): most recent edition.
       const res = await sb
         .from("editions")
         .select("*")
@@ -369,9 +373,13 @@ export async function searchArticles(
   query: string,
   limit = 20
 ): Promise<Article[]> {
-  const q = query.trim();
+  // PostgREST's .or() filter is a comma/paren-delimited mini-language, and the
+  // pattern is embedded in it — so beyond escaping % and _ wildcards, strip
+  // the characters that are syntax in that language (,()." ) which would
+  // otherwise let a query like `a,title.eq.b` break or rewrite the filter
+  // (errors/500s; data is public so not a confidentiality issue).
+  const q = query.trim().replace(/[,()."\\]/g, " ").replace(/\s+/g, " ").trim();
   if (!q) return [];
-  // Escape the % and _ wildcards a user might type so they don't match weirdly.
   const pattern = `%${q.replace(/[%_]/g, "\\$&")}%`;
 
   const sb = createPublicClient();

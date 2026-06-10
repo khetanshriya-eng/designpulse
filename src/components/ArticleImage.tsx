@@ -20,6 +20,12 @@ type Props = {
    * a height (e.g. `min-h-[300px]` or via flex `items-stretch`).
    */
   fill?: boolean;
+  /**
+   * Eager-load with high fetch priority. Set ONLY on the LCP image (the
+   * homepage hero) — lazy-loading the largest above-the-fold image delays
+   * Largest Contentful Paint.
+   */
+  priority?: boolean;
 };
 
 const ASPECT: Record<Aspect, string> = {
@@ -42,6 +48,7 @@ export function ArticleImage({
   size = "md",
   className = "",
   fill = false,
+  priority = false,
 }: Props) {
   const [failed, setFailed] = useState(false);
   // Some sources (e.g. Hugging Face) emit generic title-banner images that
@@ -62,11 +69,14 @@ export function ArticleImage({
         data-image="real"
         className={`${containerSizing} overflow-hidden bg-paper-tint ${className}`}
       >
+        {/* alt="" — the card's heading already announces the title; a non-empty
+            alt would make screen readers read it twice per card. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={article.thumbnailUrl ?? ""}
-          alt={article.title}
-          loading="lazy"
+          alt=""
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : undefined}
           onError={() => setFailed(true)}
           className="absolute inset-0 w-full h-full object-cover"
         />

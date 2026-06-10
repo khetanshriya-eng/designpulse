@@ -38,6 +38,19 @@ export const metadata: Metadata = {
   title: "Designator",
   description:
     "A daily briefing for product designers. Curated updates from Figma, NN/g, UX Collective, Lenny's, The Verge, and 70+ trusted sources, summarized so you stay current in under five minutes.",
+  // og:image / twitter:image come from app/opengraph-image.tsx automatically.
+  openGraph: {
+    type: "website",
+    siteName: "Designator",
+    title: "Designator",
+    description: "Your daily design briefing — 70+ sources, summarized.",
+    url: "https://designatorapp.com",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Designator",
+    description: "Your daily design briefing — 70+ sources, summarized.",
+  },
 };
 
 // viewport-fit:cover enables env(safe-area-inset-*) so the sticky nav can clear
