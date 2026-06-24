@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useModalA11y } from "@/lib/use-modal-a11y";
+import { formatRelativeTime } from "@/lib/format";
 
 type Result = {
   id: string;
@@ -12,6 +13,8 @@ type Result = {
   sourceName: string;
   sourceSlug: string;
   category: string;
+  categoryLabel: string;
+  publishedAt: string | null;
 };
 
 export function SearchTrigger() {
@@ -35,12 +38,26 @@ export function SearchTrigger() {
   // Focus trap + Escape + focus restoration while open.
   useModalA11y(open, panelRef, closeModal);
 
-  // Global ⌘K / Ctrl+K to open search.
+  // Global shortcuts: ⌘K / Ctrl+K toggles search; "/" opens it (the pattern
+  // designers expect). "/" is ignored while typing in a field so it doesn't
+  // hijack a slash typed into the search box, feedback form, etc.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setOpen((v) => !v);
+        return;
+      }
+      if (e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const el = e.target as HTMLElement | null;
+        const typing =
+          el &&
+          (el.tagName === "INPUT" ||
+            el.tagName === "TEXTAREA" ||
+            el.isContentEditable);
+        if (typing) return;
+        e.preventDefault();
+        setOpen(true);
       }
     }
     window.addEventListener("keydown", onKey);
@@ -188,12 +205,33 @@ export function SearchTrigger() {
                             {r.summary}
                           </p>
                         )}
+                        <div className="mt-1.5 flex items-center gap-2 text-[10px] text-ink-subtle">
+                          <span className="font-pixel uppercase tracking-[0.1em] text-accent">
+                            {r.categoryLabel}
+                          </span>
+                          {r.publishedAt && (
+                            <>
+                              <span aria-hidden>·</span>
+                              <span>{formatRelativeTime(r.publishedAt)}</span>
+                            </>
+                          )}
+                        </div>
                       </Link>
                     </li>
                   ))}
                 </ul>
               )}
             </div>
+
+            {/* Results count footer — only once there's something to count. */}
+            {!tooShort && !loading && !error && visibleResults.length > 0 && (
+              <div className="border-t border-rule px-4 py-2.5 text-center">
+                <span className="font-mono text-[11px] text-ink-subtle">
+                  {visibleResults.length} result
+                  {visibleResults.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}

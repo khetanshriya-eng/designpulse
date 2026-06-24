@@ -448,30 +448,55 @@ export const getCategoryPage = unstable_cache(
 );
 
 /**
- * Full-text-ish search. Postgres has proper FTS but we haven't set up a
- * tsvector column yet, so this uses an OR of ILIKE matches on title and
- * summary. Good enough for a few hundred rows; we'll upgrade once volume
- * warrants it.
+ * Article search. Prefers Postgres full-text search against the generated
+ * `fts` column (title weighted above summary, AND + prefix semantics), and
+ * falls back to ILIKE substring matching when `fts` doesn't exist yet
+ * (i.e. before migration 0002 runs) or if the tsquery errors. This makes the
+ * upgrade deploy-safe: search works the same before and after the migration,
+ * just better once `fts` is present.
  */
 export async function searchArticles(
   query: string,
   limit = 20
 ): Promise<Article[]> {
-  // PostgREST's .or() filter is a comma/paren-delimited mini-language, and the
-  // pattern is embedded in it — so beyond escaping % and _ wildcards, strip
-  // the characters that are syntax in that language (,()." ) which would
-  // otherwise let a query like `a,title.eq.b` break or rewrite the filter
-  // (errors/500s; data is public so not a confidentiality issue).
-  const q = query.trim().replace(/[,()."\\]/g, " ").replace(/\s+/g, " ").trim();
-  if (!q) return [];
-  const pattern = `%${q.replace(/[%_]/g, "\\$&")}%`;
+  // Unicode word tokens only — strips every tsquery/ILIKE metacharacter so
+  // user input can never break the query (data is public, so this is about
+  // robustness, not confidentiality).
+  const terms = (query.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? []).slice(0, 12);
+  if (terms.length === 0) return [];
 
   const sb = createPublicClient();
+
+  // 1) Full-text search. Prefix-match each term ("desig" → "design") and AND
+  //    them together, so "design system" needs both words.
+  const tsquery = terms.map((t) => `${t}:*`).join(" & ");
+  const fts = await sb
+    .from("articles")
+    .select(SELECT)
+    .not("summary", "is", null)
+    .neq("summary", "")
+    .not("title", "is", null)
+    .neq("title", "")
+    .not("title", "ilike", "http%")
+    .textSearch("fts", tsquery, { config: "english" })
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .limit(limit);
+
+  if (!fts.error) {
+    return rowsToArticles((fts.data ?? []) as ArticleWithSource[]);
+  }
+
+  // 2) ILIKE fallback (no fts column yet). Match the joined phrase as a
+  //    substring across title + summary.
+  const pattern = `%${terms.join(" ").replace(/[%_]/g, "\\$&")}%`;
   const { data, error } = await sb
     .from("articles")
     .select(SELECT)
     .not("summary", "is", null)
     .neq("summary", "")
+    .not("title", "is", null)
+    .neq("title", "")
+    .not("title", "ilike", "http%")
     .or(`title.ilike.${pattern},summary.ilike.${pattern}`)
     .order("published_at", { ascending: false, nullsFirst: false })
     .limit(limit);

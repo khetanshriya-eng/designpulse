@@ -32,7 +32,9 @@ export async function GET(req: NextRequest) {
         url: a.url,
         sourceName: src.name,
         sourceSlug: src.slug,
-        category: CATEGORY_META[a.category]?.label ?? a.category,
+        category: a.category,
+        categoryLabel: CATEGORY_META[a.category]?.label ?? a.category,
+        publishedAt: a.publishedAt,
       };
     });
     return Response.json({ results });
