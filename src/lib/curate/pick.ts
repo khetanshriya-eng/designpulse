@@ -3,43 +3,51 @@
  * most recent summarized articles.
  *
  * No AI here — the signals are reliable enough on their own:
+ *   - SOURCE PRIORITY TIER (dominant signal): tier-1 design sources lead, and
+ *     tier-3 tech-news/gadget sources are barred from hero/editor's-pick/
+ *     must-read entirely (they stay in the feed, never featured);
  *   - presence of a thumbnail (visual weight)
  *   - read_minutes ≥ 4 (substantive, not a quick link)
  *   - source type ≠ "forum" or "gallery" (avoid aggregators / Mobbin items)
- *   - source allow-list scoring (NN/g, Smashing, Lenny's, etc. rank higher)
+ *   - off-brand deal/listicle filter (never feature a shopping roundup)
  *   - category diversity for must-reads (one per top category if possible)
  *
  * The picker takes an already-loaded set of candidate rows so it stays pure
  * and easy to test/seed.
  */
 import type { ArticleRow, SourceRow } from "../db/types";
+import { sourcePriority } from "@/data/sources";
+import { isOffBrand } from "@/lib/content/filter";
 
 export type Candidate = ArticleRow & { source: SourceRow };
 
 type Score = { row: Candidate; score: number; reasons: string[] };
 
 /**
- * Sources we trust to carry the day. Anything not in here still ranks, just
- * a touch lower. Numbers are additive bonuses on top of the baseline score.
+ * Priority-tier bonus — the dominant ranking signal. Tier 1 (core design)
+ * vastly outweighs everything else so a fresh Verge gadget review can no
+ * longer out-score a design article. Tier 3 gets nothing and is additionally
+ * barred from featuring (see FEATURABLE_TIER below).
  */
-const SOURCE_WEIGHT: Record<string, number> = {
-  nngroup: 12,
-  smashing: 10,
-  lennys: 10,
-  firstround: 10,
-  stratechery: 9,
-  verge: 8,
-  wired: 8,
-  arstech: 7,
-  uxdesigncc: 7,
-  uxtigers: 7,
-  itsnicethat: 6,
-  techcrunch: 5,
-  "9to5google": 5,
-  uxdw: 6,
-  designspells: 5,
-  dense: 5,
+const TIER_BONUS: Record<1 | 2 | 3, number> = { 1: 16, 2: 6, 3: 0 };
+
+/**
+ * Small editorial nudge so marquee names lead *within* their tier. Secondary
+ * to TIER_BONUS — fine-tuning, not the deciding factor.
+ */
+const MARQUEE: Record<string, number> = {
+  nngroup: 4,
+  smashing: 3,
+  uxdesigncc: 3,
+  designspells: 2,
+  dense: 2,
+  uxdw: 2,
+  lennys: 3,
+  stratechery: 2,
 };
+
+/** Tier 3 (tech-news/gadget) is never the hero, editor's pick, or a must-read. */
+const FEATURABLE_TIER = 2;
 
 const FORBIDDEN_TYPES = new Set(["forum", "gallery"]);
 
@@ -67,10 +75,13 @@ function scoreOne(row: Candidate): Score {
     s += 3;
     reasons.push("+3 summary");
   }
-  const w = SOURCE_WEIGHT[row.source.slug];
-  if (w) {
-    s += w;
-    reasons.push(`+${w} ${row.source.slug}`);
+  const tier = sourcePriority(row.source.slug);
+  s += TIER_BONUS[tier];
+  reasons.push(`+${TIER_BONUS[tier]} tier${tier}`);
+  const mq = MARQUEE[row.source.slug];
+  if (mq) {
+    s += mq;
+    reasons.push(`+${mq} ${row.source.slug}`);
   }
 
   // Recency: newer articles get a small bump, but only enough to break ties.
@@ -108,29 +119,39 @@ export function pickCuration(
   const eligible = rows.filter((r) => {
     if (FORBIDDEN_TYPES.has(r.source.type)) return false;
     if (!r.summary || r.summary.length < 20) return false; // need a real summary
+    if (isOffBrand(r.title, r.original_url)) return false; // no deal/listicle features
     return true;
   });
 
   const ranked = eligible.map(scoreOne).sort((a, b) => b.score - a.score);
 
-  // Hero: top-scoring item, must have a thumbnail.
-  const heroScore = ranked.find((s) => s.row.thumbnail_url) ?? ranked[0] ?? null;
+  // Featurable = tier 1/2 only. Tier 3 (tech-news/gadget) stays in the feed
+  // via the display queries but is never the hero/pick/must-read — this is the
+  // core of the "design should lead, not tech gadgets" reweight.
+  const featurable = ranked.filter(
+    (s) => sourcePriority(s.row.source.slug) <= FEATURABLE_TIER
+  );
+
+  // Hero: top-scoring featurable item with a thumbnail. No tier-3 fallback —
+  // page.tsx renders fine without a hero on the (near-impossible) all-tech day.
+  const heroScore =
+    featurable.find((s) => s.row.thumbnail_url) ?? featurable[0] ?? null;
   const hero = heroScore?.row ?? null;
 
-  // Must-reads: walk the ranked list, prefer category diversity, skip the hero.
+  // Must-reads: walk featurable, prefer category diversity, skip the hero.
   const mustReads: Candidate[] = [];
   const usedCats = new Set<string>();
-  for (const s of ranked) {
+  for (const s of featurable) {
     if (mustReads.length >= mustReadCount) break;
     if (hero && s.row.id === hero.id) continue;
     if (usedCats.has(s.row.category)) continue;
     mustReads.push(s.row);
     usedCats.add(s.row.category);
   }
-  // If we couldn't hit the count with strict diversity, top up with the next
-  // highest-scoring items regardless of category.
+  // If strict diversity under-filled, top up with the next-highest featurable
+  // items regardless of category.
   if (mustReads.length < mustReadCount) {
-    for (const s of ranked) {
+    for (const s of featurable) {
       if (mustReads.length >= mustReadCount) break;
       if (hero && s.row.id === hero.id) continue;
       if (mustReads.find((m) => m.id === s.row.id)) continue;
@@ -138,10 +159,11 @@ export function pickCuration(
     }
   }
 
-  // Editor's pick: the second-best scoring item (something a human curator
-  // would put alongside the hero — different from the must-read grid).
+  // Editor's pick: the next-best featurable item with a thumbnail, distinct
+  // from the hero (a human curator's companion to the lead story).
   const editorsPick =
-    ranked.find((s) => s.row.id !== hero?.id && s.row.thumbnail_url)?.row ?? null;
+    featurable.find((s) => s.row.id !== hero?.id && s.row.thumbnail_url)?.row ??
+    null;
 
   return { hero, mustReads, editorsPick, ranked };
 }

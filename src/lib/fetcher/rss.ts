@@ -1,7 +1,7 @@
 import Parser from "rss-parser";
 import type { SourceRow } from "@/lib/db/types";
 import type { FetchResult, FetchedItem } from "./types";
-import { contentTypeForSource, parseDurationToMinutes, stripHtml } from "./util";
+import { contentTypeForSource, parseDurationToMinutes, stripHtml, titleFromUrl } from "./util";
 
 // Some fields (like iTunes podcast duration / media thumbnails) aren't part of
 // rss-parser's default typed map, so we register them as custom fields.
@@ -67,8 +67,16 @@ export async function fetchRssSource(source: SourceRow): Promise<FetchResult> {
 
     for (const raw of feed.items.slice(0, MAX_ITEMS_PER_SOURCE * 2)) {
       const link = raw.link?.trim();
-      const title = raw.title?.trim();
-      if (!link || !title) continue;
+      if (!link) continue;
+      // Resolve a usable title. Feeds occasionally ship a link with no title,
+      // or a title that's just the URL — both render as broken "raw URL" cards.
+      // Strip HTML, then fall back to a readable slug from the URL; skip the
+      // item entirely if neither yields anything (better no card than a junk one).
+      let title = stripHtml(raw.title) || (raw.title ?? "").trim();
+      if (!title || /^https?:\/\//i.test(title)) {
+        title = titleFromUrl(link) ?? "";
+      }
+      if (!title) continue;
 
       const publishedIso = raw.isoDate ?? (raw.pubDate ? new Date(raw.pubDate).toISOString() : null);
 
@@ -85,7 +93,7 @@ export async function fetchRssSource(source: SourceRow): Promise<FetchResult> {
         sourceId: source.id,
         sourceSlug: source.slug,
         originalUrl: link,
-        title: stripHtml(title) || title,
+        title,
         feedDescription: description,
         author:
           raw.creator ??

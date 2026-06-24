@@ -33,9 +33,11 @@ function DefaultCard({ article }: { article: Article }) {
         <h3 className="font-heading text-[1.2rem] leading-[1.45] text-ink group-hover:text-accent transition-colors line-clamp-2">
           {article.title}
         </h3>
-        <p className="text-[13px] leading-relaxed text-ink-muted line-clamp-2">
-          {article.summary}
-        </p>
+        {article.summary && (
+          <p className="text-[13px] leading-relaxed text-ink-muted line-clamp-2">
+            {article.summary}
+          </p>
+        )}
         <div className="flex items-center gap-2 text-[11px] text-ink-subtle pt-1 mt-auto">
           <span>{formatRelativeTime(article.publishedAt)}</span>
           {readTime && (
@@ -101,9 +103,11 @@ function HorizontalCard({ article }: { article: Article }) {
         <h3 className="font-heading text-[1.1rem] sm:text-[1.2rem] leading-[1.45] text-ink group-hover:text-accent transition-colors line-clamp-2">
           {article.title}
         </h3>
-        <p className="hidden sm:block text-[13px] leading-relaxed text-ink-muted line-clamp-2">
-          {article.summary}
-        </p>
+        {article.summary && (
+          <p className="hidden sm:block text-[13px] leading-relaxed text-ink-muted line-clamp-2">
+            {article.summary}
+          </p>
+        )}
         <div className="flex items-center gap-2 text-[11px] text-ink-subtle mt-auto">
           <span>{formatRelativeTime(article.publishedAt)}</span>
           {readTime && (

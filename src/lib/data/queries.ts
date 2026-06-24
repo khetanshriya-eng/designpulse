@@ -17,6 +17,7 @@ import {
   rowToArticle,
   type ArticleWithSource,
 } from "./adapter";
+import { isOffBrand } from "@/lib/content/filter";
 import type { Article } from "@/data/articles";
 
 const SELECT = "*, sources(*)";
@@ -151,6 +152,10 @@ export async function getMustReads(
     .eq("is_must_read", true)
     .not("summary", "is", null)
     .neq("summary", "")
+    .not("title", "is", null)
+    .neq("title", "")
+    .not("title", "ilike", "http%")
+    .not("title", "ilike", "www.%")
     .order("published_at", { ascending: false, nullsFirst: false })
     .limit(limit + excludeIds.length);
   if (excludeIds.length) q = q.not("id", "in", `(${excludeIds.join(",")})`);
@@ -237,20 +242,74 @@ export const getLatest = unstable_cache(
   async (limit = 6, excludeIds: string[] = []): Promise<Article[]> => {
     const windows = [7, 14, 30]; // days, in order of preference
     for (const days of windows) {
-      const pool = await fetchLatestPool(limit * 5, excludeIds, days);
-      const picked = diversifyBySource(pool, limit, 2);
+      const pool = await fetchLatestPool(limit * 6, excludeIds, days);
+      const picked = balanceByCategory(pool, limit);
       if (picked.length >= limit) {
         return rowsToArticles(picked);
       }
     }
     // Even with a 30-day window we can't fill the slot. Return whatever we
     // have rather than nothing.
-    const pool = await fetchLatestPool(limit * 5, excludeIds, 30);
-    return rowsToArticles(diversifyBySource(pool, limit, 2));
+    const pool = await fetchLatestPool(limit * 6, excludeIds, 30);
+    return rowsToArticles(balanceByCategory(pool, limit));
   },
   ["latest-articles"],
   { revalidate: 600 }
 );
+
+/**
+ * Balance a recency-sorted pool across categories so one high-volume category
+ * (esp. tech-news) can't flood the "Latest" grid. Round-robin: take the
+ * freshest of each category, then the second-freshest, etc., capped at
+ * `maxPerCategory`. Design-leaning: tier-3 (tech-news) categories fill last,
+ * so the grid leads with design/product/AI and only shows tech if slots
+ * remain. The result is re-sorted newest-first so it still reads as "latest".
+ */
+function balanceByCategory(
+  pool: ArticleWithSource[],
+  limit: number,
+  maxPerCategory = 2
+): ArticleWithSource[] {
+  const byCat = new Map<string, ArticleWithSource[]>();
+  for (const row of pool) {
+    const arr = byCat.get(row.category) ?? [];
+    arr.push(row); // pool already newest-first, so each list is too
+    byCat.set(row.category, arr);
+  }
+  const freshness = (r: ArticleWithSource) =>
+    new Date(r.published_at ?? 0).getTime();
+  const cats = [...byCat.keys()].sort((a, b) => {
+    // tech-news (the only tier-3 category) always sorts last.
+    const at = a === "tech-news" ? 1 : 0;
+    const bt = b === "tech-news" ? 1 : 0;
+    if (at !== bt) return at - bt;
+    return freshness(byCat.get(b)![0]) - freshness(byCat.get(a)![0]);
+  });
+
+  const picked: ArticleWithSource[] = [];
+  for (let round = 0; round < maxPerCategory && picked.length < limit; round++) {
+    for (const cat of cats) {
+      const item = byCat.get(cat)![round];
+      if (item) {
+        picked.push(item);
+        if (picked.length >= limit) break;
+      }
+    }
+  }
+  // Backfill from the rest of the pool (recency order) if still short.
+  if (picked.length < limit) {
+    const have = new Set(picked.map((p) => p.id));
+    for (const row of pool) {
+      if (picked.length >= limit) break;
+      if (!have.has(row.id)) {
+        picked.push(row);
+        have.add(row.id);
+      }
+    }
+  }
+  // Re-sort newest-first so the section still reads as "latest".
+  return picked.sort((a, b) => freshness(b) - freshness(a)).slice(0, limit);
+}
 
 async function fetchLatestPool(
   poolSize: number,
@@ -264,13 +323,22 @@ async function fetchLatestPool(
     .select(SELECT)
     .not("summary", "is", null)
     .neq("summary", "")
+    // Title guards: never surface a broken "raw URL" card (no/empty/url title).
+    .not("title", "is", null)
+    .neq("title", "")
+    .not("title", "ilike", "http%")
+    .not("title", "ilike", "www.%")
     .gte("published_at", cutoff)
     .order("published_at", { ascending: false, nullsFirst: false })
     .limit(Math.max(poolSize, 30) + excludeIds.length);
   if (excludeIds.length) q = q.not("id", "in", `(${excludeIds.join(",")})`);
   const { data, error } = await q;
   if (error) throw error;
-  return (data ?? []) as ArticleWithSource[];
+  // Content filter: drop off-brand deal/listicle/gadget items from the feed
+  // pool (this helper backs both getLatest and the must-read backfill).
+  return ((data ?? []) as ArticleWithSource[]).filter(
+    (r) => !isOffBrand(r.title, r.original_url)
+  );
 }
 
 /**
@@ -292,6 +360,10 @@ export const getByCategory = unstable_cache(
       .eq("category", category)
       .not("summary", "is", null)
       .neq("summary", "")
+      .not("title", "is", null)
+      .neq("title", "")
+      .not("title", "ilike", "http%")
+      .not("title", "ilike", "www.%")
       // nullsFirst:false keeps dated (fresh) articles in the lead and lets
       // null-dated ones backfill the tail — so a thin category still fills its
       // 2-card preview rather than showing a lonely single card, while the
@@ -302,7 +374,9 @@ export const getByCategory = unstable_cache(
 
     const { data, error } = await q;
     if (error) throw error;
-    const pool = (data ?? []) as ArticleWithSource[];
+    const pool = ((data ?? []) as ArticleWithSource[]).filter(
+      (r) => !isOffBrand(r.title, r.original_url)
+    );
     // Category previews show 2 cards — keep them from different sources.
     return rowsToArticles(diversifyBySource(pool, limit, 1));
   },
@@ -322,13 +396,19 @@ export const getRecentHeadlines = unstable_cache(
       .select("title, original_url")
       .not("summary", "is", null)
       .neq("summary", "")
+      .not("title", "is", null)
+      .neq("title", "")
+      .not("title", "ilike", "http%")
+      .not("title", "ilike", "www.%")
       .not("published_at", "is", null)
       .order("published_at", { ascending: false, nullsFirst: false })
-      .limit(limit);
+      // Over-fetch so the content filter below can't starve the ticker.
+      .limit(limit * 2);
     if (error) throw error;
-    return ((data ?? []) as { title: string; original_url: string }[]).map(
-      (r) => ({ title: r.title, url: r.original_url })
-    );
+    return ((data ?? []) as { title: string; original_url: string }[])
+      .filter((r) => !isOffBrand(r.title, r.original_url))
+      .slice(0, limit)
+      .map((r) => ({ title: r.title, url: r.original_url }));
   },
   ["recent-headlines"],
   { revalidate: 600 }
@@ -350,6 +430,10 @@ export const getCategoryPage = unstable_cache(
       .eq("category", category)
       .not("summary", "is", null)
       .neq("summary", "")
+      .not("title", "is", null)
+      .neq("title", "")
+      .not("title", "ilike", "http%")
+      .not("title", "ilike", "www.%")
       .order("published_at", { ascending: false, nullsFirst: false })
       .range(offset, offset + limit - 1);
     if (error) throw error;

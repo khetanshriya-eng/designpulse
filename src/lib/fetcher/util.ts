@@ -76,3 +76,24 @@ export function parseDurationToMinutes(
 export function readTimeMinutes(words: number): number {
   return Math.max(1, Math.round(words / 220));
 }
+
+/**
+ * Last-resort title from a URL slug, for feeds that ship an item with a link
+ * but no usable title: /toolbox/typr-editor → "Typr Editor". Returns null if
+ * the path has no readable segment (so the caller can skip the item entirely
+ * rather than insert a URL-as-title card).
+ */
+export function titleFromUrl(url: string): string | null {
+  try {
+    const { pathname } = new URL(url);
+    const slug = pathname.split("/").filter(Boolean).pop();
+    if (!slug) return null;
+    // Drop a trailing file extension (.html, .php) and query-ish noise.
+    const base = slug.replace(/\.[a-z0-9]{1,5}$/i, "").replace(/[-_]+/g, " ").trim();
+    // Reject pure-numeric or too-short slugs (e.g. "/p/12345") — not readable.
+    if (!base || base.length < 3 || /^\d+$/.test(base)) return null;
+    return base.replace(/\b\w/g, (c) => c.toUpperCase());
+  } catch {
+    return null;
+  }
+}

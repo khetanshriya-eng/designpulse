@@ -49,9 +49,11 @@ function PrimaryCard({ article }: { article: Article }) {
         <h3 className="font-heading text-[1.5rem] sm:text-[1.7rem] leading-tight text-ink group-hover:text-accent transition-colors tracking-tight">
           {article.title}
         </h3>
-        <p className="text-[14px] leading-relaxed text-ink-muted line-clamp-3">
-          {article.summary}
-        </p>
+        {article.summary && (
+          <p className="text-[14px] leading-relaxed text-ink-muted line-clamp-3">
+            {article.summary}
+          </p>
+        )}
         <div className="flex items-center gap-2 text-[11px] text-ink-subtle">
           <span>{formatRelativeTime(article.publishedAt)}</span>
           {readTime && (
