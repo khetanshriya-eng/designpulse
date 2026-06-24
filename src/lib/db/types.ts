@@ -23,6 +23,8 @@ export type SourceRow = {
   swatch: string | null;
   youtube_channel_id: string | null;
   is_active: boolean;
+  /** Curation tier: 1 = core design, 2 = secondary, 3 = tech-news/off-brand. */
+  priority: number;
   created_at: string;
   updated_at: string;
 };
@@ -52,12 +54,18 @@ export type ArticleRow = {
   is_must_read: boolean;
   raw_content: string | null;
   content_hash: string | null;
+  /**
+   * Generated full-text-search vector (title weight A + summary weight B).
+   * Read-only — Postgres computes it; never written by the app. Optional here
+   * because it only exists after migration 0002.
+   */
+  fts?: string | null;
   created_at: string;
 };
 
 export type ArticleInsert = Omit<
   ArticleRow,
-  "id" | "fetched_at" | "created_at"
+  "id" | "fetched_at" | "created_at" | "fts"
 > & {
   id?: string;
   fetched_at?: string;

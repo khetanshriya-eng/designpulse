@@ -8,7 +8,7 @@
  * the same shape to JSON.
  */
 import { createServiceClient } from "@/lib/db/client";
-import { SOURCES } from "@/data/sources";
+import { SOURCES, sourcePriority } from "@/data/sources";
 import { fetchSource, enrichBatch } from "@/lib/fetcher";
 import type { SourceRow, ArticleInsert } from "@/lib/db/types";
 import type { EnrichedItem } from "@/lib/fetcher";
@@ -75,6 +75,7 @@ async function syncSourcesFromCode(log: Logger): Promise<void> {
     swatch: s.swatch,
     youtube_channel_id: s.youtubeChannelId ?? null,
     is_active: true,
+    priority: sourcePriority(s.slug),
   }));
   const { error, count } = await supabase
     .from("sources")
@@ -102,6 +103,7 @@ async function loadSources(opts: FetchOptions): Promise<SourceRow[]> {
       swatch: s.swatch,
       youtube_channel_id: null,
       is_active: true,
+      priority: sourcePriority(s.slug),
       created_at: "",
       updated_at: "",
     }));

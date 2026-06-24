@@ -170,3 +170,45 @@ export const CATEGORY_META: Record<
 
 export const sourceById = (id: string) =>
   SOURCES.find((s) => s.id === id) ?? SOURCES[0];
+
+/**
+ * Curation priority tiers. This is the single source of truth — the DB
+ * `sources.priority` column is populated from here on each pipeline run, and
+ * the curator (src/lib/curate/pick.ts) reads it directly so reweighting works
+ * the moment code deploys, with no DB dependency.
+ *
+ *   Tier 1 — core design. Dominates the hero + must-reads.
+ *   Tier 2 — relevant but secondary: product, AI, quality long-form tech.
+ *   Tier 3 — tech-news / gadget / deals. Stays in the feed, NEVER featured.
+ *
+ * Default is derived from category; a few sources override their category
+ * default (e.g. design newsletters living in the general "newsletters" bucket).
+ */
+const PRIORITY_BY_CATEGORY: Record<SourceCategory, 1 | 2 | 3> = {
+  "design-tools": 1,
+  "ux-thinking": 1,
+  inspiration: 1,
+  youtube: 1,
+  podcasts: 1,
+  product: 2,
+  "ai-tools": 2,
+  newsletters: 2,
+  "tech-news": 3,
+};
+
+const PRIORITY_OVERRIDES: Record<string, 1 | 2 | 3> = {
+  // Design-focused, but filed under the general "newsletters" category.
+  tldrdesign: 1,
+  uxdw: 1,
+  figmalion: 1,
+  // Quality long-form tech — allowed into must-reads, unlike the gadget feeds.
+  arstech: 2,
+  // General VC/tech podcast, not design craft.
+  a16zpod: 2,
+};
+
+export function sourcePriority(slug: string): 1 | 2 | 3 {
+  if (slug in PRIORITY_OVERRIDES) return PRIORITY_OVERRIDES[slug];
+  const src = SOURCES.find((s) => s.slug === slug);
+  return src ? PRIORITY_BY_CATEGORY[src.category] : 2;
+}

@@ -8,7 +8,7 @@
  * Re-running is safe: upserts on `slug`.
  */
 import { createServiceClient } from "../src/lib/db/client";
-import { SOURCES } from "../src/data/sources";
+import { SOURCES, sourcePriority } from "../src/data/sources";
 import type { SourceInsert } from "../src/lib/db/types";
 
 async function main() {
@@ -26,6 +26,7 @@ async function main() {
     swatch: s.swatch,
     youtube_channel_id: s.youtubeChannelId ?? null,
     is_active: true,
+    priority: sourcePriority(s.slug),
   }));
 
   console.log(`Seeding ${rows.length} sources...`);
