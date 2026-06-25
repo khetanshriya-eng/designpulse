@@ -113,7 +113,10 @@ export const SOURCES: Source[] = [
   // Tech News
   { id: "verge", name: "The Verge", slug: "verge", url: "https://theverge.com", feedUrl: "https://theverge.com/rss/index.xml", type: "publication", category: "tech-news", initials: "Vg", swatch: "thumb-grad-7" },
   { id: "9to5google", name: "9to5Google", slug: "9to5google", url: "https://9to5google.com", feedUrl: "https://9to5google.com/feed", type: "blog", category: "tech-news", initials: "9G", swatch: "thumb-grad-5" },
-  { id: "hn", name: "Hacker News", slug: "hn", url: "https://news.ycombinator.com", feedUrl: "https://news.ycombinator.com/rss", type: "forum", category: "tech-news", initials: "HN", swatch: "thumb-grad-9" },
+  // preferMosaic: HN links out to GitHub/blogs/PDFs whose og:images are
+  // unpredictable junk (GitHub PR social cards, page screenshots), so always
+  // render the clean pixel mosaic instead of whatever was scraped.
+  { id: "hn", name: "Hacker News", slug: "hn", url: "https://news.ycombinator.com", feedUrl: "https://news.ycombinator.com/rss", type: "forum", category: "tech-news", initials: "HN", swatch: "thumb-grad-9", preferMosaic: true },
   { id: "techcrunch", name: "TechCrunch", slug: "techcrunch", url: "https://techcrunch.com", feedUrl: "https://techcrunch.com/feed", type: "publication", category: "tech-news", initials: "TC", swatch: "thumb-grad-5" },
   { id: "wired", name: "Wired", slug: "wired", url: "https://wired.com", feedUrl: "https://wired.com/feed/rss", type: "publication", category: "tech-news", initials: "Wi", swatch: "thumb-grad-1" },
   { id: "arstech", name: "Ars Technica", slug: "arstech", url: "https://arstechnica.com", feedUrl: "https://arstechnica.com/feed/", type: "publication", category: "tech-news", initials: "Ar", swatch: "thumb-grad-9" },
