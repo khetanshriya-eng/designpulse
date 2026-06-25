@@ -48,6 +48,7 @@ export const SOURCES: Source[] = [
   { id: "sidebar", name: "Sidebar.io", slug: "sidebar", url: "https://sidebar.io", feedUrl: "https://sidebar.io/feed.xml", type: "newsletter", category: "design-tools", initials: "Sb", swatch: "thumb-grad-3" },
   { id: "uxtools", name: "UX Tools", slug: "uxtools", url: "https://www.uxtools.co/", type: "blog", category: "design-tools", initials: "Ux", swatch: "thumb-grad-5" },
   { id: "prototypr", name: "Prototypr.io", slug: "prototypr", url: "https://prototypr.io", feedUrl: "https://prototypr.io/feed.xml", type: "newsletter", category: "design-tools", initials: "Pr", swatch: "thumb-grad-7" },
+  { id: "csstricks", name: "CSS-Tricks", slug: "csstricks", url: "https://css-tricks.com", feedUrl: "https://css-tricks.com/feed/", type: "blog", category: "design-tools", initials: "CT", swatch: "thumb-grad-5" },
 
   // Design — Thinking & Craft
   { id: "uxdesigncc", name: "UX Collective", slug: "uxdesigncc", url: "https://uxdesign.cc", feedUrl: "https://uxdesign.cc/feed", type: "publication", category: "ux-thinking", initials: "UX", swatch: "thumb-grad-1" },
@@ -60,6 +61,12 @@ export const SOURCES: Source[] = [
   { id: "dense", name: "Dense Discovery", slug: "dense", url: "https://densediscovery.com", type: "newsletter", category: "ux-thinking", initials: "Dd", swatch: "thumb-grad-10" },
   // itsnicethat — RSS feed dropped (404). Removed 2026-05-25.
   { id: "femke-blog", name: "Femke.design", slug: "femke-blog", url: "https://femke.design", type: "newsletter", category: "ux-thinking", initials: "Fe", swatch: "thumb-grad-8" },
+  // Added 2026-06-25 — feeds validated live (active, design-relevant) to make
+  // the feed more design-centric.
+  { id: "uxplanet", name: "UX Planet", slug: "uxplanet", url: "https://uxplanet.org", feedUrl: "https://uxplanet.org/feed", type: "publication", category: "ux-thinking", initials: "UP", swatch: "thumb-grad-1" },
+  { id: "tubik", name: "Tubik Studio", slug: "tubik", url: "https://blog.tubikstudio.com", feedUrl: "https://blog.tubikstudio.com/feed/", type: "blog", category: "ux-thinking", initials: "Tk", swatch: "thumb-grad-6" },
+  { id: "juliezhuo", name: "The Looking Glass", slug: "juliezhuo", url: "https://lg.substack.com", feedUrl: "https://lg.substack.com/feed", type: "newsletter", category: "ux-thinking", initials: "JZ", swatch: "thumb-grad-7" },
+  { id: "alistapart", name: "A List Apart", slug: "alistapart", url: "https://alistapart.com", feedUrl: "https://alistapart.com/main/feed/", type: "publication", category: "ux-thinking", initials: "AL", swatch: "thumb-grad-2" },
 
   // Inspiration
   { id: "mobbin", name: "Mobbin", slug: "mobbin", url: "https://mobbin.com", type: "gallery", category: "inspiration", initials: "Mo", swatch: "thumb-grad-1" },
@@ -101,6 +108,7 @@ export const SOURCES: Source[] = [
   { id: "stratechery", name: "Stratechery", slug: "stratechery", url: "https://stratechery.com", feedUrl: "https://stratechery.com/feed/", type: "newsletter", category: "product", initials: "St", swatch: "thumb-grad-3" },
   { id: "productdisrupt", name: "Product Disrupt", slug: "productdisrupt", url: "https://productdisrupt.com", type: "newsletter", category: "product", initials: "PD", swatch: "thumb-grad-7" },
   { id: "producthunt", name: "Product Hunt", slug: "producthunt", url: "https://producthunt.com", feedUrl: "https://producthunt.com/feed", type: "forum", category: "product", initials: "PH", swatch: "thumb-grad-4" },
+  { id: "intercom", name: "Intercom", slug: "intercom", url: "https://www.intercom.com/blog", feedUrl: "https://www.intercom.com/blog/feed/", type: "blog", category: "product", initials: "Ic", swatch: "thumb-grad-3" },
 
   // Tech News
   { id: "verge", name: "The Verge", slug: "verge", url: "https://theverge.com", feedUrl: "https://theverge.com/rss/index.xml", type: "publication", category: "tech-news", initials: "Vg", swatch: "thumb-grad-7" },

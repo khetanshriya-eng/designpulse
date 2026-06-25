@@ -29,7 +29,7 @@ type Score = { row: Candidate; score: number; reasons: string[] };
  * longer out-score a design article. Tier 3 gets nothing and is additionally
  * barred from featuring (see FEATURABLE_TIER below).
  */
-const TIER_BONUS: Record<1 | 2 | 3, number> = { 1: 16, 2: 6, 3: 0 };
+const TIER_BONUS: Record<1 | 2 | 3, number> = { 1: 25, 2: 5, 3: 0 };
 
 /**
  * Small editorial nudge so marquee names lead *within* their tier. Secondary

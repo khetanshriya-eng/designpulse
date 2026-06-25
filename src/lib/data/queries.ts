@@ -18,6 +18,7 @@ import {
   type ArticleWithSource,
 } from "./adapter";
 import { isOffBrand } from "@/lib/content/filter";
+import { sourcePriority } from "@/data/sources";
 import type { Article } from "@/data/articles";
 
 const SELECT = "*, sources(*)";
@@ -393,7 +394,7 @@ export const getRecentHeadlines = unstable_cache(
     const sb = createPublicClient();
     const { data, error } = await sb
       .from("articles")
-      .select("title, original_url")
+      .select("title, original_url, sources(slug)")
       .not("summary", "is", null)
       .neq("summary", "")
       .not("title", "is", null)
@@ -402,11 +403,31 @@ export const getRecentHeadlines = unstable_cache(
       .not("title", "ilike", "www.%")
       .not("published_at", "is", null)
       .order("published_at", { ascending: false, nullsFirst: false })
-      // Over-fetch so the content filter below can't starve the ticker.
-      .limit(limit * 2);
+      // Over-fetch so the design-only filter can't starve the ticker.
+      .limit(limit * 6);
     if (error) throw error;
-    return ((data ?? []) as { title: string; original_url: string }[])
-      .filter((r) => !isOffBrand(r.title, r.original_url))
+
+    type Row = {
+      title: string;
+      original_url: string;
+      sources: { slug: string } | { slug: string }[] | null;
+    };
+    const rows = (data ?? []) as Row[];
+    const slugOf = (r: Row) =>
+      Array.isArray(r.sources) ? r.sources[0]?.slug : r.sources?.slug;
+
+    // The ticker is the first thing on every page — make it a pure DESIGN
+    // signal. Lead with tier-1 (design) headlines; fall back to tier-2 only if
+    // there aren't enough; never show tier-3 (tech-news/gadget) or off-brand.
+    const clean = rows.filter((r) => !isOffBrand(r.title, r.original_url));
+    const byTier = (max: number) =>
+      clean.filter((r) => {
+        const s = slugOf(r);
+        return s ? sourcePriority(s) <= max : false;
+      });
+    let picked = byTier(1);
+    if (picked.length < limit) picked = byTier(2);
+    return picked
       .slice(0, limit)
       .map((r) => ({ title: r.title, url: r.original_url }));
   },

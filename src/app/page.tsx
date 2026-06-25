@@ -30,7 +30,6 @@ export default async function Home() {
     designTools,
     aiTools,
     uxThinking,
-    techNews,
     productItems,
     inspirationItems,
     podcastItems,
@@ -39,7 +38,6 @@ export default async function Home() {
     getByCategory("design-tools", 2, excludeFromLatest),
     getByCategory("ai-tools", 2, excludeFromLatest),
     getByCategory("ux-thinking", 2, excludeFromLatest),
-    getByCategory("tech-news", 2, excludeFromLatest),
     getByCategory("product", 2, [pickId].filter((x): x is string => !!x)),
     getByCategory("inspiration", 4),
     getByCategory("podcasts", 2),
@@ -93,12 +91,14 @@ export default async function Home() {
       {/* Category previews — only blocks that filled their 2-card preview are
           shown, laid out 2-up. An odd trailing block spans full width so
           there's never a lonely card or an empty half. */}
+      {/* Category previews — design-led. Tech-news is intentionally NOT
+          featured here (it stays in the feed + its own /category page) so the
+          homepage reads as a design briefing, not a tech feed. */}
       <CategorySections
         blocks={[
           { category: "design-tools", articles: designTools },
           { category: "ux-thinking", articles: uxThinking },
           { category: "ai-tools", articles: aiTools },
-          { category: "tech-news", articles: techNews },
         ]}
       />
 
