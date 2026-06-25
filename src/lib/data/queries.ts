@@ -403,8 +403,8 @@ export const getRecentHeadlines = unstable_cache(
       .not("title", "ilike", "www.%")
       .not("published_at", "is", null)
       .order("published_at", { ascending: false, nullsFirst: false })
-      // Over-fetch so the design-only filter can't starve the ticker.
-      .limit(limit * 6);
+      // Fetch a deep recent pool so the design-only filter has plenty to pick.
+      .limit(150);
     if (error) throw error;
 
     type Row = {
@@ -417,21 +417,18 @@ export const getRecentHeadlines = unstable_cache(
       Array.isArray(r.sources) ? r.sources[0]?.slug : r.sources?.slug;
 
     // The ticker is the first thing on every page — make it a pure DESIGN
-    // signal. Lead with tier-1 (design) headlines; fall back to tier-2 only if
-    // there aren't enough; never show tier-3 (tech-news/gadget) or off-brand.
-    const clean = rows.filter((r) => !isOffBrand(r.title, r.original_url));
-    const byTier = (max: number) =>
-      clean.filter((r) => {
-        const s = slugOf(r);
-        return s ? sourcePriority(s) <= max : false;
-      });
-    let picked = byTier(1);
-    if (picked.length < limit) picked = byTier(2);
+    // signal: tier-1 (design) sources ONLY. No tech-news/business/AI, even if
+    // that means a shorter ticker (it loops). Off-brand deal items excluded.
+    const picked = rows.filter((r) => {
+      if (isOffBrand(r.title, r.original_url)) return false;
+      const s = slugOf(r);
+      return s ? sourcePriority(s) === 1 : false;
+    });
     return picked
       .slice(0, limit)
       .map((r) => ({ title: r.title, url: r.original_url }));
   },
-  ["recent-headlines"],
+  ["recent-headlines-design"],
   { revalidate: 600 }
 );
 

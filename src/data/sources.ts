@@ -209,10 +209,10 @@ const PRIORITY_OVERRIDES: Record<string, 1 | 2 | 3> = {
   tldrdesign: 1,
   uxdw: 1,
   figmalion: 1,
-  // Quality long-form tech — allowed into must-reads, unlike the gadget feeds.
-  arstech: 2,
-  // General VC/tech podcast, not design craft.
+  // General VC/tech podcast, not design craft — keep out of design surfaces.
   a16zpod: 2,
+  // (Ars Technica intentionally left at its tech-news default of tier 3 — it's
+  // quality but it's still tech, not design, so it never features.)
 };
 
 export function sourcePriority(slug: string): 1 | 2 | 3 {
