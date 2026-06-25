@@ -78,6 +78,14 @@ export function ArticleImage({
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : undefined}
           onError={() => setFailed(true)}
+          onLoad={(e) => {
+            // Some sources (HN-linked sites, hotlink-blocked CDNs) return a 1x1
+            // tracking pixel or a tiny "no image" graphic with HTTP 200 — so
+            // onError never fires. Treat an effectively-empty image as missing
+            // and fall back to the pixel mosaic, like every other card.
+            const img = e.currentTarget;
+            if (img.naturalWidth < 32 || img.naturalHeight < 32) setFailed(true);
+          }}
           className="absolute inset-0 w-full h-full object-cover"
         />
       </div>
