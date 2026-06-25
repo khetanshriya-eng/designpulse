@@ -553,6 +553,87 @@ export const getFeedArticles = unstable_cache(
   { revalidate: 600 }
 );
 
+/**
+ * Past editions for /archive — straight off the real `editions` table (so the
+ * links always resolve, unlike grouping articles by published date). Each entry
+ * carries the hero's title + source and a story count (articles published that
+ * UTC day, as a "how busy was that day" proxy). Paginated.
+ */
+export type ArchiveEdition = {
+  date: string;
+  count: number;
+  heroTitle: string | null;
+  heroSource: string | null;
+};
+
+export const getArchiveEditions = unstable_cache(
+  async (
+    limit = 20,
+    offset = 0
+  ): Promise<{ editions: ArchiveEdition[]; total: number }> => {
+    const sb = createPublicClient();
+    const { data, count, error } = await sb
+      .from("editions")
+      .select("edition_date, hero_article_id", { count: "exact" })
+      .order("edition_date", { ascending: false })
+      .range(offset, offset + limit - 1);
+    if (error) throw error;
+    const rows = (data ?? []) as {
+      edition_date: string;
+      hero_article_id: string | null;
+    }[];
+
+    // Batch-fetch hero title + source name for the rows on this page.
+    const heroIds = rows
+      .map((r) => r.hero_article_id)
+      .filter((x): x is string => !!x);
+    const heroMap = new Map<string, { title: string; source: string | null }>();
+    if (heroIds.length) {
+      const { data: heroes } = await sb
+        .from("articles")
+        .select("id, title, sources(name)")
+        .in("id", heroIds);
+      for (const h of (heroes ?? []) as {
+        id: string;
+        title: string;
+        sources: { name: string } | { name: string }[] | null;
+      }[]) {
+        const s = Array.isArray(h.sources) ? h.sources[0] : h.sources;
+        heroMap.set(h.id, { title: h.title, source: s?.name ?? null });
+      }
+    }
+
+    // Per-edition story count (parallel, cheap head:count queries).
+    const counts = await Promise.all(
+      rows.map(async (r) => {
+        const { count: c } = await sb
+          .from("articles")
+          .select("*", { count: "exact", head: true })
+          .not("summary", "is", null)
+          .neq("summary", "")
+          .not("title", "is", null)
+          .not("title", "ilike", "http%")
+          .gte("published_at", `${r.edition_date}T00:00:00.000Z`)
+          .lte("published_at", `${r.edition_date}T23:59:59.999Z`);
+        return c ?? 0;
+      })
+    );
+
+    const editions: ArchiveEdition[] = rows.map((r, i) => {
+      const hero = r.hero_article_id ? heroMap.get(r.hero_article_id) : null;
+      return {
+        date: r.edition_date,
+        count: counts[i],
+        heroTitle: hero?.title ?? null,
+        heroSource: hero?.source ?? null,
+      };
+    });
+    return { editions, total: count ?? 0 };
+  },
+  ["archive-editions"],
+  { revalidate: 600 }
+);
+
 /** Total article count for the nav "N stories curated" meter. Cached (10 min). */
 export const getArticleCount = unstable_cache(
   async (): Promise<number> => {

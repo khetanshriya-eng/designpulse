@@ -5,6 +5,7 @@ import { EditorsPick } from "@/components/EditorsPick";
 import { CategoryGrid } from "@/components/CategoryGrid";
 import { InspirationStrip } from "@/components/InspirationStrip";
 import { NewsletterCTA } from "@/components/NewsletterCTA";
+import { CopyLink } from "@/components/CopyLink";
 import { SectionHeader } from "@/components/SectionHeader";
 import { getByCategory, getEdition, getLatest } from "@/lib/data/queries";
 import { SOURCES, type SourceCategory } from "@/data/sources";
@@ -47,6 +48,14 @@ export default async function Home() {
 
   return (
     <>
+      {/* Share today's edition — a Designator URL, so it brings people back. */}
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 flex justify-end">
+        <CopyLink
+          url={`https://designatorapp.com/edition/${edition.date}`}
+          label="Share today's edition"
+        />
+      </div>
+
       {/* Hero */}
       {edition.hero && (
         <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 pb-10">

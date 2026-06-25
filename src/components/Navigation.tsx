@@ -78,6 +78,12 @@ export async function Navigation() {
 
             <div className="flex items-center gap-1 sm:gap-3">
               <Link
+                href="/archive"
+                className="hidden sm:inline-block font-pixel text-[14px] opacity-80 hover:opacity-100 transition-opacity"
+              >
+                Archive
+              </Link>
+              <Link
                 href="/sources"
                 className="hidden sm:inline-block font-pixel text-[14px] opacity-80 hover:opacity-100 transition-opacity"
               >

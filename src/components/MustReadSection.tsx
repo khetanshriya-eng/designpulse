@@ -5,6 +5,7 @@ import { SourceBadge } from "./SourceBadge";
 import { CategoryDot } from "./CategoryDot";
 import { ArticleImage } from "./ArticleImage";
 import { PixelCard } from "./PixelCard";
+import { CardCopyOverlay } from "./CopyLink";
 import { SectionHeader } from "./SectionHeader";
 import { formatRelativeTime, formatReadTime } from "@/lib/format";
 
@@ -71,11 +72,12 @@ function PrimaryCard({ article }: { article: Article }) {
 function SecondaryCard({ article }: { article: Article }) {
   const readTime = formatReadTime(article);
   return (
+    <div className="relative group flex-1">
     <Link
       href={article.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group surface-card flex flex-col flex-1"
+      className="surface-card flex flex-col h-full"
     >
       <span
         className="card-stripe"
@@ -106,5 +108,7 @@ function SecondaryCard({ article }: { article: Article }) {
         </div>
       </div>
     </Link>
+      <CardCopyOverlay url={article.url} />
+    </div>
   );
 }

@@ -4,16 +4,18 @@ import { CATEGORY_META } from "@/data/sources";
 import { SourceBadge } from "./SourceBadge";
 import { CategoryDot } from "./CategoryDot";
 import { ArticleImage } from "./ArticleImage";
+import { CardCopyOverlay } from "./CopyLink";
 import { formatRelativeTime, formatReadTime } from "@/lib/format";
 
 export function HeroCard({ article }: { article: Article }) {
   const readTime = formatReadTime(article);
   return (
+    <div className="relative group">
     <Link
       href={article.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group surface-card block"
+      className="surface-card block"
     >
       <span
         className="card-stripe"
@@ -56,5 +58,7 @@ export function HeroCard({ article }: { article: Article }) {
         </div>
       </div>
     </Link>
+      <CardCopyOverlay url={article.url} />
+    </div>
   );
 }

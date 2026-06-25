@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { CATEGORY_META, type SourceCategory } from "@/data/sources";
+import { CardCopyOverlay } from "./CopyLink";
 
 /**
  * The pixel card surface used across the homepage grids. Renders an external
@@ -23,18 +24,23 @@ export function PixelCard({
   children: ReactNode;
 }) {
   return (
-    <Link
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`group surface-card flex flex-col ${className}`}
-    >
-      <span
-        className="card-stripe"
-        style={{ background: CATEGORY_META[category].stripeVar }}
-        aria-hidden
-      />
-      {children}
-    </Link>
+    // Wrapper is the `group` + positioning context so the copy chip can sit as
+    // a sibling overlay (valid markup — not a button nested inside the anchor).
+    <div className={`relative group ${className}`}>
+      <Link
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="surface-card flex flex-col h-full"
+      >
+        <span
+          className="card-stripe"
+          style={{ background: CATEGORY_META[category].stripeVar }}
+          aria-hidden
+        />
+        {children}
+      </Link>
+      <CardCopyOverlay url={href} />
+    </div>
   );
 }

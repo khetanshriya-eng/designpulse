@@ -4,6 +4,7 @@ import { SourceBadge } from "./SourceBadge";
 import { CategoryDot } from "./CategoryDot";
 import { ArticleImage } from "./ArticleImage";
 import { PixelCard } from "./PixelCard";
+import { CardCopyOverlay } from "./CopyLink";
 import { formatRelativeTime, formatReadTime } from "@/lib/format";
 
 type Variant = "default" | "horizontal" | "compact" | "medium";
@@ -85,40 +86,44 @@ function HorizontalCard({ article }: { article: Article }) {
   const readTime = formatReadTime(article);
   return (
     // Fixed-height row (image fills, text clamped) so every item in the
-    // Product / Podcasts lists is the same height.
-    <Link
-      href={article.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group flex gap-4 py-4 border-b border-rule first:border-t items-stretch min-h-[132px]"
-    >
-      <div className="w-28 sm:w-32 shrink-0 relative overflow-hidden">
-        <ArticleImage article={article} fill size="sm" />
-      </div>
-      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-        <div className="flex items-center gap-3">
-          <SourceBadge sourceId={article.sourceId} />
-          <CategoryDot category={article.category} />
+    // Product / Podcasts lists is the same height. Border lives on the wrapper
+    // so first:border-t still works and the copy chip can sit as a sibling.
+    <div className="relative group border-b border-rule first:border-t">
+      <Link
+        href={article.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex gap-4 py-4 items-stretch min-h-[132px]"
+      >
+        <div className="w-28 sm:w-32 shrink-0 relative overflow-hidden">
+          <ArticleImage article={article} fill size="sm" />
         </div>
-        <h3 className="font-heading text-[1.1rem] sm:text-[1.2rem] leading-[1.45] text-ink group-hover:text-accent transition-colors line-clamp-2">
-          {article.title}
-        </h3>
-        {article.summary && (
-          <p className="hidden sm:block text-[13px] leading-relaxed text-ink-muted line-clamp-2">
-            {article.summary}
-          </p>
-        )}
-        <div className="flex items-center gap-2 text-[11px] text-ink-subtle mt-auto">
-          <span>{formatRelativeTime(article.publishedAt)}</span>
-          {readTime && (
-            <>
-              <span aria-hidden>·</span>
-              <span>{readTime}</span>
-            </>
+        <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+          <div className="flex items-center gap-3">
+            <SourceBadge sourceId={article.sourceId} />
+            <CategoryDot category={article.category} />
+          </div>
+          <h3 className="font-heading text-[1.1rem] sm:text-[1.2rem] leading-[1.45] text-ink group-hover:text-accent transition-colors line-clamp-2">
+            {article.title}
+          </h3>
+          {article.summary && (
+            <p className="hidden sm:block text-[13px] leading-relaxed text-ink-muted line-clamp-2">
+              {article.summary}
+            </p>
           )}
+          <div className="flex items-center gap-2 text-[11px] text-ink-subtle mt-auto">
+            <span>{formatRelativeTime(article.publishedAt)}</span>
+            {readTime && (
+              <>
+                <span aria-hidden>·</span>
+                <span>{readTime}</span>
+              </>
+            )}
+          </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+      <CardCopyOverlay url={article.url} />
+    </div>
   );
 }
 

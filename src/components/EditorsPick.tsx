@@ -2,17 +2,18 @@ import Link from "next/link";
 import type { Article } from "@/data/articles";
 import { SourceBadge } from "./SourceBadge";
 import { ArticleImage } from "./ArticleImage";
+import { CardCopyOverlay } from "./CopyLink";
 import { formatReadTime } from "@/lib/format";
 
 export function EditorsPick({ article }: { article: Article }) {
   const readTime = formatReadTime(article);
   return (
-    <section aria-labelledby="editors-pick-heading">
+    <section aria-labelledby="editors-pick-heading" className="relative group">
       <Link
         href={article.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="group relative block surface-card"
+        className="relative block surface-card"
       >
         <ArticleImage
           article={article}
@@ -46,6 +47,7 @@ export function EditorsPick({ article }: { article: Article }) {
           </div>
         </div>
       </Link>
+      <CardCopyOverlay url={article.url} />
     </section>
   );
 }
