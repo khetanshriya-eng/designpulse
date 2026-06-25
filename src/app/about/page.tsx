@@ -10,11 +10,9 @@ export const metadata: Metadata = {
 
 const SOURCE_COUNT = SOURCES.length;
 
-// TODO: replace with Aditya's real profile URLs.
 const SOCIALS: { label: string; href: string }[] = [
-  { label: "Twitter / X", href: "#" },
-  { label: "LinkedIn", href: "#" },
-  { label: "Portfolio", href: "#" },
+  { label: "LinkedIn", href: "https://www.linkedin.com/in/aditya-singh-249a381b4/" },
+  { label: "Instagram", href: "https://www.instagram.com/thisweek.thatfeeling/" },
 ];
 
 const STEPS = [
