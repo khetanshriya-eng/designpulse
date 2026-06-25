@@ -166,6 +166,7 @@ export async function POST(req: NextRequest) {
     }
 
     const detail = (await res.text().catch(() => "")).toLowerCase();
+    const diag = req.nextUrl.searchParams.get("diag") ? { detail } : {};
 
     // Already-subscribed is a success from the user's POV. Buttondown returns
     // 400 (or 409) for a duplicate; match on any of its wordings rather than a
@@ -180,12 +181,24 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Buttondown also 400s an address it considers invalid/undeliverable
+    // (e.g. reserved domains). Tell the user it's their email, not a glitch.
+    const looksInvalid =
+      res.status === 400 &&
+      /invalid|deliverab|disposab|not a valid|valid email|bounce/.test(detail);
+    if (looksInvalid) {
+      return Response.json(
+        { error: "That email looks invalid — double-check it?", code: res.status, ...diag },
+        { status: 400 }
+      );
+    }
+
     // Anything else is a real failure. Surface the upstream status (not the
     // body) so the cause is diagnosable from the network tab without leaking
     // Buttondown internals.
     log.warn("buttondown subscribe error", { status: res.status, detail });
     return Response.json(
-      { error: "Something went wrong. Please try again.", code: res.status },
+      { error: "Something went wrong. Please try again.", code: res.status, ...diag },
       { status: 400 }
     );
   } catch (err) {
