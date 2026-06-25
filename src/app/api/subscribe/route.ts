@@ -42,6 +42,70 @@ function validEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+/**
+ * Send a branded welcome via Resend (verified @designatorapp.com domain).
+ * Buttondown doesn't email new API-added "regular" subscribers, so this is
+ * what makes a signup feel acknowledged. Best-effort: logs on failure, never
+ * throws into the signup response.
+ */
+async function sendWelcomeEmail(email: string): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    log.warn("welcome email skipped — no RESEND_API_KEY");
+    return;
+  }
+  const from =
+    process.env.RESEND_FROM_EMAIL ?? "Designator <hello@designatorapp.com>";
+
+  const text = [
+    "You're in. ✦",
+    "",
+    "Each morning you'll get Designator — the day's 7 best design & product",
+    "stories, summarized so you're current in five minutes.",
+    "",
+    "Your first edition lands tomorrow. Today's is already live:",
+    "https://designatorapp.com",
+    "",
+    "— Aditya, Confused Designer",
+  ].join("\n");
+
+  const html = `<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:480px;margin:0 auto;color:#1a1340;border:3px solid #1a1340;">
+  <div style="background:#5b3df5;color:#d4ff3f;font-weight:800;font-size:26px;letter-spacing:-0.5px;padding:18px 24px;">designator</div>
+  <div style="padding:24px;">
+    <h1 style="font-size:20px;margin:0 0 12px;">You're in. <span style="color:#5b3df5;">✦</span></h1>
+    <p style="font-size:15px;line-height:1.6;color:#5c5470;margin:0 0 14px;">Each morning you'll get the day's 7 best design &amp; product stories, summarized so you're current in five minutes.</p>
+    <p style="font-size:15px;line-height:1.6;color:#5c5470;margin:0 0 20px;">Your first edition lands tomorrow. Today's is already live:</p>
+    <a href="https://designatorapp.com" style="display:inline-block;background:#d4ff3f;color:#1a1340;font-weight:700;text-decoration:none;padding:10px 18px;border:2px solid #1a1340;">Read today&rsquo;s edition →</a>
+    <p style="font-size:13px;color:#9b93a8;margin:24px 0 0;">— Aditya, Confused Designer</p>
+  </div>
+</div>`;
+
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from,
+        to: email,
+        subject: "✦ Welcome to Designator",
+        text,
+        html,
+      }),
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      log.warn("welcome email not delivered", { status: res.status, detail });
+    } else {
+      log.info("welcome email sent", { to: email });
+    }
+  } catch (err) {
+    log.warn("welcome email threw", { error: (err as Error).message });
+  }
+}
+
 export async function POST(req: NextRequest) {
   let body: { email?: string; website?: string };
   try {
@@ -93,9 +157,11 @@ export async function POST(req: NextRequest) {
     });
 
     if (res.status === 201) {
+      // Best-effort welcome via Resend — never block/fail the signup on it.
+      await sendWelcomeEmail(email);
       return Response.json({
         success: true,
-        message: "You're in. First edition lands tomorrow morning.",
+        message: "You're in — check your inbox. First edition lands tomorrow morning.",
       });
     }
 
