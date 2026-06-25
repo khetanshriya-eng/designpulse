@@ -152,6 +152,10 @@ export async function POST(req: NextRequest) {
       headers: {
         Authorization: `Token ${apiKey}`,
         "Content-Type": "application/json",
+        // This form is a trusted source (honeypot + per-IP rate limit +
+        // validation above), so bypass Buttondown's account Firewall, which
+        // otherwise blocks these server-side signups ("subscriber_blocked").
+        "X-Buttondown-Bypass-Firewall": "true",
       },
       body: JSON.stringify({ email_address: email, type: "regular" }),
     });
