@@ -1,13 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Pixelify_Sans, Jersey_10, Space_Mono } from "next/font/google";
-import { headers } from "next/headers";
 import "./globals.css";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { ScrollTop } from "@/components/ScrollTop";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
-import { pickTheme } from "@/lib/theme";
 
 // Pixel face — chrome accents (logo, badges, kickers, nav).
 const pixel = Pixelify_Sans({
@@ -66,39 +64,36 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Pick theme server-side using Vercel's edge-injected geo headers so the
-  // HTML lands pre-themed (no client flash, no localStorage).
-  const h = await headers();
-  const lat = parseFloat(h.get("x-vercel-ip-latitude") ?? "");
-  const lng = parseFloat(h.get("x-vercel-ip-longitude") ?? "");
-  const theme = pickTheme(
-    Number.isFinite(lat) ? lat : null,
-    Number.isFinite(lng) ? lng : null
-  );
-
+  // Theme is resolved on the CLIENT (pre-paint inline script below), NOT from
+  // request headers — that's what lets every page be statically rendered + ISR
+  // + CDN-cached (no per-request server work just to pick a theme). The static
+  // HTML ships with a neutral default; the script corrects it before first
+  // paint, so there's no flash. suppressHydrationWarning because that script
+  // mutates <html> before React hydrates.
   return (
     <html
       lang="en"
-      data-theme={theme}
-      data-auto-theme={theme}
+      data-theme="light"
+      data-auto-theme="light"
+      suppressHydrationWarning
       className={`${pixel.variable} ${jersey.variable} ${mono.variable} h-full antialiased`}
     >
       <head>
         {/*
-          Apply a saved manual theme override before first paint, so a user who
-          flipped the toggle doesn't see a flash of the geo-picked theme. Kept
-          tiny + synchronous in <head>. data-auto-theme retains the geo pick so
-          the toggle's "reset to auto" works.
+          Pre-paint, synchronously: derive the auto theme from the visitor's
+          LOCAL time (dark 19:00–06:00), honor a saved manual override, and set
+          both data-theme and data-auto-theme so the toggle's "reset to auto"
+          works. Tiny + blocking in <head> so it lands before first paint.
         */}
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{var t=localStorage.getItem('designator-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}}catch(e){}",
+              "try{var d=document.documentElement,h=new Date().getHours(),a=(h<6||h>=19)?'dark':'light';d.dataset.autoTheme=a;var t=localStorage.getItem('designator-theme');d.dataset.theme=(t==='light'||t==='dark')?t:a;}catch(e){}",
           }}
         />
       </head>

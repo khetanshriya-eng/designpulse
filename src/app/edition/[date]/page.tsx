@@ -22,7 +22,8 @@ import {
 const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 type Params = { date: string };
 
-export const dynamic = "force-dynamic";
+// ISR so the CDN can cache edition pages (theme is client-resolved).
+export const revalidate = 600;
 
 export async function generateMetadata({
   params,

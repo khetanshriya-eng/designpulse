@@ -17,7 +17,8 @@ function isValidCategory(s: string): s is SourceCategory {
 type Params = { slug: string };
 type Search = { page?: string };
 
-export const dynamic = "force-dynamic";
+// ISR so the CDN can cache category pages (theme is client-resolved).
+export const revalidate = 600;
 
 export async function generateMetadata({
   params,

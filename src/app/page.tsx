@@ -10,8 +10,10 @@ import { getByCategory, getEdition, getLatest } from "@/lib/data/queries";
 import { SOURCES, type SourceCategory } from "@/data/sources";
 import type { Article } from "@/data/articles";
 
-// Always render fresh — the data layer reads the live edition.
-export const dynamic = "force-dynamic";
+// ISR: render statically and revalidate every 10 min so Vercel's CDN serves
+// cached HTML (theme is resolved client-side, so no per-request work needed).
+// Matches the data layer's 600s unstable_cache windows.
+export const revalidate = 600;
 
 export default async function Home() {
   const edition = await getEdition();
