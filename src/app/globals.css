@@ -348,21 +348,23 @@ h1, h2, h3, h4, h5, h6 {
   50% { opacity: 0.12; transform: scale(0.3); }
 }
 
-/* Newsletter banner: pixel envelopes fly in from the top-right and post
-   themselves into the mailbox, on a loop. Per-letter delay set inline so they
-   stagger. Disabled by the prefers-reduced-motion block below (global `*`). */
-.mail-fly {
-  animation: mail-fly 3.6s ease-in infinite;
-  animation-delay: var(--fly-delay, 0s);
-  transform-origin: center;
-  will-change: transform, opacity;
+/* Newsletter banner: the envelope mark gently bobs and its ✦ accents twinkle.
+   Subtle by design. Disabled by the prefers-reduced-motion block (global `*`). */
+.cta-bob {
+  animation: cta-bob 4.5s ease-in-out infinite;
+  will-change: transform;
 }
-@keyframes mail-fly {
-  0%   { opacity: 0; transform: translate(74px, -60px) rotate(12deg) scale(1); }
-  18%  { opacity: 1; transform: translate(52px, -42px) rotate(9deg) scale(1); }
-  68%  { opacity: 1; transform: translate(6px, -6px) rotate(0deg) scale(0.86); }
-  86%  { opacity: 0.55; transform: translate(0, 3px) rotate(-3deg) scale(0.5); }
-  100% { opacity: 0; transform: translate(0, 7px) scale(0.34); }
+@keyframes cta-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.cta-twinkle {
+  animation: cta-twinkle var(--tw, 3s) ease-in-out infinite;
+  animation-delay: var(--twd, 0s);
+}
+@keyframes cta-twinkle {
+  0%, 100% { opacity: 0.4; transform: scale(0.82); }
+  50% { opacity: 1; transform: scale(1.12); }
 }
 
 /* Feedback success: face pops in, label rises, pixel sparkles burst out. */
