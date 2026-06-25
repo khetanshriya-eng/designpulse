@@ -170,7 +170,6 @@ export async function POST(req: NextRequest) {
     }
 
     const detail = (await res.text().catch(() => "")).toLowerCase();
-    const diag = req.nextUrl.searchParams.get("diag") ? { detail } : {};
 
     // Already-subscribed is a success from the user's POV. Buttondown returns
     // 400 (or 409) for a duplicate; match on any of its wordings rather than a
@@ -192,7 +191,7 @@ export async function POST(req: NextRequest) {
       /invalid|deliverab|disposab|not a valid|valid email|bounce/.test(detail);
     if (looksInvalid) {
       return Response.json(
-        { error: "That email looks invalid — double-check it?", code: res.status, ...diag },
+        { error: "That email looks invalid — double-check it?", code: res.status },
         { status: 400 }
       );
     }
@@ -202,7 +201,7 @@ export async function POST(req: NextRequest) {
     // Buttondown internals.
     log.warn("buttondown subscribe error", { status: res.status, detail });
     return Response.json(
-      { error: "Something went wrong. Please try again.", code: res.status, ...diag },
+      { error: "Something went wrong. Please try again.", code: res.status },
       { status: 400 }
     );
   } catch (err) {
