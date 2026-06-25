@@ -348,10 +348,9 @@ h1, h2, h3, h4, h5, h6 {
   50% { opacity: 0.12; transform: scale(0.3); }
 }
 
-/* Newsletter banner: Rorschach wallpaper drifts slowly; ✦ sparkles twinkle.
-   Per-element duration/delay/base-rotation come in via CSS vars so each tile
-   moves independently. Disabled wholesale by the prefers-reduced-motion block
-   below (the global `*` rule). */
+/* Newsletter banner: Rorschach inkblots drift slowly. Per-tile duration/delay/
+   base-rotation come in via CSS vars so each moves independently. Disabled
+   wholesale by the prefers-reduced-motion block below (the global `*` rule). */
 .rorschach-float {
   animation: drift var(--drift-dur, 22s) ease-in-out infinite alternate;
   animation-delay: var(--drift-delay, 0s);
@@ -360,14 +359,6 @@ h1, h2, h3, h4, h5, h6 {
 @keyframes drift {
   0%   { transform: translate(0, 0) rotate(var(--rot, 0deg)); }
   100% { transform: translate(8px, -5px) rotate(calc(var(--rot, 0deg) + 3deg)); }
-}
-.pixel-sparkle {
-  animation: twinkle var(--twk-dur, 3s) ease-in-out infinite;
-  animation-delay: var(--twk-delay, 0s);
-}
-@keyframes twinkle {
-  0%, 100% { opacity: 0.35; transform: scale(0.85); }
-  50% { opacity: 1; transform: scale(1.1); }
 }
 
 /* Feedback success: face pops in, label rises, pixel sparkles burst out. */

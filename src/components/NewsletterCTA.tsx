@@ -3,20 +3,17 @@
 import { useState } from "react";
 
 /**
- * Homepage email-capture CTA. Posts to /api/subscribe (Buttondown). Peppy
- * pixel aesthetic: a dark→purple gradient band wallpapered with slowly
- * drifting Rorschach pixel patterns (the same symmetric inkblots used for
- * podcast fallbacks), twinkling ✦ sparkles, and corner confetti. States:
- * idle → loading → success / error. The hidden "website" field is a honeypot.
+ * Homepage email-capture CTA. Posts to /api/subscribe (Buttondown). Styled as
+ * a large article card — flat cream surface, 3px border, hard offset shadow —
+ * so it reads as "a card among cards", not a foreign element. Decoration is a
+ * scatter of slowly drifting Rorschach pixel inkblots on the RIGHT (left kept
+ * clear for text). States: idle → loading → success / error. The hidden
+ * "website" field is a honeypot.
  *
- * Decorative randomness is SEEDED (deterministic) so server and client render
- * identical markup — no hydration mismatch, no Math.random at render time.
+ * Decorative grids are SEEDED (deterministic) so SSR == client — no hydration
+ * mismatch, no Math.random at render.
  */
 type Status = "idle" | "loading" | "success" | "error";
-
-const NAVY = "#1A1340";
-const CREAM = "#FBFAF5";
-const LIME = "#D4FF3F";
 
 // ── Seeded Rorschach generation (deterministic) ──────────────────────────
 function mulberry32(seed: number): () => number {
@@ -29,7 +26,8 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-// Left half random, mirrored right → a symmetric inkblot grid.
+// Left half random, mirrored right → a symmetric inkblot (same idea as the
+// podcast fallback thumbnails / pull-to-refresh loader).
 function makeGrid(size: number, seed: number): boolean[][] {
   const rand = mulberry32(seed);
   const half = Math.ceil(size / 2);
@@ -48,47 +46,21 @@ type Pattern = {
   cell: number;
   color: string;
   top: string;
-  left: string;
+  right: string;
   rot: number;
   op: number;
   dur: string;
   delay: string;
 };
 
-// Hand-placed layout (controlled scatter), seeded pixel grids (organic look).
+// Right-side scatter (left stays clear for the copy). Low opacity → texture.
 const PATTERNS: Pattern[] = [
-  { size: 8, seed: 11, cell: 9,  color: LIME,      top: "6%",  left: "3%",  rot: 0,  op: 0.18, dur: "22s", delay: "0s" },
-  { size: 7, seed: 23, cell: 10, color: "#00E5FF", top: "52%", left: "9%",  rot: 45, op: 0.16, dur: "26s", delay: "-5s" },
-  { size: 8, seed: 7,  cell: 9,  color: "#FF4FD8", top: "12%", left: "80%", rot: 0,  op: 0.20, dur: "19s", delay: "-9s" },
-  { size: 6, seed: 31, cell: 11, color: LIME,      top: "58%", left: "89%", rot: 90, op: 0.15, dur: "23s", delay: "-13s" },
-  { size: 8, seed: 5,  cell: 8,  color: "#00E5FF", top: "76%", left: "42%", rot: 45, op: 0.14, dur: "28s", delay: "-3s" },
-  { size: 7, seed: 19, cell: 9,  color: "#FF4FD8", top: "0%",  left: "54%", rot: 0,  op: 0.16, dur: "24s", delay: "-7s" },
+  { size: 8, seed: 11, cell: 9,  color: "#5B3DF5", top: "8%",  right: "5%",  rot: 0,  op: 0.12, dur: "22s", delay: "0s" },
+  { size: 7, seed: 23, cell: 10, color: "#D4FF3F", top: "48%", right: "13%", rot: 45, op: 0.14, dur: "26s", delay: "-5s" },
+  { size: 8, seed: 7,  cell: 9,  color: "#FF4FD8", top: "18%", right: "24%", rot: 0,  op: 0.12, dur: "19s", delay: "-9s" },
+  { size: 6, seed: 31, cell: 11, color: "#00E5FF", top: "60%", right: "3%",  rot: 90, op: 0.13, dur: "23s", delay: "-13s" },
+  { size: 7, seed: 19, cell: 9,  color: "#5B3DF5", top: "74%", right: "20%", rot: 45, op: 0.11, dur: "27s", delay: "-3s" },
 ].map((p) => ({ ...p, grid: makeGrid(p.size, p.seed) }));
-
-const SPARKLES = [
-  { top: "14%", left: "30%", color: LIME,      size: 16, dur: "2.6s", delay: "0s" },
-  { top: "68%", left: "22%", color: "#FF4FD8", size: 12, dur: "3.2s", delay: "-1s" },
-  { top: "32%", left: "91%", color: "#00E5FF", size: 14, dur: "2.9s", delay: "-1.6s" },
-  { top: "84%", left: "62%", color: LIME,      size: 12, dur: "3.5s", delay: "-0.6s" },
-  { top: "4%",  left: "68%", color: "#FF4FD8", size: 16, dur: "2.4s", delay: "-2.2s" },
-];
-
-type Confetti = {
-  top?: string;
-  left?: string;
-  right?: string;
-  bottom?: string;
-  color: string;
-  size: number;
-};
-const CONFETTI: Confetti[] = [
-  { top: "10px", left: "10px", color: LIME, size: 10 },
-  { top: "26px", left: "22px", color: "#FF4FD8", size: 6 },
-  { top: "12px", right: "14px", color: "#00E5FF", size: 8 },
-  { bottom: "12px", left: "16px", color: "#FF4FD8", size: 8 },
-  { bottom: "10px", right: "12px", color: LIME, size: 10 },
-  { bottom: "24px", right: "26px", color: "#00E5FF", size: 6 },
-];
 
 function RorschachTile({ p }: { p: Pattern }) {
   const px = p.size * p.cell;
@@ -98,7 +70,7 @@ function RorschachTile({ p }: { p: Pattern }) {
       style={
         {
           top: p.top,
-          left: p.left,
+          right: p.right,
           opacity: p.op,
           "--rot": `${p.rot}deg`,
           "--drift-dur": p.dur,
@@ -163,84 +135,33 @@ export function NewsletterCTA() {
         }}
         aria-hidden
       />
-      <div
-        className="relative overflow-hidden border-[3px] p-7 sm:p-10"
-        style={{
-          background: "linear-gradient(135deg, #1A1340 0%, #5B3DF5 50%, #3A1FA0 100%)",
-          borderColor: NAVY,
-          boxShadow: "6px 6px 0 var(--card-shadow)",
-        }}
-      >
-        {/* Drifting Rorschach wallpaper. */}
-        <div className="pointer-events-none absolute inset-0" aria-hidden>
+
+      {/* Flat card — same treatment as every article card, just wider. */}
+      <div className="surface-card relative overflow-hidden p-7 sm:p-10">
+        {/* Drifting Rorschach texture on the right; hidden on mobile so the
+            copy column stays clean. */}
+        <div className="pointer-events-none absolute inset-0 hidden md:block" aria-hidden>
           {PATTERNS.map((p, i) => (
             <RorschachTile key={i} p={p} />
           ))}
         </div>
 
-        {/* Twinkling ✦ sparkles. */}
-        <div className="pointer-events-none absolute inset-0" aria-hidden>
-          {SPARKLES.map((s, i) => (
-            <span
-              key={i}
-              className="pixel-sparkle absolute leading-none"
-              style={
-                {
-                  top: s.top,
-                  left: s.left,
-                  color: s.color,
-                  fontSize: s.size,
-                  "--twk-dur": s.dur,
-                  "--twk-delay": s.delay,
-                } as React.CSSProperties
-              }
-            >
-              ✦
-            </span>
-          ))}
-        </div>
-
-        {/* Corner confetti squares. */}
-        <div className="pointer-events-none absolute inset-0" aria-hidden>
-          {CONFETTI.map((c, i) => (
-            <span
-              key={i}
-              className="absolute"
-              style={{
-                top: c.top,
-                left: c.left,
-                right: c.right,
-                bottom: c.bottom,
-                width: c.size,
-                height: c.size,
-                background: c.color,
-              }}
-            />
-          ))}
-        </div>
-
         {status === "success" ? (
-          <p
-            className="relative font-heading text-[1.6rem] sm:text-[2rem] leading-tight"
-            style={{ color: CREAM }}
-          >
-            <span style={{ color: LIME }} aria-hidden>
+          <p className="relative font-heading text-[1.6rem] sm:text-[2rem] leading-tight text-ink">
+            <span className="text-accent" aria-hidden>
               ✦{" "}
             </span>
             {message}
           </p>
         ) : (
           <div className="relative">
-            <p className="font-pixel text-[12px] uppercase tracking-[0.16em]" style={{ color: LIME }}>
+            <p className="font-pixel text-[12px] uppercase tracking-[0.16em] text-accent">
               Daily briefing
             </p>
-            <h2
-              className="font-heading text-[1.8rem] sm:text-[2.4rem] leading-[1.05] mt-2 max-w-[18ch]"
-              style={{ color: CREAM }}
-            >
+            <h2 className="font-heading text-[2rem] sm:text-[2.3rem] leading-[1.05] text-ink mt-2 max-w-[19ch]">
               Get the top picks in your inbox each morning.
             </h2>
-            <p className="text-[14px] mt-3" style={{ color: "rgba(251,250,245,0.82)" }}>
+            <p className="text-[14px] text-ink-muted mt-3">
               7 curated stories. One email. No spam.
             </p>
 
@@ -259,6 +180,8 @@ export function NewsletterCTA() {
                 aria-hidden="true"
                 className="absolute -left-[9999px] top-0 h-px w-px opacity-0"
               />
+              {/* Cream input — a card inside the card; the dark re-scoped ink
+                  reads on it in both site themes. */}
               <input
                 type="email"
                 required
@@ -266,19 +189,13 @@ export function NewsletterCTA() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@studio.com"
                 aria-label="Email address"
-                className="flex-1 text-[15px] px-4 py-3 border-[3px] outline-none placeholder:text-[#fbfaf580] focus-visible:border-[color:var(--color-cyan)]"
-                style={{ background: NAVY, color: CREAM, borderColor: LIME }}
+                className="flex-1 bg-[color:var(--color-card)] text-ink text-[15px] px-4 py-3 border-[3px] border-[color:var(--card-border)] outline-none placeholder:text-ink-subtle focus-visible:border-accent shadow-[3px_3px_0_var(--card-shadow)]"
               />
+              {/* Lime button — pixel font, hard shadow, card-style hover lift. */}
               <button
                 type="submit"
                 disabled={status === "loading"}
-                className="font-pixel text-[14px] uppercase tracking-[0.06em] px-6 py-3 border-[3px] transition-transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60"
-                style={{
-                  background: LIME,
-                  color: NAVY,
-                  borderColor: NAVY,
-                  boxShadow: "4px 4px 0 #0e0a26",
-                }}
+                className="font-pixel text-[14px] uppercase tracking-[0.06em] px-6 py-3 border-[3px] border-[color:var(--card-border)] text-[#1a1340] bg-[color:var(--color-lime)] shadow-[3px_3px_0_var(--card-shadow)] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_var(--card-shadow)] active:translate-x-0 active:translate-y-0 disabled:opacity-60"
               >
                 {status === "loading" ? "…" : "Subscribe"}
               </button>
@@ -286,8 +203,7 @@ export function NewsletterCTA() {
 
             {status === "error" && (
               <p
-                className="mt-3 font-pixel text-[12px] uppercase tracking-[0.04em]"
-                style={{ color: "#FF8FE0" }}
+                className="mt-3 font-pixel text-[12px] uppercase tracking-[0.04em] text-accent"
                 role="alert"
               >
                 {message}

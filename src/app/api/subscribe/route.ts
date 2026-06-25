@@ -165,17 +165,27 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const detail = await res.text().catch(() => "");
-    if (res.status === 400 && detail.toLowerCase().includes("already")) {
+    const detail = (await res.text().catch(() => "")).toLowerCase();
+
+    // Already-subscribed is a success from the user's POV. Buttondown returns
+    // 400 (or 409) for a duplicate; match on any of its wordings rather than a
+    // single phrase, so this can't fall through to a generic error again.
+    const isDuplicate =
+      (res.status === 400 || res.status === 409) &&
+      /already|exists|duplicate|collision|subscribed/.test(detail);
+    if (isDuplicate) {
       return Response.json({
         success: true,
         message: "You're already subscribed.",
       });
     }
 
+    // Anything else is a real failure. Surface the upstream status (not the
+    // body) so the cause is diagnosable from the network tab without leaking
+    // Buttondown internals.
     log.warn("buttondown subscribe error", { status: res.status, detail });
     return Response.json(
-      { error: "Something went wrong. Please try again." },
+      { error: "Something went wrong. Please try again.", code: res.status },
       { status: 400 }
     );
   } catch (err) {
