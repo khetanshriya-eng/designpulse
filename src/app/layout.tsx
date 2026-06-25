@@ -51,6 +51,10 @@ export const metadata: Metadata = {
     title: "Designator",
     description: "Your daily design briefing — 70+ sources, summarized.",
   },
+  // RSS autodiscovery — readers find /api/rss when the site URL is pasted in.
+  alternates: {
+    types: { "application/rss+xml": "/api/rss" },
+  },
 };
 
 // viewport-fit:cover enables env(safe-area-inset-*) so the sticky nav can clear

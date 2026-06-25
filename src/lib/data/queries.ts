@@ -504,6 +504,37 @@ export async function searchArticles(
   return rowsToArticles((data ?? []) as ArticleWithSource[]);
 }
 
+/**
+ * Recent curated articles for Designator's own RSS feed (/api/rss). Straight
+ * recency (no category balancing) — an RSS reader wants the latest, in order.
+ * Title-guarded + content-filtered like every other display surface.
+ */
+export const getFeedArticles = unstable_cache(
+  async (limit = 30): Promise<Article[]> => {
+    const sb = createPublicClient();
+    const { data, error } = await sb
+      .from("articles")
+      .select(SELECT)
+      .not("summary", "is", null)
+      .neq("summary", "")
+      .not("title", "is", null)
+      .neq("title", "")
+      .not("title", "ilike", "http%")
+      .not("title", "ilike", "www.%")
+      .not("published_at", "is", null)
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .limit(limit * 2); // over-fetch so the content filter can't starve it
+    if (error) throw error;
+    return rowsToArticles(
+      ((data ?? []) as ArticleWithSource[])
+        .filter((r) => !isOffBrand(r.title, r.original_url))
+        .slice(0, limit)
+    );
+  },
+  ["feed-articles"],
+  { revalidate: 600 }
+);
+
 /** Total article count for the nav "N stories curated" meter. Cached (10 min). */
 export const getArticleCount = unstable_cache(
   async (): Promise<number> => {
