@@ -196,6 +196,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Buttondown rate-limited our key (HTTP 429) — transient. Tell the user to
+    // retry rather than implying their email is bad.
+    if (res.status === 429) {
+      return Response.json(
+        { error: "We're getting a lot of signups — try again in a minute.", code: 429 },
+        { status: 429 }
+      );
+    }
+
     // Anything else is a real failure. Surface the upstream status (not the
     // body) so the cause is diagnosable from the network tab without leaking
     // Buttondown internals.

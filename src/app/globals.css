@@ -348,17 +348,21 @@ h1, h2, h3, h4, h5, h6 {
   50% { opacity: 0.12; transform: scale(0.3); }
 }
 
-/* Newsletter banner: Rorschach inkblots drift slowly. Per-tile duration/delay/
-   base-rotation come in via CSS vars so each moves independently. Disabled
-   wholesale by the prefers-reduced-motion block below (the global `*` rule). */
-.rorschach-float {
-  animation: drift var(--drift-dur, 22s) ease-in-out infinite alternate;
-  animation-delay: var(--drift-delay, 0s);
-  will-change: transform;
+/* Newsletter banner: pixel envelopes fly in from the top-right and post
+   themselves into the mailbox, on a loop. Per-letter delay set inline so they
+   stagger. Disabled by the prefers-reduced-motion block below (global `*`). */
+.mail-fly {
+  animation: mail-fly 3.6s ease-in infinite;
+  animation-delay: var(--fly-delay, 0s);
+  transform-origin: center;
+  will-change: transform, opacity;
 }
-@keyframes drift {
-  0%   { transform: translate(0, 0) rotate(var(--rot, 0deg)); }
-  100% { transform: translate(8px, -5px) rotate(calc(var(--rot, 0deg) + 3deg)); }
+@keyframes mail-fly {
+  0%   { opacity: 0; transform: translate(74px, -60px) rotate(12deg) scale(1); }
+  18%  { opacity: 1; transform: translate(52px, -42px) rotate(9deg) scale(1); }
+  68%  { opacity: 1; transform: translate(6px, -6px) rotate(0deg) scale(0.86); }
+  86%  { opacity: 0.55; transform: translate(0, 3px) rotate(-3deg) scale(0.5); }
+  100% { opacity: 0; transform: translate(0, 7px) scale(0.34); }
 }
 
 /* Feedback success: face pops in, label rises, pixel sparkles burst out. */
