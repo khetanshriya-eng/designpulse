@@ -93,6 +93,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/#subscribe" className="text-white/70 hover:text-[color:var(--color-lime)] transition-colors">
+                  Subscribe
+                </Link>
+              </li>
+              <li>
                 <a
                   href="/api/rss"
                   target="_blank"

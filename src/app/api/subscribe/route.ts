@@ -1,0 +1,122 @@
+/**
+ * POST /api/subscribe
+ *
+ * Adds an email to the Buttondown list. Deploy-safe: if BUTTONDOWN_API_KEY
+ * isn't set it returns a clear, non-crashing error. Lightly abuse-hardened
+ * (honeypot + per-IP rate limit) like /api/feedback, since it's a public
+ * unauthenticated POST.
+ */
+import type { NextRequest } from "next/server";
+import { logger } from "@/lib/logger";
+
+export const dynamic = "force-dynamic";
+const log = logger("api.subscribe");
+
+const BUTTONDOWN_API = "https://api.buttondown.com/v1";
+
+// Per-IP rate limit: max 5 attempts / hour. In-memory (resets on cold start) —
+// blunts scripted signup floods without a KV dependency.
+const RATE_LIMIT = 5;
+const RATE_WINDOW_MS = 60 * 60 * 1000;
+const hits = new Map<string, number[]>();
+
+function rateLimited(ip: string): boolean {
+  const now = Date.now();
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
+  if (recent.length >= RATE_LIMIT) {
+    hits.set(ip, recent);
+    return true;
+  }
+  recent.push(now);
+  hits.set(ip, recent);
+  if (hits.size > 1000) {
+    for (const [k, v] of hits) {
+      if (v.every((t) => now - t >= RATE_WINDOW_MS)) hits.delete(k);
+    }
+  }
+  return false;
+}
+
+function validEmail(email: string): boolean {
+  // Deliberately loose — Buttondown does the authoritative validation.
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+export async function POST(req: NextRequest) {
+  let body: { email?: string; website?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return Response.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  // Honeypot — invisible field; bots fill it. Pretend success, do nothing.
+  if (body.website) {
+    log.warn("subscribe honeypot tripped");
+    return Response.json({ success: true, message: "You're in!" });
+  }
+
+  const email = String(body.email ?? "").trim().toLowerCase();
+  if (!validEmail(email)) {
+    return Response.json(
+      { error: "Please enter a valid email address." },
+      { status: 400 }
+    );
+  }
+
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (rateLimited(ip)) {
+    return Response.json(
+      { error: "Too many attempts — try again later." },
+      { status: 429 }
+    );
+  }
+
+  const apiKey = process.env.BUTTONDOWN_API_KEY;
+  if (!apiKey) {
+    log.warn("subscribe skipped — BUTTONDOWN_API_KEY not set");
+    return Response.json(
+      { error: "Subscriptions aren't set up yet — check back soon." },
+      { status: 503 }
+    );
+  }
+
+  try {
+    const res = await fetch(`${BUTTONDOWN_API}/subscribers`, {
+      method: "POST",
+      headers: {
+        Authorization: `Token ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email_address: email, type: "regular" }),
+    });
+
+    if (res.status === 201) {
+      return Response.json({
+        success: true,
+        message: "You're in. First edition lands tomorrow morning.",
+      });
+    }
+
+    const detail = await res.text().catch(() => "");
+    if (res.status === 400 && detail.toLowerCase().includes("already")) {
+      return Response.json({
+        success: true,
+        message: "You're already subscribed.",
+      });
+    }
+
+    log.warn("buttondown subscribe error", { status: res.status, detail });
+    return Response.json(
+      { error: "Something went wrong. Please try again." },
+      { status: 400 }
+    );
+  } catch (err) {
+    log.error("subscribe threw", { error: (err as Error).message });
+    return Response.json(
+      { error: "Couldn't subscribe right now. Please try again." },
+      { status: 500 }
+    );
+  }
+}

@@ -15,6 +15,7 @@ import type { NextRequest } from "next/server";
 import { runFetch } from "@/lib/pipeline/fetch";
 import { runSummarize } from "@/lib/pipeline/summarize";
 import { runCurate } from "@/lib/pipeline/curate";
+import { runSendDigest } from "@/lib/newsletter";
 import { logger } from "@/lib/logger";
 import { sendAdminAlert } from "@/lib/notify";
 import { checkCronAuth } from "@/lib/cron-auth";
@@ -70,6 +71,20 @@ async function handle(req: NextRequest) {
     out.curate = { error };
     log.error("curate step failed", { error });
     failures.push({ step: "curate", error });
+  }
+
+  // Email digest: only on the run flagged ?digest=1 (the morning cron), so
+  // subscribers get one email/day built from the edition just curated above.
+  // Best-effort — a Buttondown hiccup must never fail the pipeline itself.
+  if (new URL(req.url).searchParams.get("digest")) {
+    try {
+      out.digest = await runSendDigest({ log: logger("cron.pipeline.digest") });
+    } catch (err) {
+      const error = (err as Error).message;
+      out.digest = { error };
+      log.error("digest step failed", { error });
+      // Not pushed to `failures` — the digest is non-critical to the pipeline.
+    }
   }
 
   const durationMs = Date.now() - t0;

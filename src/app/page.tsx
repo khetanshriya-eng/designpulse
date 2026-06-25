@@ -4,6 +4,7 @@ import { MustReadSection } from "@/components/MustReadSection";
 import { EditorsPick } from "@/components/EditorsPick";
 import { CategoryGrid } from "@/components/CategoryGrid";
 import { InspirationStrip } from "@/components/InspirationStrip";
+import { NewsletterCTA } from "@/components/NewsletterCTA";
 import { SectionHeader } from "@/components/SectionHeader";
 import { getByCategory, getEdition, getLatest } from "@/lib/data/queries";
 import { SOURCES, type SourceCategory } from "@/data/sources";
@@ -143,6 +144,9 @@ export default async function Home() {
           </div>
         </section>
       )}
+
+      {/* Email capture — last thing before the footer. */}
+      <NewsletterCTA />
     </>
   );
 }

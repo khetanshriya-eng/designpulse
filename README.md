@@ -27,6 +27,7 @@ Copy `.env.local.example` to `.env.local` and fill in:
 | `CRON_SECRET`                   | Random string; auths every `/api/cron/*` call                   |
 | `RESEND_API_KEY`                | Email sending (feedback + admin alerts)                         |
 | `ADMIN_EMAIL`                   | Where pipeline-failure alerts go                                |
+| `BUTTONDOWN_API_KEY`            | Newsletter subscribe + daily digest (Buttondown). Optional — subscribe/digest degrade gracefully if unset. |
 | `FEEDBACK_EMAIL` (optional)     | Feedback recipient (default `designatorapp@gmail.com`)          |
 | `RESEND_FROM_EMAIL` (optional)  | Sender override (default `@designatorapp.com` addresses)        |
 | `LOG_LEVEL` (optional)          | `debug` \| `info` \| `warn` \| `error`. Default `info`.         |
@@ -65,10 +66,15 @@ curl -H "Authorization: Bearer $CRON_SECRET" \
    (`CRON_SECRET` especially, or cron auth fails).
 3. `vercel.json` schedules the pipeline twice daily (Hobby allows 2 crons):
 
-   | Time (UTC) | IST     | Job      |
-   | ---------- | ------- | -------- |
-   | 02:30      | 8:00 AM | pipeline |
-   | 14:30      | 8:00 PM | pipeline |
+   | Time (UTC) | IST     | Job                              |
+   | ---------- | ------- | -------------------------------- |
+   | 02:30      | 8:00 AM | pipeline **+ email digest**      |
+   | 14:30      | 8:00 PM | pipeline                         |
+
+   The morning cron path carries `?digest=1`, so after it curates the fresh
+   edition it sends the daily Buttondown digest (top 7 design-first picks).
+   The digest is folded into the pipeline rather than a 3rd cron because Hobby
+   caps the project at 2. `/api/send-digest` also exists for manual sends.
 
 4. Vercel Cron auto-attaches `Authorization: Bearer $CRON_SECRET`.
 
