@@ -158,7 +158,7 @@ export function NewsletterCTA() {
             <p className="font-pixel text-[12px] uppercase tracking-[0.16em] text-accent">
               Daily briefing
             </p>
-            <h2 className="font-heading text-[2rem] sm:text-[2.3rem] leading-[1.05] text-ink mt-2 max-w-[19ch]">
+            <h2 className="font-heading text-[2rem] sm:text-[2.3rem] leading-[1.05] text-ink mt-2 max-w-[35rem]">
               Get the top picks in your inbox each morning.
             </h2>
             <p className="text-[14px] text-ink-muted mt-3">
