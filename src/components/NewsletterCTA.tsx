@@ -54,7 +54,7 @@ export function NewsletterCTA() {
   return (
     <section
       id="subscribe"
-      className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pb-16 scroll-mt-24"
+      className="site-container pb-16 scroll-mt-24"
     >
       {/* Signature multi-color pixel divider above the band. */}
       <div

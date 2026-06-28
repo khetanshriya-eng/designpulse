@@ -40,7 +40,7 @@ export function CategoryNav({ categories, storyCount }: Props) {
       // horizontal-only; vertical swipes pass through to the page scroll.
       className="bg-paper border-b border-rule overflow-x-auto overflow-y-hidden [touch-action:pan-x]"
     >
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-10 gap-6">
+      <div className="site-container flex items-center justify-between h-10 gap-6">
         <ul className="flex items-center gap-5 sm:gap-7 text-[13px] whitespace-nowrap">
           <li>
             <NavLink href="/" active={isActive("/")} label="Today" emphasis />

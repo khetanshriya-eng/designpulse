@@ -49,7 +49,7 @@ const CATEGORY_DESCRIPTIONS: Record<SourceCategory, string> = {
 
 export default function SourcesPage() {
   return (
-    <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-12 pb-12">
+    <div className="site-container pt-10 sm:pt-12 pb-12">
       {/* Page header */}
       <header className="mb-12">
         <p className="font-heading text-[11px] uppercase tracking-[0.14em] font-bold text-accent mb-2">

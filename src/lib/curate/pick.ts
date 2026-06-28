@@ -132,10 +132,28 @@ export function pickCuration(
     (s) => sourcePriority(s.row.source.slug) <= FEATURABLE_TIER
   );
 
-  // Hero: top-scoring featurable item with a thumbnail. No tier-3 fallback —
-  // page.tsx renders fine without a hero on the (near-impossible) all-tech day.
+  // Hero: must be FRESH — the freshest design (tier-1) story with an image,
+  // preferring the last 24h and widening to 36h then 48h; then any tier-1/2
+  // with an image within 48h. `featurable` is score-sorted, so .find() returns
+  // the best-scoring item inside each window (fresh window + quality tiebreak).
+  // Candidates are already loaded from a 48h window upstream, so the hero is
+  // never older than 48h. No tier-3 fallback.
+  const now = Date.now();
+  const ageHours = (r: Candidate) =>
+    r.published_at ? (now - new Date(r.published_at).getTime()) / 36e5 : Infinity;
+  const withImg = featurable.filter((s) => s.row.thumbnail_url);
+  const t1 = (maxH: number) =>
+    withImg.find(
+      (s) => sourcePriority(s.row.source.slug) === 1 && ageHours(s.row) <= maxH
+    );
   const heroScore =
-    featurable.find((s) => s.row.thumbnail_url) ?? featurable[0] ?? null;
+    t1(24) ??
+    t1(36) ??
+    t1(48) ??
+    withImg.find((s) => ageHours(s.row) <= 48) ??
+    withImg[0] ??
+    featurable[0] ??
+    null;
   const hero = heroScore?.row ?? null;
 
   // Must-reads: walk featurable, prefer category diversity, skip the hero.

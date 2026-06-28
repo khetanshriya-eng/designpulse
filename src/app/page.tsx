@@ -5,7 +5,6 @@ import { EditorsPick } from "@/components/EditorsPick";
 import { CategoryGrid } from "@/components/CategoryGrid";
 import { InspirationStrip } from "@/components/InspirationStrip";
 import { NewsletterCTA } from "@/components/NewsletterCTA";
-import { CopyLink } from "@/components/CopyLink";
 import { SectionHeader } from "@/components/SectionHeader";
 import { getByCategory, getEdition, getLatest } from "@/lib/data/queries";
 import { SOURCES, type SourceCategory } from "@/data/sources";
@@ -48,17 +47,10 @@ export default async function Home() {
 
   return (
     <>
-      {/* Share today's edition — a Designator URL, so it brings people back. */}
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 flex justify-end">
-        <CopyLink
-          url={`https://designatorapp.com/edition/${edition.date}`}
-          label="Share today's edition"
-        />
-      </div>
-
-      {/* Hero */}
+      {/* Hero — starts promptly after the nav (the share affordance moves next
+          to the named edition in a later pass). */}
       {edition.hero && (
-        <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 pb-10">
+        <section className="site-container pt-8 pb-16">
           <HeroCard article={edition.hero} />
         </section>
       )}
@@ -68,7 +60,7 @@ export default async function Home() {
       {latestArticles.length > 0 && (() => {
         const { kicker, description } = describeFreshness(latestArticles);
         return (
-          <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+          <section className="site-container pb-16">
             <SectionHeader
               kicker={kicker}
               title="Latest in the feed"
@@ -87,14 +79,14 @@ export default async function Home() {
 
       {/* Must read */}
       {edition.mustReads.length > 0 && (
-        <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <section className="site-container pb-16">
           <MustReadSection articles={edition.mustReads} />
         </section>
       )}
 
       {/* Editor's pick */}
       {edition.editorsPick && (
-        <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pb-14">
+        <section className="site-container pb-16">
           <EditorsPick article={edition.editorsPick} />
         </section>
       )}
@@ -115,14 +107,14 @@ export default async function Home() {
 
       {/* Inspiration */}
       {inspirationItems.length > 0 && (
-        <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pb-14">
+        <section className="site-container pb-16">
           <InspirationStrip articles={inspirationItems} />
         </section>
       )}
 
       {/* Product + Podcasts */}
       {(productItems.length > 0 || podcastItems.length > 0) && (
-        <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pb-14">
+        <section className="site-container pb-16">
           <div className="grid lg:grid-cols-2 gap-12">
             {productItems.length > 0 && (
               <div>
@@ -186,7 +178,7 @@ function CategorySections({
   if (full.length === 0) return null;
   const lastIsOdd = full.length % 2 === 1;
   return (
-    <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pb-14">
+    <section className="site-container pb-16">
       <div className="boot grid lg:grid-cols-2 gap-x-10 gap-y-12">
         {full.map((b, i) => (
           <div

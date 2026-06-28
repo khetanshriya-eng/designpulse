@@ -52,7 +52,7 @@ export async function Navigation() {
           paddingTop: "env(safe-area-inset-top)",
         }}
       >
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="site-container">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-3 min-w-0">
               <Link href="/" aria-label="Designator — home" className="group flex items-center">

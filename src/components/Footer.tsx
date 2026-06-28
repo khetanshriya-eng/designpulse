@@ -26,7 +26,7 @@ export function Footer() {
         }}
         aria-hidden
       />
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="site-container py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
           <div className="col-span-2 md:col-span-1">
             <span

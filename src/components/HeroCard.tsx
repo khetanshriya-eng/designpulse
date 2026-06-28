@@ -32,24 +32,30 @@ export function HeroCard({ article }: { article: Article }) {
           {/* priority: this is the LCP image — eager + high fetch priority. */}
           <ArticleImage article={article} fill size="lg" priority />
         </div>
-        <div className="order-2 flex flex-col justify-center gap-4 p-6 sm:p-8">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="inline-flex items-center bg-lime text-ink px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] font-pixel font-bold">
-              Top story
-            </span>
-            <CategoryDot category={article.category} />
-            <span className="text-[12px] text-ink-subtle">·</span>
-            <span className="text-[12px] text-ink-subtle">
-              {formatRelativeTime(article.publishedAt)}
-            </span>
+        {/* Right column: top group (badge/title/summary) pinned to the top,
+            source pinned to the bottom, so it spans the image's full height. */}
+        <div className="order-2 flex flex-col justify-between h-full p-6 sm:p-8">
+          <div>
+            <div className="flex items-center gap-3 flex-wrap mb-3">
+              <span className="inline-flex items-center bg-lime text-ink px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] font-pixel font-bold">
+                Top story
+              </span>
+              <CategoryDot category={article.category} />
+              <span className="text-[12px] text-ink-subtle">·</span>
+              <span className="text-[12px] text-ink-subtle">
+                {formatRelativeTime(article.publishedAt)}
+              </span>
+            </div>
+            <h1 className="font-heading text-[1.7rem] sm:text-[2rem] md:text-[2.2rem] leading-[1.04] text-ink tracking-tight group-hover:text-accent transition-colors">
+              {article.title}
+            </h1>
+            {article.summary && (
+              <p className="mt-4 text-[15px] leading-relaxed text-ink-muted max-w-prose">
+                {article.summary}
+              </p>
+            )}
           </div>
-          <h1 className="font-heading text-[1.7rem] sm:text-[2rem] md:text-[2.2rem] leading-[1.04] text-ink tracking-tight group-hover:text-accent transition-colors">
-            {article.title}
-          </h1>
-          <p className="text-[15px] leading-relaxed text-ink-muted max-w-prose">
-            {article.summary}
-          </p>
-          <div className="flex items-center justify-between pt-2">
+          <div className="flex items-center justify-between pt-6">
             <SourceBadge sourceId={article.sourceId} size="md" />
             {readTime && (
               <span className="text-[12px] text-ink-subtle">{readTime}</span>

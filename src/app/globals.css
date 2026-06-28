@@ -94,6 +94,43 @@
   --stripe-ai: #ffb800;
   --stripe-newsletters: #b06bff;
   --stripe-podcasts: #ff6b6b;
+
+  /* ── 4px spacing scale — the only spacing values used across the site. ──
+     Section vertical rhythm is --space-16 (64px); the single page container is
+     --container-max + --container-pad (see .site-container). */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  --container-max: 1280px;
+  --container-pad: 16px; /* mobile; widened at sm via the media query below */
+}
+
+@media (min-width: 640px) {
+  :root {
+    --container-pad: 24px;
+  }
+}
+
+/*
+ * The ONE content container, used identically on every page (home, archive,
+ * about, sources, edition, category) so horizontal margins never shift between
+ * pages. Replaces the old ad-hoc `site-container`.
+ */
+.site-container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--container-pad);
 }
 
 /* ── Night (dark) palette — arcade cabinet ── */

@@ -17,7 +17,7 @@ export default async function ArchivePage() {
   const today = new Date().toISOString().slice(0, 10);
 
   return (
-    <article className="max-w-[760px] mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-24">
+    <article className="site-container pt-14 pb-24">
       <p className="font-pixel text-[12px] uppercase tracking-[0.16em] text-accent mb-3">
         Past editions
       </p>

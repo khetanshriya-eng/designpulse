@@ -72,7 +72,7 @@ export default async function EditionPage({
     <>
       {/* Edition strap with prev/next */}
       <div className="border-b border-rule bg-paper">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between text-[11px] uppercase tracking-[0.14em] text-ink-subtle">
+        <div className="site-container py-3 flex items-center justify-between text-[11px] uppercase tracking-[0.14em] text-ink-subtle">
           <span>Edition · {formatEditionDate(edition.date)}</span>
           <div className="flex items-center gap-4">
             {older ? (
@@ -100,13 +100,13 @@ export default async function EditionPage({
       </div>
 
       {edition.hero && (
-        <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 pb-10">
+        <section className="site-container pt-8 pb-16">
           <HeroCard article={edition.hero} />
         </section>
       )}
 
       {latest.length > 0 && (
-        <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <section className="site-container pb-16">
           <SectionHeader
             kicker="In this edition"
             title="Latest stories"
@@ -120,19 +120,19 @@ export default async function EditionPage({
       )}
 
       {edition.mustReads.length > 0 && (
-        <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <section className="site-container pb-16">
           <MustReadSection articles={edition.mustReads} />
         </section>
       )}
 
       {edition.editorsPick && (
-        <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pb-14">
+        <section className="site-container pb-16">
           <EditorsPick article={edition.editorsPick} />
         </section>
       )}
 
       {/* All-editions list */}
-      <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pb-16 pt-4">
+      <section className="site-container pb-16">
         <SectionHeader kicker="Archive" title="All editions" />
         <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-2 text-[13.5px]">
           {allDates.map((d) => (

@@ -57,7 +57,7 @@ export default async function CategoryPage({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+    <div className="site-container py-10 sm:py-14">
       <SectionHeader
         kicker="Category"
         title={meta.label}

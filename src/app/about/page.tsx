@@ -35,7 +35,10 @@ const STEPS = [
 
 export default function AboutPage() {
   return (
-    <article className="max-w-[760px] mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-24">
+    <div className="site-container pt-14 pb-24">
+    {/* Prose constrained to a reading measure, left-aligned so the left edge
+        matches the homepage container (consistent margins across pages). */}
+    <article className="max-w-[760px]">
       {/* Intro */}
       <p className="font-pixel text-[12px] uppercase tracking-[0.16em] text-accent mb-3">
         About
@@ -170,6 +173,7 @@ export default function AboutPage() {
         ← Back to today&apos;s edition
       </Link>
     </article>
+    </div>
   );
 }
 
@@ -185,7 +189,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="pt-20">
+    <section className="pt-16">
       <div
         className="h-1 w-12 mb-4"
         style={{
