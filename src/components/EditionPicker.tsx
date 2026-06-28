@@ -87,7 +87,7 @@ export function EditionPicker({
       <div
         role="dialog"
         aria-label="Browse editions"
-        className="sheet-up md:[animation:none] fixed inset-x-0 bottom-0 z-50 flex max-h-[70vh] flex-col bg-[color:var(--color-card)] border-t-[3px] border-[color:var(--card-border)] md:absolute md:inset-x-auto md:bottom-auto md:top-full md:left-0 md:mt-2 md:w-[380px] md:max-h-[440px] md:border-[3px] md:shadow-[5px_5px_0_var(--card-shadow)]"
+        className="fixed inset-x-0 bottom-0 z-50 flex max-h-[70vh] flex-col bg-[color:var(--color-card)] border-t-[3px] border-[color:var(--card-border)] md:absolute md:inset-x-auto md:bottom-auto md:top-full md:left-0 md:mt-2 md:w-[380px] md:max-h-[440px] md:border-[3px] md:shadow-[5px_5px_0_var(--card-shadow)]"
       >
         {/* Drag handle (mobile) — also the swipe-to-dismiss target. */}
         <div

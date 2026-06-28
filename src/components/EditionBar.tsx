@@ -18,7 +18,7 @@ export function EditionBar({ date }: { date: string }) {
 
   return (
     <div className="site-container">
-      <div className="relative flex items-center justify-between gap-3 py-4 border-b-[3px] border-[color:var(--card-border)]">
+      <div className="relative flex items-center justify-between gap-3 pt-4 pb-2">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}

@@ -53,7 +53,7 @@ export default async function Home() {
 
       {/* Hero — starts promptly after the edition bar. */}
       {edition.hero && (
-        <section className="site-container pt-8 pb-16">
+        <section className="site-container pt-4 pb-16">
           <HeroCard article={edition.hero} />
         </section>
       )}

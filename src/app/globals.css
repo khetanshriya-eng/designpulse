@@ -409,14 +409,6 @@ h1, h2, h3, h4, h5, h6 {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
-/* Edition picker bottom sheet (mobile): slide up from the bottom edge. */
-.sheet-up {
-  animation: sheet-up 0.22s ease-out;
-}
-@keyframes sheet-up {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
 
 /* Feedback success: face pops in, label rises, pixel sparkles burst out. */
 .fb-pop {
