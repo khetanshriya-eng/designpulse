@@ -12,6 +12,12 @@ export const dynamic = "force-dynamic";
 const PER_PAGE = 20;
 
 export async function GET(req: NextRequest) {
+  // ?all=true → the full list for the edition picker (search across everything).
+  if (req.nextUrl.searchParams.get("all") === "true") {
+    const { editions, total } = await getArchiveEditions(400, 0);
+    return Response.json({ editions, total, hasMore: false });
+  }
+
   const raw = parseInt(req.nextUrl.searchParams.get("page") ?? "1", 10);
   const page = Number.isFinite(raw) && raw > 0 ? raw : 1;
   const offset = (page - 1) * PER_PAGE;

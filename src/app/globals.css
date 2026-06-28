@@ -404,6 +404,20 @@ h1, h2, h3, h4, h5, h6 {
   50% { opacity: 1; transform: scale(1.12); }
 }
 
+/* Share toast (desktop top-right / mobile bottom-center): subtle rise + fade. */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* Edition picker bottom sheet (mobile): slide up from the bottom edge. */
+.sheet-up {
+  animation: sheet-up 0.22s ease-out;
+}
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
 /* Feedback success: face pops in, label rises, pixel sparkles burst out. */
 .fb-pop {
   animation: fb-pop 0.5s cubic-bezier(0.2, 0.85, 0.3, 1.4) both;

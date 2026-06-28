@@ -5,6 +5,7 @@ import { EditorsPick } from "@/components/EditorsPick";
 import { CategoryGrid } from "@/components/CategoryGrid";
 import { InspirationStrip } from "@/components/InspirationStrip";
 import { NewsletterCTA } from "@/components/NewsletterCTA";
+import { EditionBar } from "@/components/EditionBar";
 import { SectionHeader } from "@/components/SectionHeader";
 import { getByCategory, getEdition, getLatest } from "@/lib/data/queries";
 import { SOURCES, type SourceCategory } from "@/data/sources";
@@ -47,8 +48,10 @@ export default async function Home() {
 
   return (
     <>
-      {/* Hero — starts promptly after the nav (the share affordance moves next
-          to the named edition in a later pass). */}
+      {/* Named edition + date picker + prominent share, directly below tabs. */}
+      <EditionBar date={edition.date} />
+
+      {/* Hero — starts promptly after the edition bar. */}
       {edition.hero && (
         <section className="site-container pt-8 pb-16">
           <HeroCard article={edition.hero} />

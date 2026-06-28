@@ -11,6 +11,7 @@ import { HeroCard } from "@/components/HeroCard";
 import { MustReadSection } from "@/components/MustReadSection";
 import { EditorsPick } from "@/components/EditorsPick";
 import { SectionHeader } from "@/components/SectionHeader";
+import { EditionBar } from "@/components/EditionBar";
 import { formatEditionDate } from "@/lib/format";
 import {
   getEdition,
@@ -53,11 +54,6 @@ export default async function EditionPage({
 
   if (!edition) notFound();
 
-  // Walk the actual list of dates we have so prev/next skips missing days.
-  const idx = allDates.indexOf(edition.date);
-  const newer = idx > 0 ? allDates[idx - 1] : null;
-  const older = idx >= 0 && idx < allDates.length - 1 ? allDates[idx + 1] : null;
-
   // Latest grid restricted to the same day's window — approximate by pulling
   // 8 most recent across the system. (We don't pin "latest" to a date because
   // articles don't carry an edition_date.)
@@ -70,34 +66,8 @@ export default async function EditionPage({
 
   return (
     <>
-      {/* Edition strap with prev/next */}
-      <div className="border-b border-rule bg-paper">
-        <div className="site-container py-3 flex items-center justify-between text-[11px] uppercase tracking-[0.14em] text-ink-subtle">
-          <span>Edition · {formatEditionDate(edition.date)}</span>
-          <div className="flex items-center gap-4">
-            {older ? (
-              <Link
-                href={`/edition/${older}`}
-                className="hover:text-ink transition-colors"
-              >
-                ← {formatEditionDate(older)}
-              </Link>
-            ) : (
-              <span className="opacity-40">← Older</span>
-            )}
-            {newer ? (
-              <Link
-                href={`/edition/${newer}`}
-                className="hover:text-ink transition-colors"
-              >
-                {formatEditionDate(newer)} →
-              </Link>
-            ) : (
-              <span className="opacity-40">Newer →</span>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Named edition + date picker + share (replaces the old prev/next nav). */}
+      <EditionBar date={edition.date} />
 
       {edition.hero && (
         <section className="site-container pt-8 pb-16">
