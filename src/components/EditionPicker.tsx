@@ -56,6 +56,18 @@ export function EditionPicker({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  // Desktop only: the dropdown is anchored to the (scrolling) edition bar, so
+  // close it on page scroll instead of letting it drift over the sticky header.
+  // The mobile bottom sheet is fixed, so we leave it be.
+  useEffect(() => {
+    if (!open) return;
+    function onScroll() {
+      if (window.matchMedia("(min-width: 768px)").matches) onClose();
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   const q = search.trim().toLowerCase();
@@ -75,19 +87,19 @@ export function EditionPicker({
 
   return (
     <>
-      {/* Backdrop — dims on mobile, transparent click-catcher on desktop. */}
+      {/* Backdrop — dims the page on mobile (bottom sheet), transparent
+          click-catcher on desktop (dropdown). */}
       <button
         aria-label="Close edition picker"
         onClick={onClose}
         tabIndex={-1}
-        className="fixed inset-0 z-40 md:bg-transparent"
-        style={{ background: "var(--color-scrim)" }}
+        className="fixed inset-0 z-40 max-md:bg-[color:var(--color-scrim)]"
       />
 
       <div
         role="dialog"
         aria-label="Browse editions"
-        className="fixed inset-x-0 bottom-0 z-50 flex max-h-[70vh] flex-col bg-[color:var(--color-card)] border-t-[3px] border-[color:var(--card-border)] md:absolute md:inset-x-auto md:bottom-auto md:top-full md:left-0 md:mt-2 md:w-[380px] md:max-h-[440px] md:border-[3px] md:shadow-[5px_5px_0_var(--card-shadow)]"
+        className="max-md:sheet-up fixed inset-x-0 bottom-0 z-50 flex max-h-[70vh] flex-col bg-[color:var(--color-card)] border-t-[3px] border-[color:var(--card-border)] md:absolute md:inset-x-auto md:bottom-auto md:top-full md:left-0 md:mt-2 md:w-[380px] md:max-h-[440px] md:border-[3px] md:shadow-[5px_5px_0_var(--card-shadow)]"
       >
         {/* Drag handle (mobile) — also the swipe-to-dismiss target. */}
         <div

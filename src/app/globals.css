@@ -113,6 +113,11 @@
 
   --container-max: 1280px;
   --container-pad: 16px; /* mobile; widened at sm via the media query below */
+
+  /* Dim overlay behind modals / bottom sheets (theme-independent). Was
+     referenced by the search + feedback + edition overlays but never defined,
+     so those scrims had been invisible. */
+  --color-scrim: rgba(13, 10, 38, 0.55);
 }
 
 @media (min-width: 640px) {
@@ -408,6 +413,15 @@ h1, h2, h3, h4, h5, h6 {
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+/* Edition picker bottom sheet (mobile only): slide up from the bottom edge.
+   Applied via `max-md:sheet-up` so the desktop dropdown never animates. */
+.sheet-up {
+  animation: sheet-up 0.24s ease-out;
+}
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
 /* Feedback success: face pops in, label rises, pixel sparkles burst out. */
