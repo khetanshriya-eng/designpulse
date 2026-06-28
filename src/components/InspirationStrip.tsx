@@ -28,7 +28,6 @@ export function InspirationStrip({ articles }: { articles: Article[] }) {
         title="Inspiration picks"
         description="Visual references from across the design web."
         href="/category/inspiration"
-        hrefLabel="More inspiration"
       />
       <div className={`boot grid ${colsClass} gap-4 sm:gap-5`}>
         {items.map((a) => (

@@ -34,7 +34,7 @@ export function CategoryGrid({ category, articles }: Props) {
           href={`/category/${category}`}
           className="font-pixel text-[12px] text-ink-muted hover:text-accent transition-colors"
         >
-          More →
+          See all →
         </Link>
       </header>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-7">

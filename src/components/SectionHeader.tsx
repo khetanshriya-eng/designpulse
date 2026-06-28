@@ -38,7 +38,7 @@ export function SectionHeader({ kicker, title, description, href, hrefLabel }: P
           href={href}
           className="font-pixel hidden sm:inline-block text-[12px] text-ink-muted hover:text-accent transition-colors whitespace-nowrap"
         >
-          {hrefLabel ?? "See more"} →
+          {hrefLabel ?? "See all"} →
         </Link>
       )}
     </header>

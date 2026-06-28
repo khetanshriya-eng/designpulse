@@ -49,6 +49,7 @@ export const SOURCES: Source[] = [
   { id: "uxtools", name: "UX Tools", slug: "uxtools", url: "https://www.uxtools.co/", type: "blog", category: "design-tools", initials: "Ux", swatch: "thumb-grad-5" },
   { id: "prototypr", name: "Prototypr.io", slug: "prototypr", url: "https://prototypr.io", feedUrl: "https://prototypr.io/feed.xml", type: "newsletter", category: "design-tools", initials: "Pr", swatch: "thumb-grad-7" },
   { id: "csstricks", name: "CSS-Tricks", slug: "csstricks", url: "https://css-tricks.com", feedUrl: "https://css-tricks.com/feed/", type: "blog", category: "design-tools", initials: "CT", swatch: "thumb-grad-5" },
+  { id: "webdev", name: "web.dev", slug: "webdev", url: "https://web.dev", feedUrl: "https://web.dev/feed.xml", type: "blog", category: "design-tools", initials: "wd", swatch: "thumb-grad-9" },
 
   // Design — Thinking & Craft
   { id: "uxdesigncc", name: "UX Collective", slug: "uxdesigncc", url: "https://uxdesign.cc", feedUrl: "https://uxdesign.cc/feed", type: "publication", category: "ux-thinking", initials: "UX", swatch: "thumb-grad-1" },
@@ -155,6 +156,9 @@ export const SOURCES: Source[] = [
   { id: "shoptalk", name: "ShopTalk Show", slug: "shoptalk", url: "https://shoptalkshow.com", feedUrl: "https://shoptalkshow.com/feed/podcast/", type: "podcast", category: "podcasts", initials: "ST", swatch: "thumb-grad-6" },
   { id: "smashingpod", name: "Smashing Podcast", slug: "smashingpod", url: "https://podcast.smashingmagazine.com", feedUrl: "https://podcast.smashingmagazine.com/rss", type: "podcast", category: "podcasts", initials: "SP", swatch: "thumb-grad-2" },
   { id: "a16zpod", name: "a16z Podcast", slug: "a16zpod", url: "https://a16z.com/podcasts/", feedUrl: "https://feeds.simplecast.com/JGE3yC0V", type: "podcast", category: "podcasts", initials: "A1", swatch: "thumb-grad-7" },
+  // Added 2026-06-28 (Phase 3) — validated live + frequent, to keep podcasts in rotation.
+  { id: "lennyspod", name: "Lenny's Podcast", slug: "lennyspod", url: "https://www.lennyspodcast.com", feedUrl: "https://api.substack.com/feed/podcast/10845.rss", type: "podcast", category: "podcasts", initials: "LP", swatch: "thumb-grad-5" },
+  { id: "syntax", name: "Syntax", slug: "syntax", url: "https://syntax.fm", feedUrl: "https://feeds.megaphone.fm/FSI1483080183", type: "podcast", category: "podcasts", initials: "Sy", swatch: "thumb-grad-6" },
 ];
 
 /** Slugs whose articles always render the pixel mosaic, ignoring thumbnails. */

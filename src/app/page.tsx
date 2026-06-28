@@ -30,21 +30,46 @@ export default async function Home() {
   // Latest + per-category lists pulled in parallel — each independent.
   const [
     latestArticles,
+    aiArticles,
     designTools,
-    aiTools,
     uxThinking,
-    productItems,
+    videoItems,
+    newsletterItems,
     inspirationItems,
+    productItems,
     podcastItems,
   ] = await Promise.all([
     getLatest(6, excludeFromLatest),
+    getByCategory("ai-tools", 6, excludeFromLatest),
     getByCategory("design-tools", 2, excludeFromLatest),
-    getByCategory("ai-tools", 2, excludeFromLatest),
     getByCategory("ux-thinking", 2, excludeFromLatest),
-    getByCategory("product", 2, [pickId].filter((x): x is string => !!x)),
+    getByCategory("youtube", 2, excludeFromLatest),
+    getByCategory("newsletters", 2, excludeFromLatest),
     getByCategory("inspiration", 4),
+    getByCategory("product", 2, [pickId].filter((x): x is string => !!x)),
     getByCategory("podcasts", 2),
   ]);
+
+  // Freshness gating (3A): a homepage section only renders if it has enough
+  // recent items, so the page never shows a month-old "Design Tools" block.
+  // When a design category is starved, the category grid quietly fills with
+  // whichever design-leaning categories ARE fresh (3B graceful degradation).
+  const WEEK = 168; // hours
+  const FORTNIGHT = 336; // podcasts publish less often
+  const gridBlocks = (
+    [
+      { category: "design-tools", articles: designTools },
+      { category: "ux-thinking", articles: uxThinking },
+      { category: "youtube", articles: videoItems },
+      { category: "newsletters", articles: newsletterItems },
+    ] as { category: SourceCategory; articles: Article[] }[]
+  )
+    .filter((b) => freshCount(b.articles, WEEK) >= 2)
+    .slice(0, 4);
+  const showAi = freshCount(aiArticles, WEEK) >= 2;
+  const showInspiration = freshCount(inspirationItems, WEEK) >= 2;
+  const showProduct = freshCount(productItems, WEEK) >= 2;
+  const showPodcasts = freshCount(podcastItems, FORTNIGHT) >= 2;
 
   return (
     <>
@@ -69,7 +94,6 @@ export default async function Home() {
               title="Latest in the feed"
               description={description}
               href={`/edition/${edition.date}`}
-              hrefLabel="See full edition"
             />
             <div className="boot grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-7 gap-y-10">
               {latestArticles.map((a) => (
@@ -94,32 +118,45 @@ export default async function Home() {
         </section>
       )}
 
-      {/* Category previews — only blocks that filled their 2-card preview are
-          shown, laid out 2-up. An odd trailing block spans full width so
-          there's never a lonely card or an empty half. */}
-      {/* Category previews — design-led. Tech-news is intentionally NOT
-          featured here (it stays in the feed + its own /category page) so the
-          homepage reads as a design briefing, not a tech feed. */}
-      <CategorySections
-        blocks={[
-          { category: "design-tools", articles: designTools },
-          { category: "ux-thinking", articles: uxThinking },
-          { category: "ai-tools", articles: aiTools },
-        ]}
-      />
+      {/* AI & Tools — featured card + a compact list, so the fast-moving
+          category shows ~6 recent items instead of two big static cards. */}
+      {showAi && (
+        <section className="site-container pb-16">
+          <SectionHeader
+            kicker="Moving fast"
+            title="AI & Tools"
+            href="/category/ai-tools"
+          />
+          <div className="grid lg:grid-cols-2 gap-6 lg:gap-8 items-start">
+            <ArticleCard article={aiArticles[0]} variant="default" />
+            <div className="flex flex-col">
+              {aiArticles.slice(1, 6).map((a) => (
+                <ArticleCard key={a.id} article={a} variant="list" />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Category previews — design-led, freshness-gated + dynamic: only
+          categories with ≥2 items from the last week show, so a starved
+          category (e.g. month-old Design Tools) is dropped and the grid fills
+          with whichever design-leaning categories ARE fresh. Tech-news is never
+          featured here (stays in the feed + its own /category page). */}
+      <CategorySections blocks={gridBlocks} />
 
       {/* Inspiration */}
-      {inspirationItems.length > 0 && (
+      {showInspiration && (
         <section className="site-container pb-16">
           <InspirationStrip articles={inspirationItems} />
         </section>
       )}
 
       {/* Product + Podcasts */}
-      {(productItems.length > 0 || podcastItems.length > 0) && (
+      {(showProduct || showPodcasts) && (
         <section className="site-container pb-16">
           <div className="grid lg:grid-cols-2 gap-12">
-            {productItems.length > 0 && (
+            {showProduct && (
               <div>
                 <SectionHeader
                   kicker="Product & startup"
@@ -133,7 +170,7 @@ export default async function Home() {
                 </div>
               </div>
             )}
-            {podcastItems.length > 0 && (
+            {showPodcasts && (
               <div>
                 <SectionHeader
                   kicker="Tune in"
@@ -155,6 +192,16 @@ export default async function Home() {
       <NewsletterCTA />
     </>
   );
+}
+
+const HOUR_MS = 60 * 60 * 1000;
+/** How many of these items were published within `hours` (freshness gating). */
+function freshCount(items: { publishedAt: string }[], hours: number): number {
+  const cutoff = Date.now() - hours * HOUR_MS;
+  return items.filter((a) => {
+    const t = Date.parse(a.publishedAt);
+    return Number.isFinite(t) && t >= cutoff;
+  }).length;
 }
 
 function EmptyState({ reason }: { reason: string }) {

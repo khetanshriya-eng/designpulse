@@ -7,7 +7,7 @@ import { PixelCard } from "./PixelCard";
 import { CardCopyOverlay } from "./CopyLink";
 import { formatRelativeTime, formatReadTime } from "@/lib/format";
 
-type Variant = "default" | "horizontal" | "compact" | "medium";
+type Variant = "default" | "horizontal" | "compact" | "medium" | "list";
 
 type Props = {
   article: Article;
@@ -18,7 +18,39 @@ export function ArticleCard({ article, variant = "default" }: Props) {
   if (variant === "compact") return <CompactCard article={article} />;
   if (variant === "horizontal") return <HorizontalCard article={article} />;
   if (variant === "medium") return <MediumCard article={article} />;
+  if (variant === "list") return <ListCard article={article} />;
   return <DefaultCard article={article} />;
+}
+
+/**
+ * Tight one-line-ish row: small thumb, title, source · time, no summary.
+ * Used to pack several items into a small space (e.g. the AI & Tools list).
+ */
+function ListCard({ article }: { article: Article }) {
+  return (
+    <Link
+      href={article.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group flex gap-3 py-3 border-b border-rule first:border-t items-center"
+    >
+      <div className="w-14 h-14 shrink-0 relative overflow-hidden">
+        <ArticleImage article={article} fill size="sm" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <h3 className="font-heading text-[1.05rem] leading-[1.3] text-ink group-hover:text-accent transition-colors line-clamp-2">
+          {article.title}
+        </h3>
+        <div className="mt-1 flex items-center gap-2 text-[11px] text-ink-subtle">
+          <SourceBadge sourceId={article.sourceId} />
+          <span aria-hidden>·</span>
+          <span className="whitespace-nowrap">
+            {formatRelativeTime(article.publishedAt)}
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
 }
 
 function DefaultCard({ article }: { article: Article }) {
