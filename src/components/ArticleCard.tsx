@@ -4,7 +4,6 @@ import { SourceBadge } from "./SourceBadge";
 import { CategoryDot } from "./CategoryDot";
 import { ArticleImage } from "./ArticleImage";
 import { PixelCard } from "./PixelCard";
-import { CardCopyOverlay } from "./CopyLink";
 import { formatRelativeTime, formatReadTime } from "@/lib/format";
 
 type Variant = "default" | "horizontal" | "compact" | "medium" | "list";
@@ -118,9 +117,8 @@ function HorizontalCard({ article }: { article: Article }) {
   const readTime = formatReadTime(article);
   return (
     // Fixed-height row (image fills, text clamped) so every item in the
-    // Product / Podcasts lists is the same height. Border lives on the wrapper
-    // so first:border-t still works and the copy chip can sit as a sibling.
-    <div className="relative group border-b border-rule first:border-t">
+    // Product / Podcasts lists is the same height. The whole row is one anchor.
+    <div className="group border-b border-rule first:border-t">
       <Link
         href={article.url}
         target="_blank"
@@ -154,7 +152,6 @@ function HorizontalCard({ article }: { article: Article }) {
           </div>
         </div>
       </Link>
-      <CardCopyOverlay url={article.url} />
     </div>
   );
 }

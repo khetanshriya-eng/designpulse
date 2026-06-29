@@ -95,36 +95,3 @@ export function CopyLink({ url, label = "Copy link", compact = false, chip = fal
     </button>
   );
 }
-
-/**
- * Copy control styled as a small pixel chip pinned to a card's top-right.
- * Hover-reveal on pointer devices, always faintly visible on touch (where
- * there's no hover). Render it as a SIBLING of the card's <Link> inside a
- * `relative group` wrapper — not nested in the anchor — so the markup is valid
- * and the copy click never opens the article.
- */
-export function CardCopyOverlay({
-  url,
-  hideOnMobile = false,
-}: {
-  url: string;
-  /**
-   * Hide entirely below `md`. Used by the hero, where the edition-level share
-   * button sits right above it — on touch (no hover) both would show at once,
-   * so the hero's own chip is redundant. Regular feed cards keep theirs (far
-   * from the share button) but at low opacity since there's no hover to reveal.
-   */
-  hideOnMobile?: boolean;
-}) {
-  return (
-    <CopyLink
-      url={url}
-      compact
-      chip
-      label="Copy article link"
-      className={`absolute top-2 right-2 z-10 grid place-items-center p-1.5 border-2 border-[#1a1340] bg-[#1a1340] shadow-[2px_2px_0_var(--card-shadow)] opacity-0 group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-60 transition-opacity${
-        hideOnMobile ? " max-md:hidden" : ""
-      }`}
-    />
-  );
-}
