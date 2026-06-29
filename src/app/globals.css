@@ -430,14 +430,34 @@ h1, h2, h3, h4, h5, h6 {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
-/* Edition picker bottom sheet (mobile only): slide up from the bottom edge.
-   Applied via `max-md:sheet-up` so the desktop dropdown never animates. */
-.sheet-up {
-  animation: sheet-up 0.24s ease-out;
+/* Edition picker bottom sheet: slide up from the bottom edge. Scoped to the
+   mobile breakpoint in CSS (NOT via a Tailwind `max-md:` variant — Tailwind
+   can't make a responsive variant of a hand-written class, so that silently
+   compiled to nothing and the sheet never animated). The desktop dropdown gets
+   the plain `sheet-up` class too but matches no rule here, so it never slides. */
+@media (max-width: 767px) {
+  .sheet-up {
+    animation: sheet-up 0.24s ease-out;
+  }
 }
 @keyframes sheet-up {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
+}
+
+/* iOS Safari: a fixed strip that keeps the status-bar / notch region filled
+   with the nav color, so the status bar blends into the purple (or night-navy)
+   nav even when in-page background sampling would otherwise wash it out. The
+   theme-color meta covers Android / installed PWAs; this covers Safari. */
+.status-bar-fill {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--nav-bg);
+  z-index: 40;
+  pointer-events: none;
 }
 
 /* Feedback success: face pops in, label rises, pixel sparkles burst out. */

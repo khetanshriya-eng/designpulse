@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { getEditionName } from "@/lib/editionName";
 import { formatEditionDate } from "@/lib/format";
+import { PixelLoader } from "./PixelLoader";
 
 type Edition = { date: string; count: number };
 
@@ -27,6 +28,10 @@ export function EditionPicker({
   // null = not yet loaded (drives the loading state without a synchronous
   // setState in the effect). Fetched once on first open and cached.
   const [editions, setEditions] = useState<Edition[] | null>(null);
+  // Live drag-to-dismiss (mobile): dragY = px pulled down from rest; dragging
+  // disables the snap-back transition so the sheet tracks the finger 1:1.
+  const [dragY, setDragY] = useState(0);
+  const [dragging, setDragging] = useState(false);
   const touchStartY = useRef<number | null>(null);
 
   useEffect(() => {
@@ -46,6 +51,18 @@ export function EditionPicker({
   }, [open, editions]);
 
   const loading = editions === null;
+
+  // While open, flag the document so PullToRefresh stands down — otherwise a
+  // downward drag on the sheet bubbles to #app-scroll and fires the refresh
+  // loader instead of dismissing the sheet. (dragY/dragging always settle back
+  // to rest on touchend, so there's no leftover offset to reset here.)
+  useEffect(() => {
+    if (!open) return;
+    document.documentElement.dataset.modalOpen = "true";
+    return () => {
+      delete document.documentElement.dataset.modalOpen;
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -99,22 +116,40 @@ export function EditionPicker({
       <div
         role="dialog"
         aria-label="Browse editions"
-        className="max-md:sheet-up fixed inset-x-0 bottom-0 z-50 flex h-[85vh] flex-col bg-[color:var(--color-card)] border-t-[3px] border-[color:var(--card-border)] md:absolute md:inset-x-auto md:bottom-auto md:top-full md:left-0 md:mt-2 md:h-auto md:w-[380px] md:max-h-[440px] md:border-[3px] md:shadow-[5px_5px_0_var(--card-shadow)]"
+        className="sheet-up fixed inset-x-0 bottom-0 z-50 flex h-[85vh] flex-col bg-[color:var(--color-card)] border-t-[3px] border-[color:var(--card-border)] md:absolute md:inset-x-auto md:bottom-auto md:top-full md:left-0 md:mt-2 md:h-auto md:w-[380px] md:max-h-[440px] md:border-[3px] md:shadow-[5px_5px_0_var(--card-shadow)]"
+        style={{
+          transform: `translateY(${dragY}px)`,
+          transition: dragging ? "none" : "transform 0.24s ease-out",
+        }}
       >
-        {/* Drag handle (mobile) — also the swipe-to-dismiss target. */}
+        {/* Drag handle (mobile) — grab + pull down to dismiss. The sheet tracks
+            the finger (dragY); past ~110px it slides the rest of the way out and
+            closes, otherwise it springs back. touch-none keeps the browser from
+            scrolling/refreshing under the drag. */}
         <div
-          className="md:hidden flex flex-shrink-0 justify-center pt-2 pb-1 cursor-grab"
+          className="md:hidden flex flex-shrink-0 justify-center pt-3 pb-2 cursor-grab touch-none"
           onTouchStart={(e) => {
             touchStartY.current = e.touches[0].clientY;
+            setDragging(true);
           }}
-          onTouchEnd={(e) => {
-            if (
-              touchStartY.current != null &&
-              e.changedTouches[0].clientY - touchStartY.current > 60
-            ) {
-              onClose();
-            }
+          onTouchMove={(e) => {
+            if (touchStartY.current == null) return;
+            const dy = e.touches[0].clientY - touchStartY.current;
+            setDragY(dy > 0 ? dy : 0);
+          }}
+          onTouchEnd={() => {
+            setDragging(false);
             touchStartY.current = null;
+            if (dragY > 110) {
+              // Finish the slide-out, then unmount.
+              setDragY(window.innerHeight);
+              window.setTimeout(() => {
+                onClose();
+                setDragY(0);
+              }, 200);
+            } else {
+              setDragY(0);
+            }
           }}
         >
           <span className="h-1.5 w-10 rounded-full" style={{ background: "rgba(26,19,64,0.3)" }} />
@@ -140,9 +175,12 @@ export function EditionPicker({
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
           {loading && (
-            <p className="p-4 text-center font-mono text-[12px] text-[#1a1340]/60">
-              Loading…
-            </p>
+            <div className="flex flex-col items-center justify-center gap-2 py-10">
+              <PixelLoader loading opacity={1} />
+              <span className="font-mono text-[11px] text-[#1a1340]/55">
+                Loading editions…
+              </span>
+            </div>
           )}
           {!loading &&
             filtered.map((r) => (

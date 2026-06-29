@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { PixelLoader } from "./PixelLoader";
 
 /**
  * Mobile pull-to-refresh with a pixel T-rex.
@@ -47,7 +48,14 @@ export function PullToRefresh() {
     };
 
     const onStart = (e: TouchEvent) => {
-      if (scrollTop() > 0 || busyRef.current) {
+      // Don't hijack the gesture while a bottom sheet / modal is open (it sets
+      // this flag) — otherwise dragging the sheet's handle down bubbles up here
+      // and fires the refresh loader instead of dismissing the sheet.
+      if (
+        scrollTop() > 0 ||
+        busyRef.current ||
+        document.documentElement.dataset.modalOpen === "true"
+      ) {
         startY.current = null;
         return;
       }
@@ -98,62 +106,5 @@ export function PullToRefresh() {
         opacity={refreshing ? 1 : Math.min(1, pull / THRESHOLD)}
       />
     </div>
-  );
-}
-
-/**
- * A dynamic pixel "Rorschach": a bilaterally-symmetric inkblot (left cells
- * mirrored to the right) that shimmers/morphs while loading — each mirrored
- * cell-pair shares a timing so symmetry is preserved as cells fade + scale.
- * Ink color is theme-aware (dark blot on the light bar, light on the dark
- * bar). During the pull the blot is static and just ramps in opacity.
- */
-const ROR_W = 14;
-const ROR_H = 11;
-
-function PixelLoader({ loading, opacity }: { loading: boolean; opacity: number }) {
-  // Generated once per mount (lazy init, off the render path) so every pull
-  // produces a fresh blot.
-  const [cells] = useState(() => {
-    const half = ROR_W / 2;
-    const out: { x: number; y: number; dur: string; delay: string }[] = [];
-    for (let y = 0; y < ROR_H; y++) {
-      for (let x = 0; x < half; x++) {
-        const cx = x / (half - 1); // 0 at outer edge → 1 at center
-        const cy = 1 - Math.abs(y - (ROR_H - 1) / 2) / ((ROR_H - 1) / 2);
-        const p = 0.1 + 0.6 * cx * Math.max(cy, 0) + 0.18 * Math.max(cy, 0);
-        if (Math.random() < p) {
-          out.push({
-            x,
-            y,
-            // Fast, snappy shimmer.
-            dur: (0.3 + Math.random() * 0.45).toFixed(2),
-            delay: (Math.random() * 0.35).toFixed(2),
-          });
-        }
-      }
-    }
-    return out;
-  });
-
-  return (
-    <svg
-      viewBox={`0 0 ${ROR_W} ${ROR_H}`}
-      className="h-12 w-auto"
-      style={{ color: "var(--color-accent)", opacity }}
-      shapeRendering="crispEdges"
-      aria-hidden
-    >
-      {cells.flatMap(({ x, y, dur, delay }, i) => {
-        const style = loading
-          ? { animationDuration: `${dur}s`, animationDelay: `${delay}s` }
-          : undefined;
-        const cls = loading ? "ror-cell" : undefined;
-        return [
-          <rect key={`l${i}`} x={x} y={y} width="1.05" height="1.05" fill="currentColor" className={cls} style={style} />,
-          <rect key={`r${i}`} x={ROR_W - 1 - x} y={y} width="1.05" height="1.05" fill="currentColor" className={cls} style={style} />,
-        ];
-      })}
-    </svg>
   );
 }

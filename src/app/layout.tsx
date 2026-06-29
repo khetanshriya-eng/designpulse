@@ -116,6 +116,8 @@ export default function RootLayout({
         />
       </head>
       <body className="text-ink">
+        {/* Keeps the iOS status-bar/notch region in the nav color (see globals). */}
+        <div className="status-bar-fill" aria-hidden />
         {/* Fixed overlays live outside the scroll container (viewport-fixed). */}
         <PullToRefresh />
         <ScrollTop />
