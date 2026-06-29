@@ -39,7 +39,7 @@ export function ShareEditionButton({ editionUrl }: { editionUrl: string }) {
         onClick={handleShare}
         title="Copy this edition's link"
         aria-label="Copy this edition's link"
-        className="shrink-0 inline-flex items-center gap-2 px-3 py-2 border-[3px] border-[color:var(--card-border)] bg-[color:var(--color-card)] text-[#1a1340] shadow-[3px_3px_0_var(--card-shadow)] transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-[4px_4px_0_var(--card-shadow)] active:translate-x-0 active:translate-y-0"
+        className="shrink-0 self-start inline-flex items-center gap-2 p-2 sm:px-3 sm:py-2 border-[3px] border-[color:var(--card-border)] bg-[color:var(--color-card)] text-[#1a1340] shadow-[3px_3px_0_var(--card-shadow)] transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-[4px_4px_0_var(--card-shadow)] active:translate-x-0 active:translate-y-0"
       >
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" shapeRendering="crispEdges" aria-hidden>
           <rect x="5" y="5" width="9" height="9" stroke="currentColor" strokeWidth="2" />

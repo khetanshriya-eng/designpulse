@@ -202,6 +202,22 @@ body {
 }
 
 /*
+ * iOS auto-zoom guard. Mobile Safari zooms the whole page in whenever a
+ * focused input/textarea/select has a font-size below 16px — and never zooms
+ * back out. Our mono inputs (search, date picker, email) read at ~14px, which
+ * tripped this on every focus. Pinning them to 16px on mobile is the correct
+ * fix (vs. disabling pinch-zoom, which is an a11y violation). Desktop keeps the
+ * smaller mono sizes. Mirror any per-input visual size with transform:scale().
+ */
+@media (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/*
  * Touch devices only: move scrolling off the document into #app-scroll, so the
  * browser's native pull-to-refresh never fires (it's a document-level gesture)
  * and our dino PTR owns it. Desktop (fine pointer) is untouched — the document

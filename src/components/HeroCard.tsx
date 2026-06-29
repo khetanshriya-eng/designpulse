@@ -64,7 +64,8 @@ export function HeroCard({ article }: { article: Article }) {
         </div>
       </div>
     </Link>
-      <CardCopyOverlay url={article.url} />
+      {/* Desktop only: on mobile the edition-share button above covers this. */}
+      <CardCopyOverlay url={article.url} hideOnMobile />
     </div>
   );
 }

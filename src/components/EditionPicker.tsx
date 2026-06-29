@@ -99,11 +99,11 @@ export function EditionPicker({
       <div
         role="dialog"
         aria-label="Browse editions"
-        className="max-md:sheet-up fixed inset-x-0 bottom-0 z-50 flex max-h-[70vh] flex-col bg-[color:var(--color-card)] border-t-[3px] border-[color:var(--card-border)] md:absolute md:inset-x-auto md:bottom-auto md:top-full md:left-0 md:mt-2 md:w-[380px] md:max-h-[440px] md:border-[3px] md:shadow-[5px_5px_0_var(--card-shadow)]"
+        className="max-md:sheet-up fixed inset-x-0 bottom-0 z-50 flex h-[85vh] flex-col bg-[color:var(--color-card)] border-t-[3px] border-[color:var(--card-border)] md:absolute md:inset-x-auto md:bottom-auto md:top-full md:left-0 md:mt-2 md:h-auto md:w-[380px] md:max-h-[440px] md:border-[3px] md:shadow-[5px_5px_0_var(--card-shadow)]"
       >
         {/* Drag handle (mobile) — also the swipe-to-dismiss target. */}
         <div
-          className="md:hidden flex justify-center pt-2 pb-1 cursor-grab"
+          className="md:hidden flex flex-shrink-0 justify-center pt-2 pb-1 cursor-grab"
           onTouchStart={(e) => {
             touchStartY.current = e.touches[0].clientY;
           }}
@@ -120,8 +120,9 @@ export function EditionPicker({
           <span className="h-1.5 w-10 rounded-full" style={{ background: "rgba(26,19,64,0.3)" }} />
         </div>
 
-        {/* Search */}
-        <div className="p-3 border-b-[3px] border-[color:var(--card-border)]">
+        {/* Search — pinned just under the handle; never scrolls away. The 16px
+            mobile rule in globals.css keeps iOS from auto-zooming on focus. */}
+        <div className="flex-shrink-0 p-3 border-b-[3px] border-[color:var(--card-border)]">
           <input
             autoFocus
             value={search}
@@ -132,8 +133,12 @@ export function EditionPicker({
           />
         </div>
 
-        {/* List */}
-        <div className="overflow-y-auto">
+        {/* List — the only scroll area, so the input stays put. min-h keeps a
+            single result from collapsing; safe-area padding clears the home bar. */}
+        <div
+          className="flex-1 min-h-[120px] overflow-y-auto overscroll-contain"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        >
           {loading && (
             <p className="p-4 text-center font-mono text-[12px] text-[#1a1340]/60">
               Loading…

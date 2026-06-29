@@ -40,6 +40,10 @@ export function ThemeToggle() {
     setSweep(reverse);
     window.setTimeout(() => {
       document.documentElement.dataset.theme = next;
+      // Keep the iOS status-bar tint matched to the nav (purple by day, navy by
+      // night) as the theme flips under cover.
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute("content", next === "dark" ? "#1a1340" : "#5b3df5");
       setTheme(next);
     }, 250);
     window.setTimeout(() => setSweep(null), 700);

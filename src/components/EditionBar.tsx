@@ -19,25 +19,30 @@ export function EditionBar({ date }: { date: string }) {
   return (
     <div className="site-container">
       <div className="relative flex items-center justify-between gap-3 pt-4 pb-2">
+        {/* Name stacked over date — the two-line left block gives the title
+            side enough visual weight to balance the share button on the right
+            (instead of "name · date" running into an oversized button). */}
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           title="Browse past editions"
           aria-haspopup="dialog"
           aria-expanded={open}
-          className="group flex items-center gap-2 min-w-0 text-left"
+          className="group flex flex-col items-start gap-0.5 min-w-0 text-left"
         >
-          <span className="font-heading text-[1.3rem] sm:text-[1.6rem] leading-none text-ink truncate">
-            {name}
+          <span className="flex items-center gap-2 min-w-0">
+            <span className="font-heading text-[1.3rem] sm:text-[1.6rem] leading-none text-ink truncate">
+              {name}
+            </span>
+            <span
+              aria-hidden
+              className="font-pixel text-[13px] text-accent transition-transform group-hover:translate-y-0.5"
+            >
+              ▾
+            </span>
           </span>
-          <span className="hidden sm:inline font-mono text-[13px] text-ink-subtle whitespace-nowrap">
-            · {formatEditionDate(date)}
-          </span>
-          <span
-            aria-hidden
-            className="font-pixel text-[13px] text-accent transition-transform group-hover:translate-y-0.5"
-          >
-            ▾
+          <span className="font-mono text-[12px] text-ink-subtle whitespace-nowrap">
+            {formatEditionDate(date)}
           </span>
         </button>
 
