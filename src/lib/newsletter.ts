@@ -17,10 +17,15 @@ import { createPublicClient } from "@/lib/db/client";
 import { sourcePriority, CATEGORY_META, type SourceCategory } from "@/data/sources";
 import { getEditionName } from "@/lib/editionName";
 import { isOffBrand } from "@/lib/content/filter";
+import { unsubscribeUrl } from "@/lib/unsubscribe";
 import { logger, type Logger } from "@/lib/logger";
 
 const BUTTONDOWN_API = "https://api.buttondown.com/v1";
 const SITE = "https://designatorapp.com";
+
+/** Swapped for a per-recipient HMAC link on the Resend path, or for
+ * Buttondown's own template variable on the draft/fallback path. */
+const UNSUB_PLACEHOLDER = "%%UNSUBSCRIBE_URL%%";
 
 const DIGEST_TARGET = 7; // aim for this many stories
 const DIGEST_MIN = 5; // below this we log a warning (but still send)
@@ -200,7 +205,7 @@ export function renderDigestHtml(
           <td style="background:${NAVY};padding:18px 24px;">
             <p style="font-family:${MONO};font-size:12px;line-height:1.7;color:rgba(255,250,240,0.7);margin:0;">
               You're getting this because you subscribed to <a href="${SITE}" style="color:${LIME};text-decoration:none;">Designator</a> — the daily briefing for product designers.<br />
-              <a href="{{ unsubscribe_url }}" style="color:rgba(255,250,240,0.9);text-decoration:underline;">Unsubscribe</a>
+              <a href="${UNSUB_PLACEHOLDER}" style="color:rgba(255,250,240,0.9);text-decoration:underline;">Unsubscribe</a>
               &nbsp;·&nbsp; <a href="${SITE}" style="color:rgba(255,250,240,0.9);text-decoration:underline;">designatorapp.com</a>
             </p>
           </td>
@@ -267,9 +272,107 @@ export type SendDigestResult = {
   reason?: string;
   /** Which relaxation pass filled the quota (1 = strict 24h). */
   pass?: number;
+  /** Delivery channel actually used (or that would be used, on a dry run). */
+  via?: "resend" | "buttondown";
+  /** How many addresses the digest went to (Resend path). */
+  recipients?: number;
   /** Populated on Buttondown failures so cron logs / manual runs show WHY. */
   buttondown?: { status: number; detail: string };
+  /** Populated on Resend failures. */
+  resend?: { status: number; detail: string };
 };
+
+/**
+ * Active subscriber emails from Buttondown (still the list of record — the
+ * signup flow is unchanged). Defensive about field names (email/email_address)
+ * and filters out any non-deliverable subscriber types.
+ */
+async function fetchButtondownSubscribers(
+  apiKey: string,
+  log: Logger
+): Promise<string[]> {
+  const out: string[] = [];
+  let url: string | null = `${BUTTONDOWN_API}/subscribers`;
+  for (let pageN = 0; url && pageN < 20; pageN++) {
+    const res: Response = await fetch(url, {
+      headers: { Authorization: `Token ${apiKey}` },
+    });
+    if (!res.ok) {
+      log.error("subscriber fetch failed", { status: res.status });
+      break;
+    }
+    const data = (await res.json()) as {
+      results?: Record<string, unknown>[];
+      next?: string | null;
+    };
+    for (const s of data.results ?? []) {
+      const email = (s.email_address ?? s.email) as string | undefined;
+      const type = String(s.type ?? s.subscriber_type ?? "");
+      if (!email) continue;
+      // Skip anything not plainly deliverable (unactivated double-opt-ins,
+      // unsubscribed, complained, paused, …).
+      if (/unactiv|unsub|spam|trash|block|paused|churn|complain/i.test(type)) {
+        continue;
+      }
+      out.push(email.toLowerCase());
+    }
+    url = data.next ?? null;
+  }
+  return [...new Set(out)];
+}
+
+/**
+ * Deliver via Resend from our own verified domain — the same sender identity
+ * as the welcome email, which already reaches inboxes. Per-recipient HMAC
+ * unsubscribe link in the footer plus List-Unsubscribe headers (Gmail's
+ * one-click), both strong deliverability signals the shared Buttondown
+ * domain couldn't give us on the free tier.
+ */
+async function sendViaResend(
+  resendKey: string,
+  subject: string,
+  htmlTemplate: string,
+  recipients: string[],
+  log: Logger
+): Promise<{ sentCount: number; failure?: { status: number; detail: string } }> {
+  const from =
+    process.env.RESEND_FROM_EMAIL ?? "Designator <hello@designatorapp.com>";
+  let sentCount = 0;
+  let failure: { status: number; detail: string } | undefined;
+  // Resend's batch endpoint caps at 100 emails per call.
+  for (let i = 0; i < recipients.length; i += 100) {
+    const chunk = recipients.slice(i, i + 100);
+    const payload = chunk.map((email) => {
+      const unsub = unsubscribeUrl(email);
+      return {
+        from,
+        to: [email],
+        subject,
+        html: htmlTemplate.split(UNSUB_PLACEHOLDER).join(unsub),
+        headers: {
+          "List-Unsubscribe": `<${unsub}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
+      };
+    });
+    const res = await fetch("https://api.resend.com/emails/batch", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      failure = { status: res.status, detail: detail.slice(0, 300) };
+      log.error("resend batch failed", { status: res.status, detail });
+    } else {
+      sentCount += chunk.length;
+    }
+  }
+  return { sentCount, failure };
+}
 
 /**
  * Build and send the daily digest. Selection: multi-pass relaxation (see
@@ -388,14 +491,27 @@ export async function runSendDigest(
     dateLabel
   );
 
+  const resendKey = process.env.RESEND_API_KEY;
+  const via: "resend" | "buttondown" = resendKey ? "resend" : "buttondown";
+
   // Dry run: everything above (DB read, selection, rendering) executed for
-  // real; only the Buttondown POST is skipped. Used to diagnose the pipeline
-  // in production without emailing subscribers.
+  // real; no email created anywhere. Reports which channel a real send would
+  // use and (on the Resend path) how many recipients it would go to.
   if (opts.dryRun) {
+    let recipients: number | undefined;
+    if (resendKey) {
+      try {
+        recipients = (await fetchButtondownSubscribers(apiKey, log)).length;
+      } catch {
+        /* diagnosis only — never fail a dry run on this */
+      }
+    }
     log.info("digest dry run — send skipped", {
       count: selected.length,
       subject,
       pass,
+      via,
+      recipients,
       sources: selected.map((c) => c.srcSlug),
     });
     return {
@@ -403,9 +519,69 @@ export async function runSendDigest(
       count: selected.length,
       subject,
       pass,
+      via,
+      recipients,
       reason: "dry run",
     };
   }
+
+  // Real sends go through RESEND from our own verified domain — the exact
+  // sender identity (From + SPF/DKIM) as the welcome email, which already
+  // lands in inboxes. Buttondown's shared sending domain (the free tier's
+  // only option) is what kept flagging the digest as spam.
+  if (!opts.draft && resendKey) {
+    const recipients = await fetchButtondownSubscribers(apiKey, log);
+    if (recipients.length === 0) {
+      log.warn("digest skipped — no deliverable subscribers");
+      return {
+        sent: false,
+        count: selected.length,
+        subject,
+        pass,
+        via,
+        reason: "no subscribers",
+      };
+    }
+    const { sentCount, failure } = await sendViaResend(
+      resendKey,
+      subject,
+      html,
+      recipients,
+      log
+    );
+    if (sentCount === 0) {
+      return {
+        sent: false,
+        count: selected.length,
+        subject,
+        pass,
+        via,
+        reason: "resend error",
+        resend: failure,
+      };
+    }
+    log.info("digest sent via resend", {
+      count: selected.length,
+      subject,
+      pass,
+      recipients: sentCount,
+    });
+    return {
+      sent: true,
+      count: selected.length,
+      subject,
+      pass,
+      via,
+      recipients: sentCount,
+    };
+  }
+
+  // Buttondown path: ?draft=1 design previews (dashboard render + test sends)
+  // and the fallback when RESEND_API_KEY is absent. Buttondown substitutes its
+  // own per-recipient unsubscribe variable here.
+  const bdHtml = html
+    .split(UNSUB_PLACEHOLDER)
+    .join("{{ unsubscribe_url }}");
 
   // status "about_to_send" = create AND deliver immediately; "draft" parks it
   // in the Buttondown dashboard for design review / test sends. ("sent" is a
@@ -422,7 +598,7 @@ export async function runSendDigest(
     },
     body: JSON.stringify({
       subject,
-      body: html,
+      body: bdHtml,
       status: opts.draft ? "draft" : "about_to_send",
     }),
   });
@@ -438,6 +614,7 @@ export async function runSendDigest(
       count: selected.length,
       subject,
       pass,
+      via: "buttondown",
       reason: "buttondown error",
       buttondown: { status: res.status, detail: detail.slice(0, 500) },
     };
@@ -450,10 +627,15 @@ export async function runSendDigest(
       count: selected.length,
       subject,
       pass,
+      via: "buttondown",
       reason: "draft created",
     };
   }
 
-  log.info("digest sent", { count: selected.length, subject, pass });
-  return { sent: true, count: selected.length, subject, pass };
+  log.info("digest sent via buttondown", {
+    count: selected.length,
+    subject,
+    pass,
+  });
+  return { sent: true, count: selected.length, subject, pass, via: "buttondown" };
 }

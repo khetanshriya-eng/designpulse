@@ -174,20 +174,27 @@ html[data-theme="dark"] {
  * inside #app-scroll (see the pointer:coarse block below).
  */
 html {
-  /* iOS Safari samples the ROOT background's EDGES for its chrome: the top
-     edge behind the status bar, the bottom edge behind the keyboard / home
-     indicator / overscroll. A solid nav-purple root fixed the status bar but
-     leaked purple at the bottom — so split it with a HARD stop (no visible
-     blend): nav color for the top half, page paper for the bottom half. Both
-     halves re-theme via the vars (purple/cream by day, navy/deep-navy at
-     night). The actual page canvas lives on <body>. */
-  background: linear-gradient(
+  /* The root background paints Safari's chrome regions: behind the status bar
+     (top) and behind the keyboard / home indicator / bottom strip. A plain
+     50/50 gradient FAILED here: the default background-repeat TILED it below
+     the root box (which is only ~100svh tall), so the strip between the page
+     box and the physical screen bottom showed the NEXT tile's purple top —
+     the "permanent purple block". Fix: no-repeat + an image sized far past
+     the box (400lvh) with a hard stop — nav color strictly for the top band,
+     paper for everything below it. background-color stays nav-colored so the
+     TOP overscroll (beyond the box, where no-repeat leaves only the color)
+     matches the nav too. Fallback first for pre-lvh Safari. */
+  background: var(--nav-bg);
+  background-color: var(--nav-bg);
+  background-image: linear-gradient(
     to bottom,
-    var(--nav-bg) 0%,
-    var(--nav-bg) 50%,
-    var(--color-paper) 50%,
+    var(--nav-bg) 0,
+    var(--nav-bg) 50lvh,
+    var(--color-paper) 50lvh,
     var(--color-paper) 100%
   );
+  background-size: 100% 400lvh;
+  background-repeat: no-repeat;
   color: var(--color-ink);
   color-scheme: light;
 }
@@ -239,7 +246,10 @@ body {
  */
 @media (pointer: coarse) {
   body {
-    height: 100%;
+    /* dvh, not 100%: 100% is the SMALL viewport, which left an uncovered
+       strip above the home indicator when Safari's toolbar collapsed — the
+       root background (formerly purple) showed through it permanently. */
+    height: 100dvh;
     overflow: hidden;
   }
   .app-scroll {

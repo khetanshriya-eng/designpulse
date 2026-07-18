@@ -81,6 +81,10 @@ export const viewport: Viewport = {
   userScalable: true,
   viewportFit: "cover",
   themeColor: "#5b3df5",
+  // Android: shrink the layout viewport when the keyboard opens, so bottom
+  // sheets sit above it natively. iOS ignores this — there the BottomSheet's
+  // visualViewport anchoring does the same job.
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({

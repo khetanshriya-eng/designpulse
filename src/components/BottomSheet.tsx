@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useModalA11y } from "@/lib/use-modal-a11y";
 
 const MOBILE_MQ = "(max-width: 767px)";
@@ -96,29 +97,31 @@ export function BottomSheet({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  // Mobile scroll lock + PTR stand-down. Cleanup restores the exact scroll
-  // position and removes the flag no matter how the sheet closes (✕, backdrop,
+  // Mobile scroll lock + PTR stand-down. CRITICAL: on touch devices the page
+  // scrolls inside #app-scroll, NOT the document — locking document.body (the
+  // earlier approach) was a no-op and the background kept scrolling behind
+  // the sheet. Lock the real scroller: overflow hidden stops touch scrolling
+  // dead, and the captured scrollTop is restored on close in case the
+  // overflow flip reset it. Cleanup runs on every close path (✕, backdrop,
   // Escape, result tap, route navigation).
   useEffect(() => {
     if (!open) return;
     if (!window.matchMedia(MOBILE_MQ).matches) return;
-    const scrollY = window.scrollY;
-    const body = document.body;
-    const prev = {
-      position: body.style.position,
-      top: body.style.top,
-      width: body.style.width,
-    };
     document.documentElement.dataset.modalOpen = "true";
-    body.style.position = "fixed";
-    body.style.top = `-${scrollY}px`;
-    body.style.width = "100%";
+    const sc = document.getElementById("app-scroll");
+    const prevOverflowY = sc?.style.overflowY ?? "";
+    const prevScrollTop = sc?.scrollTop ?? 0;
+    if (sc) sc.style.overflowY = "hidden";
+    // The document itself can't scroll on touch (body overflow hidden), but
+    // iOS sometimes nudges window scroll to reveal a focused input — pin it.
+    const prevWinY = window.scrollY;
     return () => {
       delete document.documentElement.dataset.modalOpen;
-      body.style.position = prev.position;
-      body.style.top = prev.top;
-      body.style.width = prev.width;
-      window.scrollTo(0, scrollY);
+      if (sc) {
+        sc.style.overflowY = prevOverflowY;
+        sc.scrollTop = prevScrollTop;
+      }
+      window.scrollTo(0, prevWinY);
     };
   }, [open]);
 
@@ -159,7 +162,11 @@ export function BottomSheet({
   }
 
   // ----------------------------------------------------------------- mobile
-  return (
+  // Portaled to <body>: the trigger renders inside #app-scroll (the touch
+  // scroller), and keeping a fixed overlay inside a scrolling ancestor is
+  // exactly the setup iOS mishandles around the keyboard. From <body> the
+  // overlay is genuinely viewport-relative.
+  return createPortal(
     // Overlay anchored to the VISUAL viewport: explicit height + translateY
     // glue it to the visible area, so the sheet's bottom edge sits on top of
     // the keyboard when it's open. (top+height set → the inset-0 bottom is
@@ -212,6 +219,7 @@ export function BottomSheet({
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
