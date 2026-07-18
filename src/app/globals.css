@@ -174,7 +174,11 @@ html[data-theme="dark"] {
  * inside #app-scroll (see the pointer:coarse block below).
  */
 html {
-  background: var(--color-paper);
+  /* Nav color, NOT paper: iOS Safari samples the ROOT element's background
+     for the status-bar / notch region (theme-color alone is often ignored in
+     regular browsing). Purple by day, navy at night via --nav-bg, so the
+     status bar blends into the nav. The actual page canvas lives on <body>. */
+  background: var(--nav-bg);
   color: var(--color-ink);
   color-scheme: light;
 }
@@ -183,6 +187,7 @@ html[data-theme="dark"] {
 }
 
 body {
+  background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;

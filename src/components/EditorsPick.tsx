@@ -14,14 +14,22 @@ export function EditorsPick({ article }: { article: Article }) {
         rel="noopener noreferrer"
         className="relative block surface-card"
       >
-        <ArticleImage
-          article={article}
-          aspect="wide"
-          size="lg"
-          className="brightness-[0.7] group-hover:brightness-[0.65] transition-[filter]"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-6 sm:p-10 max-w-[820px]">
+        {/* Image sizing lives on this wrapper (fill mode) so the aspect can be
+            responsive: taller 16/10 tile on mobile, cinematic 21/9 on md+. */}
+        <div className="relative aspect-[16/10] md:aspect-[21/9]">
+          <ArticleImage
+            article={article}
+            fill
+            size="lg"
+            className="md:brightness-[0.7] md:group-hover:brightness-[0.65] transition-[filter]"
+          />
+          {/* Legibility gradient only where text overlays the image (md+). */}
+          <div className="hidden md:block absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
+        </div>
+        {/* Text: on mobile a flat navy panel BELOW the image (in flow — grows
+            with the title, so long titles can never clip against a fixed image
+            height); on md+ the classic overlay pinned to the bottom. */}
+        <div className="bg-[#1a1340] p-5 sm:p-6 md:bg-transparent md:absolute md:inset-x-0 md:bottom-0 md:p-10 md:max-w-[820px]">
           <p
             id="editors-pick-heading"
             className="font-pixel text-[11px] uppercase tracking-[0.18em] font-bold text-accent-soft mb-3"

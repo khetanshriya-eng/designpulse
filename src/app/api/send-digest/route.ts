@@ -19,14 +19,17 @@ async function handle(req: NextRequest) {
   if (denied) return denied;
 
   const log = logger("api.send-digest");
+  // ?dry=1: run the full selection + rendering but skip the Buttondown POST —
+  // safe production diagnosis without emailing subscribers.
+  const dryRun = !!new URL(req.url).searchParams.get("dry");
   try {
-    const result = await runSendDigest({ log });
-    return Response.json({ success: true, ...result });
+    const result = await runSendDigest({ log, dryRun });
+    return Response.json({ success: result.sent || dryRun, ...result });
   } catch (err) {
     const message = (err as Error).message;
     log.error("crashed", { error: message });
     return Response.json(
-      { success: false, error: "Digest send failed" },
+      { success: false, error: "Digest send failed", detail: message },
       { status: 500 }
     );
   }

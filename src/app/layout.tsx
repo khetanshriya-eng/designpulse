@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { ScrollTop } from "@/components/ScrollTop";
+import { ScrollReset } from "@/components/ScrollReset";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 
@@ -118,6 +119,8 @@ export default function RootLayout({
       <body className="text-ink">
         {/* Keeps the iOS status-bar/notch region in the nav color (see globals). */}
         <div className="status-bar-fill" aria-hidden />
+        {/* #app-scroll owns scrolling on touch — reset it on route changes. */}
+        <ScrollReset />
         {/* Fixed overlays live outside the scroll container (viewport-fixed). */}
         <PullToRefresh />
         <ScrollTop />

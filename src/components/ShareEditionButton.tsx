@@ -53,7 +53,7 @@ export function ShareEditionButton({ editionUrl }: { editionUrl: string }) {
       {showToast && (
         <div
           role="status"
-          className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 sm:bottom-auto sm:left-auto sm:top-6 sm:right-6 sm:translate-x-0 px-4 py-3 font-mono text-[13px] border-[3px] [animation:slideUp_0.2s_ease]"
+          className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 sm:bottom-auto sm:left-auto sm:top-6 sm:right-6 sm:translate-x-0 w-max max-w-[92vw] whitespace-nowrap px-3.5 py-3 font-mono text-[13px] border-[3px] [animation:slideUp_0.2s_ease]"
           style={{
             background: "#1a1340",
             color: "#fffaf0",
@@ -64,7 +64,7 @@ export function ShareEditionButton({ editionUrl }: { editionUrl: string }) {
           <span style={{ color: "var(--color-lime)" }} aria-hidden>
             ✦{" "}
           </span>
-          Edition link copied to clipboard
+          Edition link copied
         </div>
       )}
     </>

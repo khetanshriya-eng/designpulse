@@ -102,16 +102,8 @@ export function Footer() {
                   Subscribe
                 </Link>
               </li>
-              <li>
-                <a
-                  href="/api/rss"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-[color:var(--color-lime)] transition-colors"
-                >
-                  RSS feed
-                </a>
-              </li>
+              {/* RSS deliberately not linked here — autodiscovery lives in the
+                  <head> and the About page colophon still points to /api/rss. */}
             </ul>
           </div>
         </div>

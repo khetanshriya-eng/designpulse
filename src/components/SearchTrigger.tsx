@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useModalA11y } from "@/lib/use-modal-a11y";
 import { formatRelativeTime } from "@/lib/format";
+import { BottomSheet } from "./BottomSheet";
+import { PixelLoader } from "./PixelLoader";
 
 type Result = {
   id: string;
@@ -17,14 +19,57 @@ type Result = {
   publishedAt: string | null;
 };
 
+/** Curated starting points shown in the mobile sheet before the user types. */
+const POPULAR_SEARCHES = [
+  "Figma",
+  "AI tools",
+  "design systems",
+  "UX research",
+  "portfolio",
+  "typography",
+  "Config",
+];
+
+const RECENTS_KEY = "designator-recent-searches";
+const RECENTS_MAX = 5;
+const MOBILE_MQ = "(max-width: 767px)";
+
+function loadRecents(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(RECENTS_KEY);
+    const arr: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr)
+      ? arr.filter((s): s is string => typeof s === "string").slice(0, RECENTS_MAX)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 export function SearchTrigger() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Result[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Only read once per mount is fine — recents are also updated in-place via
+  // setRecents whenever a search is saved/cleared.
+  const [recents, setRecents] = useState<string[]>(loadRecents);
+  // Mobile = bottom sheet, desktop = the classic centered overlay. Tracked
+  // live so a resize/rotation swaps presentation on the next open.
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.matchMedia(MOBILE_MQ).matches
+  );
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_MQ);
+    const onChange = () => setIsMobile(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   // Reset everything and close. Handler-based reset avoids React 19's
   // set-state-in-effect warning.
@@ -35,8 +80,38 @@ export function SearchTrigger() {
     setError(null);
   }
 
-  // Focus trap + Escape + focus restoration while open.
-  useModalA11y(open, panelRef, closeModal);
+  // Remember a query that led somewhere (user tapped a result). MRU, deduped
+  // case-insensitively, capped.
+  function saveRecent(term: string) {
+    const t = term.trim();
+    if (t.length < 2) return;
+    setRecents((prev) => {
+      const next = [
+        t,
+        ...prev.filter((p) => p.toLowerCase() !== t.toLowerCase()),
+      ].slice(0, RECENTS_MAX);
+      try {
+        localStorage.setItem(RECENTS_KEY, JSON.stringify(next));
+      } catch {
+        /* private mode etc. — recents just won't persist */
+      }
+      return next;
+    });
+  }
+
+  function clearRecents() {
+    try {
+      localStorage.removeItem(RECENTS_KEY);
+    } catch {
+      /* ignore */
+    }
+    setRecents([]);
+  }
+
+  // Focus trap + Escape + focus restoration for the DESKTOP overlay only —
+  // the mobile sheet brings its own a11y (and must not autofocus, since that
+  // would summon the keyboard the moment it opens).
+  useModalA11y(open && !isMobile, panelRef, closeModal);
 
   // Global shortcuts: ⌘K / Ctrl+K toggles search; "/" opens it (the pattern
   // designers expect). "/" is ignored while typing in a field so it doesn't
@@ -64,12 +139,12 @@ export function SearchTrigger() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Focus the input when the modal opens.
+  // Focus the input when the DESKTOP modal opens. Mobile: no autofocus.
   useEffect(() => {
-    if (open) {
+    if (open && !isMobile) {
       requestAnimationFrame(() => inputRef.current?.focus());
     }
-  }, [open]);
+  }, [open, isMobile]);
 
   // Debounced fetch. Only fires for queries with ≥2 trimmed chars; shorter
   // queries are filtered at render time (so we don't need to setState here
@@ -116,7 +191,100 @@ export function SearchTrigger() {
         <SearchIcon />
       </button>
 
-      {open && (
+      {/* ------------------------- Mobile: bottom sheet ------------------- */}
+      <BottomSheet
+        open={open && isMobile}
+        onClose={closeModal}
+        ariaLabel="Search"
+      >
+        {/* Input — pinned under the handle; 16px rule prevents iOS zoom. */}
+        <div className="flex-shrink-0 flex items-center gap-3 px-4 pb-3 border-b-[3px] border-[color:var(--card-border)]">
+          <SearchIcon className="text-[#1a1340]/50" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search articles, sources, topics…"
+            aria-label="Search query"
+            className="flex-1 bg-transparent font-mono text-[14px] text-[#1a1340] placeholder:text-[#1a1340]/45 outline-none py-1"
+          />
+        </div>
+
+        {/* Scroll area: suggestions before typing, results after. */}
+        <div
+          className="flex-1 min-h-[120px] overflow-y-auto overscroll-contain"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+          aria-live="polite"
+        >
+          {tooShort && (
+            <div className="p-4 flex flex-col gap-6">
+              <ChipGroup
+                label="Popular"
+                terms={POPULAR_SEARCHES}
+                onPick={setQ}
+              />
+              {recents.length > 0 && (
+                <ChipGroup
+                  label="Recent"
+                  terms={recents}
+                  onPick={setQ}
+                  onClear={clearRecents}
+                />
+              )}
+            </div>
+          )}
+          {!tooShort && loading && (
+            <div className="flex flex-col items-center justify-center gap-2 py-10">
+              <PixelLoader loading opacity={1} />
+              <span className="font-mono text-[11px] text-[#1a1340]/55">
+                Searching…
+              </span>
+            </div>
+          )}
+          {!tooShort && !loading && error && (
+            <p className="p-4 text-center font-mono text-[12px] text-[#1a1340]/60">
+              Couldn&apos;t search: {error}
+            </p>
+          )}
+          {!tooShort && !loading && !error && visibleResults.length === 0 && (
+            <p className="p-4 text-center font-mono text-[12px] text-[#1a1340]/60">
+              No matches for &ldquo;{q}&rdquo;.
+            </p>
+          )}
+          {!loading &&
+            visibleResults.map((r) => (
+              <Link
+                key={r.id}
+                href={r.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  saveRecent(trimmed);
+                  closeModal();
+                }}
+                className="block px-4 py-3 border-b border-[color:var(--card-border)]/20"
+              >
+                <p className="font-heading text-[15px] leading-[1.35] text-[#1a1340] line-clamp-2">
+                  {r.title}
+                </p>
+                <div className="mt-1 flex items-center gap-2 font-mono text-[10px] text-[#1a1340]/55">
+                  <span className="font-pixel uppercase tracking-[0.1em] text-[#5b3df5]">
+                    {r.categoryLabel}
+                  </span>
+                  <span>{r.sourceName}</span>
+                  {r.publishedAt && (
+                    <>
+                      <span aria-hidden>·</span>
+                      <span>{formatRelativeTime(r.publishedAt)}</span>
+                    </>
+                  )}
+                </div>
+              </Link>
+            ))}
+        </div>
+      </BottomSheet>
+
+      {/* ------------------------- Desktop: centered overlay --------------- */}
+      {open && !isMobile && (
         <div
           className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] px-4"
           role="dialog"
@@ -189,7 +357,10 @@ export function SearchTrigger() {
                         href={r.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        onClick={closeModal}
+                        onClick={() => {
+                          saveRecent(trimmed);
+                          closeModal();
+                        }}
                         className="block px-4 py-3.5 hover:bg-paper-tint transition-colors"
                       >
                         <div className="flex items-baseline justify-between gap-3">
@@ -239,7 +410,51 @@ export function SearchTrigger() {
   );
 }
 
-function SearchIcon() {
+/** A labeled row of pixel chips (Popular / Recent) for the mobile sheet. */
+function ChipGroup({
+  label,
+  terms,
+  onPick,
+  onClear,
+}: {
+  label: string;
+  terms: string[];
+  onPick: (term: string) => void;
+  onClear?: () => void;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2.5">
+        <p className="font-pixel text-[11px] uppercase tracking-[0.14em] text-[#1a1340]/55">
+          {label}
+        </p>
+        {onClear && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="font-mono text-[11px] text-[#1a1340]/55 underline underline-offset-2"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {terms.map((term) => (
+          <button
+            key={term}
+            type="button"
+            onClick={() => onPick(term)}
+            className="font-mono text-[12px] px-2.5 py-1.5 border-2 border-[#1a1340] text-[#1a1340] shadow-[2px_2px_0_var(--card-shadow)] active:translate-x-px active:translate-y-px active:shadow-none transition-all"
+          >
+            {term}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SearchIcon({ className = "text-ink-muted" }: { className?: string }) {
   return (
     <svg
       width="18"
@@ -250,7 +465,7 @@ function SearchIcon() {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="text-ink-muted shrink-0"
+      className={`shrink-0 ${className}`}
     >
       <circle cx="11" cy="11" r="7" />
       <path d="m21 21-4.3-4.3" />

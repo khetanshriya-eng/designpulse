@@ -82,6 +82,8 @@ export type SendDigestResult = {
   count: number;
   subject?: string;
   reason?: string;
+  /** Populated on Buttondown failures so cron logs / manual runs show WHY. */
+  buttondown?: { status: number; detail: string };
 };
 
 /**
@@ -90,7 +92,7 @@ export type SendDigestResult = {
  * and ≤2 per source), rendered to Markdown and sent via Buttondown.
  */
 export async function runSendDigest(
-  opts: { log?: Logger } = {}
+  opts: { log?: Logger; dryRun?: boolean } = {}
 ): Promise<SendDigestResult> {
   const log = opts.log ?? logger("newsletter.send");
 
@@ -141,6 +143,13 @@ export async function runSendDigest(
       srcSlug: src.slug,
     });
   }
+  // Stage log: how the funnel narrowed (fetched → on-brand tier-1/2). Makes
+  // "no articles" diagnosable from Vercel logs instead of a silent skip.
+  log.info("digest candidates", {
+    fetched: (data ?? []).length,
+    eligible: candidates.length,
+  });
+
   // Tier 1 leads; recency order preserved within a tier (stable sort).
   candidates.sort((a, b) => sourcePriority(a.srcSlug) - sourcePriority(b.srcSlug));
 
@@ -180,6 +189,18 @@ export async function runSendDigest(
     dateLabel
   );
 
+  // Dry run: everything above (DB read, selection, rendering) executed for
+  // real; only the Buttondown POST is skipped. Used to diagnose the pipeline
+  // in production without emailing subscribers.
+  if (opts.dryRun) {
+    log.info("digest dry run — send skipped", {
+      count: selected.length,
+      subject,
+      sources: selected.map((c) => c.srcSlug),
+    });
+    return { sent: false, count: selected.length, subject, reason: "dry run" };
+  }
+
   const res = await fetch(`${BUTTONDOWN_API}/emails`, {
     method: "POST",
     headers: {
@@ -190,9 +211,18 @@ export async function runSendDigest(
   });
 
   if (!res.ok) {
+    // Surface Buttondown's own explanation (plan limits, key issues, …) in
+    // both the log and the result, so a failing cron is diagnosable from the
+    // Vercel dashboard and a manual run shows the reason in the response.
     const detail = await res.text().catch(() => "");
     log.error("digest send failed", { status: res.status, detail });
-    throw new Error(`Buttondown send failed: ${res.status}`);
+    return {
+      sent: false,
+      count: selected.length,
+      subject,
+      reason: "buttondown error",
+      buttondown: { status: res.status, detail: detail.slice(0, 500) },
+    };
   }
 
   log.info("digest sent", { count: selected.length, subject });

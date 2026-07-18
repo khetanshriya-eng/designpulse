@@ -34,11 +34,17 @@ export function EditionBar({ date }: { date: string }) {
             <span className="font-heading text-[1.3rem] sm:text-[1.6rem] leading-none text-ink truncate">
               {name}
             </span>
+            {/* Real chevron in a lime pixel chip so it reads as a control, not
+                decoration. Flips while the picker is open. */}
             <span
               aria-hidden
-              className="font-pixel text-[13px] text-accent transition-transform group-hover:translate-y-0.5"
+              className={`shrink-0 inline-flex items-center justify-center w-5 h-5 bg-lime border-2 border-[#1a1340] transition-transform group-hover:translate-y-0.5 ${
+                open ? "rotate-180" : ""
+              }`}
             >
-              ▾
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" shapeRendering="crispEdges">
+                <path d="M1 3l4 4 4-4" stroke="#1a1340" strokeWidth="2" />
+              </svg>
             </span>
           </span>
           <span className="font-mono text-[12px] text-ink-subtle whitespace-nowrap">
