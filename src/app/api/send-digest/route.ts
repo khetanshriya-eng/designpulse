@@ -25,8 +25,13 @@ async function handle(req: NextRequest) {
   const params = new URL(req.url).searchParams;
   const dryRun = !!params.get("dry");
   const draft = !!params.get("draft");
+  // ?to=address: send the real rendered email to ONE address for design
+  // review — never touches the subscriber list.
+  const toRaw = params.get("to") ?? undefined;
+  const to =
+    toRaw && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toRaw) ? toRaw : undefined;
   try {
-    const result = await runSendDigest({ log, dryRun, draft });
+    const result = await runSendDigest({ log, dryRun, draft, to });
     const success =
       result.sent ||
       result.reason === "dry run" ||

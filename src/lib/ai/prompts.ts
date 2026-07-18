@@ -14,6 +14,7 @@ Style rules:
 - Lead with the substantive finding, idea, or news — not "the author" or "this article".
 - No clickbait words: "must", "amazing", "ultimate", "incredible", "game-changing", "you won't believe".
 - No filler: "in this article", "the writer explains", "this post discusses", "explores how".
+- Plain punctuation only: never use em dashes (—) or en dashes (–). Use commas and periods instead.
 - No emojis, no hashtags, no quotes around the summary.
 - If the content is shallow, generic, or a listicle with no thesis, return exactly: SKIP
 

@@ -1,23 +1,22 @@
 /**
- * Per-date edition page. Mirrors the homepage but pinned to one edition_date,
- * with prev/next navigation that walks the actual list of curated editions in
- * the DB (rather than naive ±1 day arithmetic — there may be gaps).
+ * Per-date edition page. Mirrors the homepage but pinned to one edition_date:
+ * every section draws ONLY from articles published on that calendar day, so
+ * an old edition is a stable snapshot — it never bleeds today's stories.
  */
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import type { Metadata } from "next";
 import { ArticleCard } from "@/components/ArticleCard";
 import { HeroCard } from "@/components/HeroCard";
 import { MustReadSection } from "@/components/MustReadSection";
 import { EditorsPick } from "@/components/EditorsPick";
 import { SectionHeader } from "@/components/SectionHeader";
+import { CategorySections } from "@/components/CategorySections";
+import { InspirationStrip } from "@/components/InspirationStrip";
 import { EditionBar } from "@/components/EditionBar";
 import { formatEditionDate } from "@/lib/format";
-import {
-  getEdition,
-  getLatest,
-  listEditionDates,
-} from "@/lib/data/queries";
+import { getEdition, getArticlesForDay } from "@/lib/data/queries";
+import type { SourceCategory } from "@/data/sources";
+import type { Article } from "@/data/articles";
 
 // Real month/day ranges — 2026-99-99 should 404 at the regex, not hit the DB.
 const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -47,22 +46,53 @@ export default async function EditionPage({
   const { date } = await params;
   if (!DATE_RE.test(date)) notFound();
 
-  const [edition, allDates] = await Promise.all([
+  const [edition, dayPool] = await Promise.all([
     getEdition(date),
-    listEditionDates(60),
+    getArticlesForDay(date),
   ]);
 
   if (!edition) notFound();
 
-  // Latest grid restricted to the same day's window — approximate by pulling
-  // 8 most recent across the system. (We don't pin "latest" to a date because
-  // articles don't carry an edition_date.)
-  const excludeIds = [
-    edition.hero?.id,
-    edition.editorsPick?.id,
-    ...edition.mustReads.map((m) => m.id),
-  ].filter((x): x is string => !!x);
-  const latest = await getLatest(6, excludeIds);
+  // Must-reads come from a GLOBAL is_must_read flag (today's picks), so on a
+  // past edition they'd bleed today's stories in — keep only the ones
+  // actually published on this edition's day.
+  const dayStartMs = Date.parse(`${date}T00:00:00Z`);
+  const dayEndMs = dayStartMs + 24 * 60 * 60 * 1000;
+  const mustReads = edition.mustReads.filter((m) => {
+    const t = Date.parse(m.publishedAt);
+    return Number.isFinite(t) && t >= dayStartMs && t < dayEndMs;
+  });
+
+  // The day's articles, minus whatever the curated slots already show.
+  const shownIds = new Set(
+    [
+      edition.hero?.id,
+      edition.editorsPick?.id,
+      ...mustReads.map((m) => m.id),
+    ].filter((x): x is string => !!x)
+  );
+  const pool = dayPool.filter((a) => !shownIds.has(a.id));
+
+  // Headline grid: the day's freshest stories.
+  const dayStories = pool.slice(0, 6);
+
+  // Category previews from the SAME day's pool — the sections the homepage
+  // has (UX & Thinking, Video, …), pinned to this edition's date. A category
+  // with <2 stories that day is dropped by CategorySections.
+  const byCategory = (cat: SourceCategory) =>
+    pool.filter((a) => a.category === cat).slice(0, 2);
+  const gridBlocks = (
+    [
+      { category: "design-tools", articles: byCategory("design-tools") },
+      { category: "ux-thinking", articles: byCategory("ux-thinking") },
+      { category: "youtube", articles: byCategory("youtube") },
+      { category: "ai-tools", articles: byCategory("ai-tools") },
+    ] as { category: SourceCategory; articles: Article[] }[]
+  ).filter((b) => b.articles.length >= 2);
+
+  const inspiration = pool
+    .filter((a) => a.category === "inspiration")
+    .slice(0, 4);
 
   return (
     <>
@@ -75,23 +105,23 @@ export default async function EditionPage({
         </section>
       )}
 
-      {latest.length > 0 && (
+      {dayStories.length > 0 && (
         <section className="site-container pb-16">
           <SectionHeader
             kicker="In this edition"
-            title="Latest stories"
+            title={`Stories from ${formatEditionDate(edition.date)}`}
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-7 gap-y-10">
-            {latest.map((a) => (
+            {dayStories.map((a) => (
               <ArticleCard key={a.id} article={a} variant="default" />
             ))}
           </div>
         </section>
       )}
 
-      {edition.mustReads.length > 0 && (
+      {mustReads.length > 0 && (
         <section className="site-container pb-16">
-          <MustReadSection articles={edition.mustReads} />
+          <MustReadSection articles={mustReads} />
         </section>
       )}
 
@@ -101,26 +131,17 @@ export default async function EditionPage({
         </section>
       )}
 
-      {/* All-editions list */}
-      <section className="site-container pb-16">
-        <SectionHeader kicker="Archive" title="All editions" />
-        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-2 text-[13.5px]">
-          {allDates.map((d) => (
-            <li key={d}>
-              <Link
-                href={`/edition/${d}`}
-                className={
-                  d === edition.date
-                    ? "text-accent font-medium"
-                    : "text-ink-muted hover:text-ink transition-colors"
-                }
-              >
-                {formatEditionDate(d)}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {/* Same category previews the homepage has, pinned to this day. */}
+      <CategorySections blocks={gridBlocks} />
+
+      {inspiration.length >= 2 && (
+        <section className="site-container pb-16">
+          <InspirationStrip articles={inspiration} />
+        </section>
+      )}
+
+      {/* No trailing "all editions" list — the edition dropdown in the bar
+          above and /archive already cover finding other editions. */}
     </>
   );
 }

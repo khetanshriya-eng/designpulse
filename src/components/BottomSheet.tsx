@@ -60,19 +60,21 @@ export function BottomSheet({
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  // Visual viewport tracking — listeners live for the component's whole life
-  // (not gated on `open`) so a keyboard that closes AFTER the sheet closed
-  // still resets the stored height; otherwise the next open would start from
-  // a stale, keyboard-sized value. Events are rare (keyboard, pinch), and
-  // setState with an unchanged value is a cheap React bail-out.
-  const [vvH, setVvH] = useState<number | null>(null);
-  const [vvTop, setVvTop] = useState(0);
+  // Keyboard inset tracking. The sheet's GEOMETRY is fully static (see the
+  // mobile branch) — the only dynamic piece is bottom padding equal to the
+  // keyboard's overlap, so the scrollable results can always be scrolled
+  // clear of it. Layout-viewport height comes from documentElement.clientHeight
+  // (stable on iOS) — window.innerHeight shrinks with the keyboard on some iOS
+  // versions, which is exactly the bug that made earlier math come out to 0.
+  // Listeners live for the component's whole life (not gated on `open`) so a
+  // keyboard closing AFTER the sheet closed still resets the stored inset.
+  const [kb, setKb] = useState(0);
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
     const update = () => {
-      setVvH(Math.round(vv.height));
-      setVvTop(Math.round(vv.offsetTop));
+      const layoutH = document.documentElement.clientHeight;
+      setKb(Math.max(0, Math.round(layoutH - vv.height - vv.offsetTop)));
     };
     vv.addEventListener("resize", update);
     vv.addEventListener("scroll", update);
@@ -164,21 +166,19 @@ export function BottomSheet({
   // ----------------------------------------------------------------- mobile
   // Portaled to <body>: the trigger renders inside #app-scroll (the touch
   // scroller), and keeping a fixed overlay inside a scrolling ancestor is
-  // exactly the setup iOS mishandles around the keyboard. From <body> the
-  // overlay is genuinely viewport-relative.
+  // exactly the setup iOS mishandles around the keyboard.
+  //
+  // GEOMETRY IS STATIC ON PURPOSE. Earlier versions resized/translated the
+  // overlay from visualViewport events, and iOS freezes fixed elements while
+  // the keyboard animates — the sheet ended up mid-screen with the ✕ under
+  // the status bar. Now nothing moves: the sheet spans from a fixed top gap
+  // (safe-area + 60px, so the ✕ can never sit under the status bar) to the
+  // bottom of the layout viewport. The keyboard simply overlays the sheet's
+  // lower portion, and the body's keyboard-inset bottom padding keeps every
+  // result reachable by scrolling. The pinned input lives at the TOP of the
+  // sheet — far above any keyboard.
   return createPortal(
-    // Overlay anchored to the VISUAL viewport: explicit height + translateY
-    // glue it to the visible area, so the sheet's bottom edge sits on top of
-    // the keyboard when it's open. (top+height set → the inset-0 bottom is
-    // ignored per CSS; h-dvh is the pre-first-event fallback, correct because
-    // nothing is focused at open.)
-    <div
-      className="fixed inset-x-0 top-0 z-50 h-dvh"
-      style={{
-        height: vvH != null ? `${vvH}px` : undefined,
-        transform: vvTop > 0 ? `translateY(${vvTop}px)` : undefined,
-      }}
-    >
+    <div className="fixed inset-0 z-50">
       {/* Backdrop — tap to close. */}
       <button
         aria-label={`Close ${ariaLabel.toLowerCase()}`}
@@ -188,13 +188,17 @@ export function BottomSheet({
       />
 
       {/* Sheet wrapper (slides up as one unit with the floating ✕). */}
-      <div className="sheet-up absolute inset-x-0 bottom-0">
-        {/* Floating close — Zomato-style placement, pixel styling: square,
-            navy fill, lime border, hard shadow. */}
+      <div
+        className="sheet-up absolute inset-x-0 bottom-0"
+        style={{ top: "calc(env(safe-area-inset-top) + 60px)" }}
+      >
+        {/* Floating close — square pixel button in the top gap: navy fill,
+            lime border, hard shadow. The gap starts BELOW the safe area, so
+            the button is always fully visible. */}
         <button
           onClick={onClose}
           aria-label={`Close ${ariaLabel.toLowerCase()}`}
-          className="absolute -top-14 left-1/2 -translate-x-1/2 w-10 h-10 flex items-center justify-center border-[3px] active:translate-y-[1px]"
+          className="absolute -top-[52px] left-1/2 -translate-x-1/2 w-10 h-10 flex items-center justify-center border-[3px] active:translate-y-[1px]"
           style={{
             background: "#1a1340",
             color: "#fffaf0",
@@ -207,14 +211,15 @@ export function BottomSheet({
           </svg>
         </button>
 
-        {/* Sheet body: opens at 85vh, capped to the visible viewport minus a
-            small top gap while the keyboard is up. Consumers pin their input
-            (flex-shrink-0) and scroll their results (flex-1 overflow-y-auto). */}
+        {/* Sheet body fills the wrapper. Consumers pin their input
+            (flex-shrink-0) and scroll their results (flex-1 overflow-y-auto);
+            the keyboard inset padding keeps the results' tail scrollable
+            above the keyboard. */}
         <div
           role="dialog"
           aria-label={ariaLabel}
-          className="flex h-[85vh] flex-col bg-[color:var(--color-card)] border-t-[3px] border-[color:var(--card-border)] pt-3"
-          style={{ maxHeight: vvH != null ? `${vvH - 24}px` : undefined }}
+          className="flex h-full flex-col bg-[color:var(--color-card)] border-t-[3px] border-[color:var(--card-border)] pt-3"
+          style={{ paddingBottom: kb > 0 ? kb : undefined }}
         >
           {children}
         </div>

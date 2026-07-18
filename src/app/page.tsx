@@ -2,7 +2,7 @@ import { ArticleCard } from "@/components/ArticleCard";
 import { HeroCard } from "@/components/HeroCard";
 import { MustReadSection } from "@/components/MustReadSection";
 import { EditorsPick } from "@/components/EditorsPick";
-import { CategoryGrid } from "@/components/CategoryGrid";
+import { CategorySections } from "@/components/CategorySections";
 import { InspirationStrip } from "@/components/InspirationStrip";
 import { NewsletterCTA } from "@/components/NewsletterCTA";
 import { EditionBar } from "@/components/EditionBar";
@@ -210,36 +210,6 @@ function EmptyState({ reason }: { reason: string }) {
       <p className="font-heading text-2xl text-ink mb-2">No edition yet</p>
       <p className="text-ink-subtle text-sm">{reason}</p>
     </div>
-  );
-}
-
-/**
- * Category previews laid out for completeness. Only blocks that filled their
- * full 2-card preview are shown (a category with <2 is dropped rather than
- * rendered as a lonely card). Blocks render 2-up; if an odd number qualify,
- * the last one spans the full width so there's never an empty half-cell.
- */
-function CategorySections({
-  blocks,
-}: {
-  blocks: { category: SourceCategory; articles: Article[] }[];
-}) {
-  const full = blocks.filter((b) => b.articles.length >= 2);
-  if (full.length === 0) return null;
-  const lastIsOdd = full.length % 2 === 1;
-  return (
-    <section className="site-container pb-16">
-      <div className="boot grid lg:grid-cols-2 gap-x-10 gap-y-12">
-        {full.map((b, i) => (
-          <div
-            key={b.category}
-            className={lastIsOdd && i === full.length - 1 ? "lg:col-span-2" : ""}
-          >
-            <CategoryGrid category={b.category} articles={b.articles} />
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }
 

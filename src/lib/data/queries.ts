@@ -259,6 +259,41 @@ export const getLatest = unstable_cache(
 );
 
 /**
+ * Every displayable article published on ONE calendar day (UTC). This is what
+ * pins an edition page to its own moment in time: an edition from last month
+ * shows last month's stories, never today's. (getLatest, by contrast, is
+ * date-agnostic and only belongs on the homepage.)
+ */
+export const getArticlesForDay = unstable_cache(
+  async (date: string, limit = 60): Promise<Article[]> => {
+    const dayStart = `${date}T00:00:00Z`;
+    const dayEnd = new Date(
+      new Date(dayStart).getTime() + 24 * 60 * 60 * 1000
+    ).toISOString();
+    const sb = createPublicClient();
+    const { data, error } = await sb
+      .from("articles")
+      .select(SELECT)
+      .gte("published_at", dayStart)
+      .lt("published_at", dayEnd)
+      .not("summary", "is", null)
+      .neq("summary", "")
+      .not("title", "is", null)
+      .neq("title", "")
+      .not("title", "ilike", "http%")
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .limit(limit);
+    if (error) throw error;
+    const rows = ((data ?? []) as ArticleWithSource[]).filter(
+      (r) => !isOffBrand(r.title ?? "", r.original_url ?? "")
+    );
+    return rowsToArticles(rows);
+  },
+  ["articles-for-day"],
+  { revalidate: 600 }
+);
+
+/**
  * Balance a recency-sorted pool across categories so one high-volume category
  * (esp. tech-news) can't flood the "Latest" grid. Round-robin: take the
  * freshest of each category, then the second-freshest, etc., capped at

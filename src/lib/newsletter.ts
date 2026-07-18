@@ -136,6 +136,13 @@ function esc(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
+/** Em/en dashes read as machine-written — swap for plain commas. Applied to
+ * our AI summaries at render time (the prompt now bans them going forward,
+ * but the DB still holds older ones). Publisher titles are left alone. */
+function stripDashes(s: string): string {
+  return s.replace(/\s*[—–]\s*/g, ", ");
+}
+
 /**
  * Email-safe HTML digest: table layout, inline styles only, mono system stack
  * for the retro feel (pixel webfonts won't load in Gmail), text wordmark (no
@@ -153,21 +160,30 @@ export function renderDigestHtml(
       const cat = CATEGORY_META[a.category as SourceCategory]?.label ?? a.category;
       const catColor = EMAIL_CAT_COLORS[a.category] ?? PURPLE;
       const read = a.readMinutes ? `${a.readMinutes} min read` : "quick read";
+      // Hierarchy, top to bottom: (1) number chip + category — alone on their
+      // own nowrap line so nothing can collide or wrap under the chip;
+      // (2) the title, big; (3) the summary; (4) source + read time as a
+      // quiet byline; (5) the Read button. Generous spacing throughout.
       return `
       <tr>
-        <td style="padding:20px 24px 22px;border-top:2px solid ${NAVY};">
-          <div style="font-family:${MONO};font-size:12px;line-height:1;margin:0 0 10px;">
-            <span style="background:${LIME};color:${NAVY};font-weight:bold;padding:2px 8px;border:2px solid ${NAVY};">${i + 1}</span>
-            <span style="color:${catColor};font-weight:bold;text-transform:uppercase;letter-spacing:1px;">&nbsp; ${esc(cat)}</span>
-            <span style="color:${GRAY};">&nbsp;·&nbsp; ${esc(a.sourceName)} &nbsp;·&nbsp; ${esc(read)}</span>
-          </div>
-          <a href="${esc(a.url)}" style="font-family:${MONO};font-size:18px;line-height:1.4;font-weight:bold;color:${NAVY};text-decoration:none;">${esc(a.title)}</a>
+        <td style="padding:26px 24px 28px;border-top:2px solid ${NAVY};">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="background:${LIME};border:2px solid ${NAVY};font-family:${MONO};font-size:12px;line-height:1;font-weight:bold;color:${NAVY};padding:3px 9px;">${i + 1}</td>
+              <td style="padding-left:12px;font-family:${MONO};font-size:11px;line-height:1;font-weight:bold;letter-spacing:2px;color:${catColor};white-space:nowrap;">${esc(cat.toUpperCase())}</td>
+            </tr>
+          </table>
+          <div style="height:16px;line-height:16px;font-size:0;">&nbsp;</div>
+          <a href="${esc(a.url)}" style="font-family:${MONO};font-size:19px;line-height:1.4;font-weight:bold;color:${NAVY};text-decoration:none;">${esc(a.title)}</a>
           ${
             a.summary
-              ? `<p style="font-family:${MONO};font-size:14px;line-height:1.6;color:${GRAY};margin:10px 0 12px;">${esc(a.summary)}</p>`
-              : `<div style="height:12px;"></div>`
+              ? `<p style="font-family:${MONO};font-size:14px;line-height:1.65;color:${GRAY};margin:12px 0 0;">${esc(stripDashes(a.summary))}</p>`
+              : ""
           }
-          <a href="${esc(a.url)}" style="font-family:${MONO};font-size:13px;font-weight:bold;color:${NAVY};background:${LIME};padding:4px 10px;border:2px solid ${NAVY};text-decoration:none;">Read&nbsp;→</a>
+          <div style="height:14px;line-height:14px;font-size:0;">&nbsp;</div>
+          <div style="font-family:${MONO};font-size:12px;line-height:1;color:${GRAY};">${esc(a.sourceName)} &nbsp;·&nbsp; ${esc(read)}</div>
+          <div style="height:18px;line-height:18px;font-size:0;">&nbsp;</div>
+          <a href="${esc(a.url)}" style="font-family:${MONO};font-size:13px;font-weight:bold;color:${NAVY};background:${LIME};padding:6px 12px;border:2px solid ${NAVY};text-decoration:none;">Read&nbsp;→</a>
         </td>
       </tr>`;
     })
@@ -180,16 +196,16 @@ export function renderDigestHtml(
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:${CREAM};border:3px solid ${NAVY};">
         <!-- Header band -->
         <tr>
-          <td style="background:${PURPLE};padding:22px 24px;border-bottom:3px solid ${NAVY};">
-            <div style="font-family:${MONO};font-size:26px;font-weight:bold;letter-spacing:-1px;color:${LIME};">designator <span style="color:${CREAM};">✦</span></div>
-            <div style="font-family:${MONO};font-size:16px;font-weight:bold;color:${CREAM};margin-top:8px;">${esc(editionName)}</div>
-            <div style="font-family:${MONO};font-size:12px;color:rgba(255,250,240,0.75);margin-top:4px;">${esc(dateLabel)} &nbsp;·&nbsp; ${articles.length} stories</div>
+          <td style="background:${PURPLE};padding:26px 24px;border-bottom:3px solid ${NAVY};">
+            <div style="font-family:${MONO};font-size:26px;line-height:1;font-weight:bold;letter-spacing:-1px;color:${LIME};">designator <span style="color:${CREAM};">✦</span></div>
+            <div style="font-family:${MONO};font-size:16px;line-height:1.3;font-weight:bold;color:${CREAM};margin-top:12px;">${esc(editionName)}</div>
+            <div style="font-family:${MONO};font-size:12px;line-height:1;color:rgba(255,250,240,0.75);margin-top:8px;">${esc(dateLabel)} &nbsp;·&nbsp; ${articles.length} stories</div>
           </td>
         </tr>
         <!-- Intro line (keeps the email from being 100% links) -->
         <tr>
-          <td style="padding:16px 24px;">
-            <p style="font-family:${MONO};font-size:14px;line-height:1.6;color:${GRAY};margin:0;">Good morning — the design stories worth your time today, hand-picked from 75+ sources and summarized so you're current in five minutes.</p>
+          <td style="padding:20px 24px;">
+            <p style="font-family:${MONO};font-size:14px;line-height:1.65;color:${GRAY};margin:0;">Good morning. Here are today's design stories worth your time, picked from 75+ sources and summarized so you can catch up in five minutes.</p>
           </td>
         </tr>
         <!-- Stories -->
@@ -204,7 +220,7 @@ export function renderDigestHtml(
         <tr>
           <td style="background:${NAVY};padding:18px 24px;">
             <p style="font-family:${MONO};font-size:12px;line-height:1.7;color:rgba(255,250,240,0.7);margin:0;">
-              You're getting this because you subscribed to <a href="${SITE}" style="color:${LIME};text-decoration:none;">Designator</a> — the daily briefing for product designers.<br />
+              You're getting this because you subscribed to <a href="${SITE}" style="color:${LIME};text-decoration:none;">Designator</a>, the daily briefing for product designers.<br />
               <a href="${UNSUB_PLACEHOLDER}" style="color:rgba(255,250,240,0.9);text-decoration:underline;">Unsubscribe</a>
               &nbsp;·&nbsp; <a href="${SITE}" style="color:rgba(255,250,240,0.9);text-decoration:underline;">designatorapp.com</a>
             </p>
@@ -411,7 +427,13 @@ async function sendViaResend(
  * {@link DIGEST_HARD_MIN} the day is skipped.
  */
 export async function runSendDigest(
-  opts: { log?: Logger; dryRun?: boolean; draft?: boolean } = {}
+  opts: {
+    log?: Logger;
+    dryRun?: boolean;
+    draft?: boolean;
+    /** Send the real rendered email to ONE address only (design review). */
+    to?: string;
+  } = {}
 ): Promise<SendDigestResult> {
   const log = opts.log ?? logger("newsletter.send");
 
@@ -508,7 +530,7 @@ export async function runSendDigest(
     year: "numeric",
   });
   const isoDate = today.toISOString().slice(0, 10);
-  const subject = `✦ Designator — ${dateLabel}`;
+  const subject = `✦ Designator · ${dateLabel}`;
   const html = renderDigestHtml(
     selected.map((c) => ({
       title: c.title,
@@ -524,6 +546,47 @@ export async function runSendDigest(
 
   const resendKey = process.env.RESEND_API_KEY;
   const via: "resend" | "buttondown" = resendKey ? "resend" : "buttondown";
+
+  // Design-review send: the real rendered email, to exactly one address —
+  // never the subscriber list. Takes precedence over everything but dry runs.
+  if (opts.to && !opts.dryRun) {
+    if (!resendKey) {
+      return {
+        sent: false,
+        count: selected.length,
+        subject,
+        pass,
+        reason: "test send needs RESEND_API_KEY",
+      };
+    }
+    const { sentCount, failure } = await sendViaResend(
+      resendKey,
+      subject,
+      html,
+      [opts.to.toLowerCase()],
+      log
+    );
+    log.info("digest test send", { to: opts.to, ok: sentCount === 1 });
+    return sentCount === 1
+      ? {
+          sent: true,
+          count: selected.length,
+          subject,
+          pass,
+          via: "resend",
+          recipients: 1,
+          reason: "test send",
+        }
+      : {
+          sent: false,
+          count: selected.length,
+          subject,
+          pass,
+          via: "resend",
+          reason: "resend error",
+          resend: failure,
+        };
+  }
 
   // Dry run: everything above (DB read, selection, rendering) executed for
   // real; no email created anywhere. Reports which channel a real send would

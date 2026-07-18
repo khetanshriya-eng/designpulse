@@ -60,8 +60,8 @@ async function sendWelcomeEmail(email: string): Promise<void> {
   const text = [
     "You're in. ✦",
     "",
-    "Each morning you'll get Designator — the day's 7 best design & product",
-    "stories, summarized so you're current in five minutes.",
+    "Each morning you'll get Designator: the day's best design and product",
+    "stories, summarized so you can catch up in five minutes.",
     "",
     "Your first edition lands tomorrow. Today's is already live:",
     "https://designatorapp.com",
@@ -69,18 +69,18 @@ async function sendWelcomeEmail(email: string): Promise<void> {
     "P.S. If this landed in Spam or Promotions, drag it to your Primary",
     "inbox so you don't miss editions.",
     "",
-    "— Aditya, Confused Designer",
+    "Aditya, Confused Designer",
   ].join("\n");
 
   const html = `<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:480px;margin:0 auto;color:#1a1340;border:3px solid #1a1340;">
   <div style="background:#5b3df5;color:#d4ff3f;font-weight:800;font-size:26px;letter-spacing:-0.5px;padding:18px 24px;">designator</div>
   <div style="padding:24px;">
     <h1 style="font-size:20px;margin:0 0 12px;">You're in. <span style="color:#5b3df5;">✦</span></h1>
-    <p style="font-size:15px;line-height:1.6;color:#5c5470;margin:0 0 14px;">Each morning you'll get the day's 7 best design &amp; product stories, summarized so you're current in five minutes.</p>
+    <p style="font-size:15px;line-height:1.6;color:#5c5470;margin:0 0 14px;">Each morning you'll get the day's best design and product stories, summarized so you can catch up in five minutes.</p>
     <p style="font-size:15px;line-height:1.6;color:#5c5470;margin:0 0 20px;">Your first edition lands tomorrow. Today's is already live:</p>
     <a href="https://designatorapp.com" style="display:inline-block;background:#d4ff3f;color:#1a1340;font-weight:700;text-decoration:none;padding:10px 18px;border:2px solid #1a1340;">Read today&rsquo;s edition →</a>
     <p style="font-size:13px;line-height:1.6;color:#5c5470;margin:20px 0 0;">P.S. If this landed in Spam or Promotions, drag it to your Primary inbox so you don&rsquo;t miss editions.</p>
-    <p style="font-size:13px;color:#9b93a8;margin:24px 0 0;">— Aditya, Confused Designer</p>
+    <p style="font-size:13px;color:#9b93a8;margin:24px 0 0;">Aditya, Confused Designer</p>
   </div>
 </div>`;
 
