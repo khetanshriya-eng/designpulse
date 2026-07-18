@@ -278,6 +278,19 @@ export const getArticlesForEdition = unstable_cache(
     const { data, error } = await sb
       .from("articles")
       .select(SELECT)
+      // Only the categories the edition page actually renders. Without this,
+      // high-volume tech-news floods the newest-first `limit` and pushes the
+      // week's older design stories out of the pool — which is exactly what
+      // kept UX & Thinking below its 2-story bar on past editions.
+      .in("category", [
+        "design-tools",
+        "ux-thinking",
+        "inspiration",
+        "youtube",
+        "ai-tools",
+        "newsletters",
+        "product",
+      ])
       .gte("published_at", windowStart)
       .lt("published_at", windowEnd)
       .not("summary", "is", null)
