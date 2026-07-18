@@ -314,7 +314,13 @@ async function fetchButtondownSubscribers(
       if (/unactiv|unsub|spam|trash|block|paused|churn|complain/i.test(type)) {
         continue;
       }
-      out.push(email.toLowerCase());
+      // Skip malformed addresses and reserved test domains (a leftover
+      // signup-test subscriber like foo@example.com makes Resend 422 the
+      // whole batch it appears in).
+      const lower = email.toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lower)) continue;
+      if (/@(example|test)\.(com|org|net)$|@example\./.test(lower)) continue;
+      out.push(lower);
     }
     url = data.next ?? null;
   }
@@ -337,38 +343,63 @@ async function sendViaResend(
 ): Promise<{ sentCount: number; failure?: { status: number; detail: string } }> {
   const from =
     process.env.RESEND_FROM_EMAIL ?? "Designator <hello@designatorapp.com>";
+  const authHeaders = {
+    Authorization: `Bearer ${resendKey}`,
+    "Content-Type": "application/json",
+  };
+  const itemFor = (email: string) => {
+    const unsub = unsubscribeUrl(email);
+    return {
+      from,
+      to: [email],
+      subject,
+      html: htmlTemplate.split(UNSUB_PLACEHOLDER).join(unsub),
+      headers: {
+        "List-Unsubscribe": `<${unsub}>`,
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      },
+    };
+  };
+
   let sentCount = 0;
   let failure: { status: number; detail: string } | undefined;
   // Resend's batch endpoint caps at 100 emails per call.
   for (let i = 0; i < recipients.length; i += 100) {
     const chunk = recipients.slice(i, i + 100);
-    const payload = chunk.map((email) => {
-      const unsub = unsubscribeUrl(email);
-      return {
-        from,
-        to: [email],
-        subject,
-        html: htmlTemplate.split(UNSUB_PLACEHOLDER).join(unsub),
-        headers: {
-          "List-Unsubscribe": `<${unsub}>`,
-          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-        },
-      };
-    });
     const res = await fetch("https://api.resend.com/emails/batch", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
+      headers: authHeaders,
+      body: JSON.stringify(chunk.map(itemFor)),
     });
-    if (!res.ok) {
-      const detail = await res.text().catch(() => "");
-      failure = { status: res.status, detail: detail.slice(0, 300) };
-      log.error("resend batch failed", { status: res.status, detail });
-    } else {
+    if (res.ok) {
       sentCount += chunk.length;
+      continue;
+    }
+    // Resend rejects a WHOLE batch if any single item fails validation — so
+    // on failure, retry this chunk one address at a time. One bad subscriber
+    // must never cost everyone else their edition.
+    const detail = await res.text().catch(() => "");
+    log.warn("resend batch rejected — retrying individually", {
+      status: res.status,
+      detail: detail.slice(0, 300),
+    });
+    for (const email of chunk) {
+      const single = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: authHeaders,
+        body: JSON.stringify(itemFor(email)),
+      });
+      if (single.ok) {
+        sentCount++;
+      } else {
+        const d = await single.text().catch(() => "");
+        failure = { status: single.status, detail: d.slice(0, 300) };
+        log.error("resend send failed for recipient", {
+          email,
+          status: single.status,
+          detail: d.slice(0, 200),
+        });
+      }
     }
   }
   return { sentCount, failure };
