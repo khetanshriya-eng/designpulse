@@ -174,11 +174,20 @@ html[data-theme="dark"] {
  * inside #app-scroll (see the pointer:coarse block below).
  */
 html {
-  /* Nav color, NOT paper: iOS Safari samples the ROOT element's background
-     for the status-bar / notch region (theme-color alone is often ignored in
-     regular browsing). Purple by day, navy at night via --nav-bg, so the
-     status bar blends into the nav. The actual page canvas lives on <body>. */
-  background: var(--nav-bg);
+  /* iOS Safari samples the ROOT background's EDGES for its chrome: the top
+     edge behind the status bar, the bottom edge behind the keyboard / home
+     indicator / overscroll. A solid nav-purple root fixed the status bar but
+     leaked purple at the bottom — so split it with a HARD stop (no visible
+     blend): nav color for the top half, page paper for the bottom half. Both
+     halves re-theme via the vars (purple/cream by day, navy/deep-navy at
+     night). The actual page canvas lives on <body>. */
+  background: linear-gradient(
+    to bottom,
+    var(--nav-bg) 0%,
+    var(--nav-bg) 50%,
+    var(--color-paper) 50%,
+    var(--color-paper) 100%
+  );
   color: var(--color-ink);
   color-scheme: light;
 }

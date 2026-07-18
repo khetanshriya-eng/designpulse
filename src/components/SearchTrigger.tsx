@@ -212,7 +212,7 @@ export function SearchTrigger() {
         {/* Scroll area: suggestions before typing, results after. */}
         <div
           className="flex-1 min-h-[120px] overflow-y-auto overscroll-contain"
-          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
           aria-live="polite"
         >
           {tooShort && (

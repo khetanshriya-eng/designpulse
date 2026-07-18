@@ -66,6 +66,9 @@ async function sendWelcomeEmail(email: string): Promise<void> {
     "Your first edition lands tomorrow. Today's is already live:",
     "https://designatorapp.com",
     "",
+    "P.S. If this landed in Spam or Promotions, drag it to your Primary",
+    "inbox so you don't miss editions.",
+    "",
     "— Aditya, Confused Designer",
   ].join("\n");
 
@@ -76,6 +79,7 @@ async function sendWelcomeEmail(email: string): Promise<void> {
     <p style="font-size:15px;line-height:1.6;color:#5c5470;margin:0 0 14px;">Each morning you'll get the day's 7 best design &amp; product stories, summarized so you're current in five minutes.</p>
     <p style="font-size:15px;line-height:1.6;color:#5c5470;margin:0 0 20px;">Your first edition lands tomorrow. Today's is already live:</p>
     <a href="https://designatorapp.com" style="display:inline-block;background:#d4ff3f;color:#1a1340;font-weight:700;text-decoration:none;padding:10px 18px;border:2px solid #1a1340;">Read today&rsquo;s edition →</a>
+    <p style="font-size:13px;line-height:1.6;color:#5c5470;margin:20px 0 0;">P.S. If this landed in Spam or Promotions, drag it to your Primary inbox so you don&rsquo;t miss editions.</p>
     <p style="font-size:13px;color:#9b93a8;margin:24px 0 0;">— Aditya, Confused Designer</p>
   </div>
 </div>`;

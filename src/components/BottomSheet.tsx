@@ -4,26 +4,29 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useModalA11y } from "@/lib/use-modal-a11y";
 
 const MOBILE_MQ = "(max-width: 767px)";
-/** Drag distance past which releasing the handle dismisses the sheet. */
-const DISMISS_DRAG_PX = 110;
 
 /**
- * Shared modal shell: a bottom sheet on mobile (slide-up, drag handle with
- * drag-to-dismiss, darkened scrim, body scroll lock, keyboard-aware sizing),
- * repositionable on desktop via `desktopClassName` (e.g. an anchored dropdown).
- * Used by the edition picker and the mobile search.
+ * Shared modal shell: a bottom sheet on mobile (slide-up, darkened scrim,
+ * floating pixel ✕ above the sheet edge, body scroll lock, keyboard-aware
+ * sizing), or a desktop panel positioned via `desktopClassName` (e.g. an
+ * anchored dropdown). Used by the edition picker and the mobile search.
  *
  * Mechanics centralized here so every consumer gets the same guarantees:
- * - PullToRefresh stands down while open (data-modalOpen flag) — otherwise a
- *   downward drag on the sheet bubbles to #app-scroll and fires the refresh.
+ * - No drag-to-dismiss: the gesture fought background scroll, so dismissal is
+ *   the ✕ button / backdrop tap / Escape / selecting a result — all of which
+ *   funnel through onClose, so the effect-return cleanups below run on every
+ *   close path (including route navigation).
+ * - PullToRefresh stands down while open (data-modalOpen flag) — a scroll at
+ *   the top edge of the results list could still bubble to #app-scroll.
  * - The body is scroll-locked on mobile while open, so iOS can't shift the
  *   page to "reveal" a focused input; the exact scroll position is restored
- *   on close. ALL cleanup lives in effect returns, so it runs on every close
- *   path — backdrop tap, drag-dismiss, Escape, and route navigation.
+ *   on close.
  * - No autofocus on mobile (focusing an input would summon the keyboard the
  *   moment the sheet opens). Desktop gets the standard modal focus handling.
- * - When the keyboard IS open (user tapped an input), the sheet is lifted
- *   above it and capped to the visual viewport so pinned inputs stay visible.
+ * - Keyboard-aware: the whole overlay is anchored to the visualViewport
+ *   (height + offsetTop), so when the keyboard opens the sheet rides up and
+ *   shrinks to the VISIBLE area — pinned input stays put, results scroll,
+ *   nothing clips behind the keyboard.
  */
 export function BottomSheet({
   open,
@@ -42,24 +45,48 @@ export function BottomSheet({
   closeOnDesktopScroll?: boolean;
   children: ReactNode;
 }) {
-  // Live drag-to-dismiss (mobile): dragY = px pulled down from rest; dragging
-  // disables the snap-back transition so the sheet tracks the finger 1:1.
-  const [dragY, setDragY] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  const touchStartY = useRef<number | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Desktop-only focus trap + autofocus. On mobile, focusing the first control
-  // would open the iOS keyboard immediately — exactly the layout-shift bug this
-  // component exists to prevent. (Breakpoint sampled once; a mid-open desktop
-  // resize is an edge we accept.)
-  const [isDesktop] = useState(
-    () => typeof window !== "undefined" && !window.matchMedia(MOBILE_MQ).matches
+  // Mobile = sheet, desktop = positioned panel. Tracked live so a rotation
+  // swaps presentation on the next open.
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.matchMedia(MOBILE_MQ).matches
   );
-  useModalA11y(open && isDesktop, panelRef, onClose);
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_MQ);
+    const onChange = () => setIsMobile(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
-  // Escape for the mobile sheet (hardware keyboards); on desktop the a11y hook
-  // already handles Escape in the capture phase.
+  // Visual viewport tracking — listeners live for the component's whole life
+  // (not gated on `open`) so a keyboard that closes AFTER the sheet closed
+  // still resets the stored height; otherwise the next open would start from
+  // a stale, keyboard-sized value. Events are rare (keyboard, pinch), and
+  // setState with an unchanged value is a cheap React bail-out.
+  const [vvH, setVvH] = useState<number | null>(null);
+  const [vvTop, setVvTop] = useState(0);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      setVvH(Math.round(vv.height));
+      setVvTop(Math.round(vv.offsetTop));
+    };
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, []);
+
+  // Desktop-only focus trap + autofocus (on mobile, focusing the first control
+  // would open the iOS keyboard immediately).
+  useModalA11y(open && !isMobile, panelRef, onClose);
+
+  // Escape for the mobile sheet (hardware keyboards); on desktop the a11y
+  // hook already handles Escape in the capture phase.
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -70,7 +97,8 @@ export function BottomSheet({
   }, [open, onClose]);
 
   // Mobile scroll lock + PTR stand-down. Cleanup restores the exact scroll
-  // position and removes the flag no matter how the sheet closes.
+  // position and removes the flag no matter how the sheet closes (✕, backdrop,
+  // Escape, result tap, route navigation).
   useEffect(() => {
     if (!open) return;
     if (!window.matchMedia(MOBILE_MQ).matches) return;
@@ -105,91 +133,85 @@ export function BottomSheet({
     return () => window.removeEventListener("scroll", onScroll);
   }, [open, closeOnDesktopScroll, onClose]);
 
-  // Keyboard-aware sizing (mobile): when the iOS keyboard opens, the visual
-  // viewport shrinks — lift the sheet above the keyboard and cap its height so
-  // the pinned input stays visible. Applied imperatively (not state) so vv
-  // scroll/resize events don't churn renders; the panel remounts fresh per
-  // open, so no stale styles linger.
-  useEffect(() => {
-    if (!open) return;
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const apply = () => {
-      const panel = panelRef.current;
-      if (!panel || !window.matchMedia(MOBILE_MQ).matches) return;
-      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      panel.style.bottom = inset > 0 ? `${inset}px` : "";
-      panel.style.maxHeight = inset > 0 ? `${Math.round(vv.height * 0.9)}px` : "";
-    };
-    vv.addEventListener("resize", apply);
-    vv.addEventListener("scroll", apply);
-    return () => {
-      vv.removeEventListener("resize", apply);
-      vv.removeEventListener("scroll", apply);
-    };
-  }, [open]);
-
   if (!open) return null;
 
+  // ---------------------------------------------------------------- desktop
+  if (!isMobile) {
+    return (
+      <>
+        {/* Transparent click-catcher. */}
+        <button
+          aria-label={`Close ${ariaLabel.toLowerCase()}`}
+          onClick={onClose}
+          tabIndex={-1}
+          className="fixed inset-0 z-40"
+        />
+        <div
+          ref={panelRef}
+          role="dialog"
+          aria-label={ariaLabel}
+          className={`z-50 flex flex-col bg-[color:var(--color-card)] border-[color:var(--card-border)] ${desktopClassName}`}
+        >
+          {children}
+        </div>
+      </>
+    );
+  }
+
+  // ----------------------------------------------------------------- mobile
   return (
-    <>
-      {/* Backdrop — dims the page on mobile (bottom sheet), transparent
-          click-catcher on desktop. */}
+    // Overlay anchored to the VISUAL viewport: explicit height + translateY
+    // glue it to the visible area, so the sheet's bottom edge sits on top of
+    // the keyboard when it's open. (top+height set → the inset-0 bottom is
+    // ignored per CSS; h-dvh is the pre-first-event fallback, correct because
+    // nothing is focused at open.)
+    <div
+      className="fixed inset-x-0 top-0 z-50 h-dvh"
+      style={{
+        height: vvH != null ? `${vvH}px` : undefined,
+        transform: vvTop > 0 ? `translateY(${vvTop}px)` : undefined,
+      }}
+    >
+      {/* Backdrop — tap to close. */}
       <button
         aria-label={`Close ${ariaLabel.toLowerCase()}`}
         onClick={onClose}
         tabIndex={-1}
-        className="fixed inset-0 z-40 max-md:bg-[color:var(--color-scrim)]"
+        className="absolute inset-0 bg-[color:var(--color-scrim)]"
       />
 
-      <div
-        ref={panelRef}
-        role="dialog"
-        aria-label={ariaLabel}
-        className={`sheet-up fixed inset-x-0 bottom-0 z-50 flex h-[85vh] flex-col bg-[color:var(--color-card)] border-t-[3px] border-[color:var(--card-border)] ${desktopClassName}`}
-        style={{
-          transform: `translateY(${dragY}px)`,
-          transition: dragging ? "none" : "transform 0.24s ease-out",
-        }}
-      >
-        {/* Drag handle (mobile) — grab + pull down to dismiss. The sheet tracks
-            the finger; past DISMISS_DRAG_PX it slides the rest of the way out
-            and closes, otherwise it springs back. touch-none keeps the browser
-            from scrolling/refreshing under the drag. */}
-        <div
-          className="md:hidden flex flex-shrink-0 justify-center pt-3 pb-2 cursor-grab touch-none"
-          onTouchStart={(e) => {
-            touchStartY.current = e.touches[0].clientY;
-            setDragging(true);
-          }}
-          onTouchMove={(e) => {
-            if (touchStartY.current == null) return;
-            const dy = e.touches[0].clientY - touchStartY.current;
-            setDragY(dy > 0 ? dy : 0);
-          }}
-          onTouchEnd={() => {
-            setDragging(false);
-            touchStartY.current = null;
-            if (dragY > DISMISS_DRAG_PX) {
-              // Finish the slide-out, then unmount.
-              setDragY(window.innerHeight);
-              window.setTimeout(() => {
-                onClose();
-                setDragY(0);
-              }, 200);
-            } else {
-              setDragY(0);
-            }
+      {/* Sheet wrapper (slides up as one unit with the floating ✕). */}
+      <div className="sheet-up absolute inset-x-0 bottom-0">
+        {/* Floating close — Zomato-style placement, pixel styling: square,
+            navy fill, lime border, hard shadow. */}
+        <button
+          onClick={onClose}
+          aria-label={`Close ${ariaLabel.toLowerCase()}`}
+          className="absolute -top-14 left-1/2 -translate-x-1/2 w-10 h-10 flex items-center justify-center border-[3px] active:translate-y-[1px]"
+          style={{
+            background: "#1a1340",
+            color: "#fffaf0",
+            borderColor: "var(--color-lime)",
+            boxShadow: "3px 3px 0 rgba(0,0,0,0.4)",
           }}
         >
-          <span
-            className="h-1.5 w-10 rounded-full"
-            style={{ background: "rgba(26,19,64,0.3)" }}
-          />
-        </div>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" shapeRendering="crispEdges" aria-hidden>
+            <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="2.5" />
+          </svg>
+        </button>
 
-        {children}
+        {/* Sheet body: opens at 85vh, capped to the visible viewport minus a
+            small top gap while the keyboard is up. Consumers pin their input
+            (flex-shrink-0) and scroll their results (flex-1 overflow-y-auto). */}
+        <div
+          role="dialog"
+          aria-label={ariaLabel}
+          className="flex h-[85vh] flex-col bg-[color:var(--color-card)] border-t-[3px] border-[color:var(--card-border)] pt-3"
+          style={{ maxHeight: vvH != null ? `${vvH - 24}px` : undefined }}
+        >
+          {children}
+        </div>
       </div>
-    </>
+    </div>
   );
 }

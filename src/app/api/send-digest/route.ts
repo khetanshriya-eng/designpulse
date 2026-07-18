@@ -19,12 +19,19 @@ async function handle(req: NextRequest) {
   if (denied) return denied;
 
   const log = logger("api.send-digest");
-  // ?dry=1: run the full selection + rendering but skip the Buttondown POST —
-  // safe production diagnosis without emailing subscribers.
-  const dryRun = !!new URL(req.url).searchParams.get("dry");
+  // ?dry=1: full selection + rendering, no Buttondown POST (safe diagnosis).
+  // ?draft=1: create the email as a Buttondown DRAFT — review the design and
+  // send test emails from the Buttondown dashboard before it reaches anyone.
+  const params = new URL(req.url).searchParams;
+  const dryRun = !!params.get("dry");
+  const draft = !!params.get("draft");
   try {
-    const result = await runSendDigest({ log, dryRun });
-    return Response.json({ success: result.sent || dryRun, ...result });
+    const result = await runSendDigest({ log, dryRun, draft });
+    const success =
+      result.sent ||
+      result.reason === "dry run" ||
+      result.reason === "draft created";
+    return Response.json({ success, ...result });
   } catch (err) {
     const message = (err as Error).message;
     log.error("crashed", { error: message });
