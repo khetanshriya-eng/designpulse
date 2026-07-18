@@ -54,13 +54,14 @@ export default async function EditionPage({
   if (!edition) notFound();
 
   // Must-reads come from a GLOBAL is_must_read flag (today's picks), so on a
-  // past edition they'd bleed today's stories in — keep only the ones
-  // actually published on this edition's day.
+  // past edition they'd bleed today's stories in — keep only the ones from
+  // this edition's own 48h era (same window as getArticlesForDay).
   const dayStartMs = Date.parse(`${date}T00:00:00Z`);
-  const dayEndMs = dayStartMs + 24 * 60 * 60 * 1000;
+  const windowStartMs = dayStartMs - 24 * 60 * 60 * 1000;
+  const windowEndMs = dayStartMs + 24 * 60 * 60 * 1000;
   const mustReads = edition.mustReads.filter((m) => {
     const t = Date.parse(m.publishedAt);
-    return Number.isFinite(t) && t >= dayStartMs && t < dayEndMs;
+    return Number.isFinite(t) && t >= windowStartMs && t < windowEndMs;
   });
 
   // The day's articles, minus whatever the curated slots already show.
@@ -76,9 +77,10 @@ export default async function EditionPage({
   // Headline grid: the day's freshest stories.
   const dayStories = pool.slice(0, 6);
 
-  // Category previews from the SAME day's pool — the sections the homepage
-  // has (UX & Thinking, Video, …), pinned to this edition's date. A category
-  // with <2 stories that day is dropped by CategorySections.
+  // Category previews from the SAME era's pool — the sections the homepage
+  // has (UX & Thinking, Video, …), pinned to this edition. A category with
+  // <2 stories in the window is dropped; whichever categories ARE covered
+  // fill the grid (up to 4 blocks, homepage parity).
   const byCategory = (cat: SourceCategory) =>
     pool.filter((a) => a.category === cat).slice(0, 2);
   const gridBlocks = (
@@ -87,8 +89,12 @@ export default async function EditionPage({
       { category: "ux-thinking", articles: byCategory("ux-thinking") },
       { category: "youtube", articles: byCategory("youtube") },
       { category: "ai-tools", articles: byCategory("ai-tools") },
+      { category: "newsletters", articles: byCategory("newsletters") },
+      { category: "product", articles: byCategory("product") },
     ] as { category: SourceCategory; articles: Article[] }[]
-  ).filter((b) => b.articles.length >= 2);
+  )
+    .filter((b) => b.articles.length >= 2)
+    .slice(0, 4);
 
   const inspiration = pool
     .filter((a) => a.category === "inspiration")

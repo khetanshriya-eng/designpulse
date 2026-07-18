@@ -259,23 +259,28 @@ export const getLatest = unstable_cache(
 );
 
 /**
- * Every displayable article published on ONE calendar day (UTC). This is what
- * pins an edition page to its own moment in time: an edition from last month
- * shows last month's stories, never today's. (getLatest, by contrast, is
+ * Every displayable article from ONE edition's era. This is what pins an
+ * edition page to its own moment in time: an edition from last month shows
+ * last month's stories, never today's. (getLatest, by contrast, is
  * date-agnostic and only belongs on the homepage.)
+ *
+ * The window is the 48h ENDING at the end of the edition date — an edition
+ * curated at 02:30 UTC on day D is mostly built from stories published on
+ * D-1, so a literal calendar-day window starved the category sections on
+ * every past edition (they only cleared the 2-story bar for "today", where
+ * publishing is still in progress).
  */
 export const getArticlesForDay = unstable_cache(
-  async (date: string, limit = 60): Promise<Article[]> => {
-    const dayStart = `${date}T00:00:00Z`;
-    const dayEnd = new Date(
-      new Date(dayStart).getTime() + 24 * 60 * 60 * 1000
-    ).toISOString();
+  async (date: string, limit = 80): Promise<Article[]> => {
+    const dayStartMs = Date.parse(`${date}T00:00:00Z`);
+    const windowStart = new Date(dayStartMs - 24 * 60 * 60 * 1000).toISOString();
+    const windowEnd = new Date(dayStartMs + 24 * 60 * 60 * 1000).toISOString();
     const sb = createPublicClient();
     const { data, error } = await sb
       .from("articles")
       .select(SELECT)
-      .gte("published_at", dayStart)
-      .lt("published_at", dayEnd)
+      .gte("published_at", windowStart)
+      .lt("published_at", windowEnd)
       .not("summary", "is", null)
       .neq("summary", "")
       .not("title", "is", null)
