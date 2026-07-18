@@ -259,21 +259,20 @@ export const getLatest = unstable_cache(
 );
 
 /**
- * Every displayable article from ONE edition's era. This is what pins an
- * edition page to its own moment in time: an edition from last month shows
- * last month's stories, never today's. (getLatest, by contrast, is
- * date-agnostic and only belongs on the homepage.)
- *
- * The window is the 48h ENDING at the end of the edition date — an edition
- * curated at 02:30 UTC on day D is mostly built from stories published on
- * D-1, so a literal calendar-day window starved the category sections on
- * every past edition (they only cleared the 2-story bar for "today", where
- * publishing is still in progress).
+ * Every displayable article from ONE edition's era: the 7 days ENDING at the
+ * end of the edition date. This makes a past edition page a faithful snapshot
+ * of what the homepage looked like that day — the homepage's category
+ * sections show the freshest stories of the trailing WEEK (its freshness gate
+ * is 168h), so a stricter window here starved past editions' sections while
+ * "today" looked full. Newest-first, so the head of the pool is still the
+ * edition day itself; nothing published after the edition date can appear.
  */
-export const getArticlesForDay = unstable_cache(
-  async (date: string, limit = 80): Promise<Article[]> => {
+export const getArticlesForEdition = unstable_cache(
+  async (date: string, limit = 120): Promise<Article[]> => {
     const dayStartMs = Date.parse(`${date}T00:00:00Z`);
-    const windowStart = new Date(dayStartMs - 24 * 60 * 60 * 1000).toISOString();
+    const windowStart = new Date(
+      dayStartMs - 6 * 24 * 60 * 60 * 1000
+    ).toISOString();
     const windowEnd = new Date(dayStartMs + 24 * 60 * 60 * 1000).toISOString();
     const sb = createPublicClient();
     const { data, error } = await sb
@@ -294,7 +293,7 @@ export const getArticlesForDay = unstable_cache(
     );
     return rowsToArticles(rows);
   },
-  ["articles-for-day"],
+  ["articles-for-edition"],
   { revalidate: 600 }
 );
 

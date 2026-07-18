@@ -14,7 +14,7 @@ import { CategorySections } from "@/components/CategorySections";
 import { InspirationStrip } from "@/components/InspirationStrip";
 import { EditionBar } from "@/components/EditionBar";
 import { formatEditionDate } from "@/lib/format";
-import { getEdition, getArticlesForDay } from "@/lib/data/queries";
+import { getEdition, getArticlesForEdition } from "@/lib/data/queries";
 import type { SourceCategory } from "@/data/sources";
 import type { Article } from "@/data/articles";
 
@@ -48,14 +48,15 @@ export default async function EditionPage({
 
   const [edition, dayPool] = await Promise.all([
     getEdition(date),
-    getArticlesForDay(date),
+    getArticlesForEdition(date),
   ]);
 
   if (!edition) notFound();
 
   // Must-reads come from a GLOBAL is_must_read flag (today's picks), so on a
   // past edition they'd bleed today's stories in — keep only the ones from
-  // this edition's own 48h era (same window as getArticlesForDay).
+  // this edition's own 48h era. (Tighter than the 7-day section pool on
+  // purpose: must-reads are "curator's picks of the day", not of the week.)
   const dayStartMs = Date.parse(`${date}T00:00:00Z`);
   const windowStartMs = dayStartMs - 24 * 60 * 60 * 1000;
   const windowEndMs = dayStartMs + 24 * 60 * 60 * 1000;
