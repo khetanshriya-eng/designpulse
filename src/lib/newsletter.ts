@@ -211,6 +211,10 @@ export async function runSendDigest(
     headers: {
       Authorization: `Token ${apiKey}`,
       "Content-Type": "application/json",
+      // Buttondown's one-time-per-key confirmation that programmatic sending
+      // is intentional (400 sending_requires_confirmation without it). Kept
+      // permanently — same pattern as the subscribe route's firewall bypass.
+      "X-Buttondown-Live-Dangerously": "true",
     },
     body: JSON.stringify({ subject, body, status: "about_to_send" }),
   });
