@@ -201,13 +201,18 @@ export async function runSendDigest(
     return { sent: false, count: selected.length, subject, reason: "dry run" };
   }
 
+  // status "about_to_send" = create AND deliver immediately. ("sent" is a
+  // terminal state Buttondown sets itself — creating with it 400s with
+  // status_invalid, which is exactly how every cron digest failed silently
+  // until 2026-07: valid creation statuses per their error metadata are
+  // draft / about_to_send / scheduled / imported / transactional.)
   const res = await fetch(`${BUTTONDOWN_API}/emails`, {
     method: "POST",
     headers: {
       Authorization: `Token ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ subject, body, status: "sent" }),
+    body: JSON.stringify({ subject, body, status: "about_to_send" }),
   });
 
   if (!res.ok) {
