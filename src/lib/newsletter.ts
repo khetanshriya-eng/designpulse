@@ -18,6 +18,7 @@ import { sourcePriority, CATEGORY_META, type SourceCategory } from "@/data/sourc
 import { getEditionName } from "@/lib/editionName";
 import { isOffBrand } from "@/lib/content/filter";
 import { unsubscribeUrl } from "@/lib/unsubscribe";
+import { safeHttpUrl } from "@/lib/url";
 import { logger, type Logger } from "@/lib/logger";
 
 const BUTTONDOWN_API = "https://api.buttondown.com/v1";
@@ -570,13 +571,16 @@ export async function runSendDigest(
   for (const r of (data ?? []) as Row[]) {
     const src = Array.isArray(r.sources) ? r.sources[0] : r.sources;
     if (!src) continue;
+    // Scheme guard: the URL becomes an href in the email — drop non-http(s).
+    const safeUrl = safeHttpUrl(r.original_url);
+    if (!safeUrl) continue;
     if (isOffBrand(r.title, r.original_url)) continue;
     const publishedMs = r.published_at ? Date.parse(r.published_at) : NaN;
     if (!Number.isFinite(publishedMs)) continue;
     candidates.push({
       title: r.title,
       summary: r.summary ?? "",
-      url: r.original_url,
+      url: safeUrl,
       category: r.category,
       readMinutes: r.read_minutes,
       srcName: src.name,

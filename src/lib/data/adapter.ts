@@ -9,6 +9,7 @@
  */
 import type { Article } from "@/data/articles";
 import type { ArticleRow, SourceRow } from "@/lib/db/types";
+import { safeHttpUrl } from "@/lib/url";
 
 export type ArticleWithSource = ArticleRow & {
   sources?: SourceRow | SourceRow[] | null;
@@ -18,12 +19,19 @@ export function rowToArticle(row: ArticleWithSource): Article | null {
   const src = Array.isArray(row.sources) ? row.sources[0] : row.sources;
   if (!src) return null;
 
+  // Scheme guard (defense in depth): the URL becomes an href, the thumbnail a
+  // src. Drop the whole card if the link isn't http(s) — a javascript:/data:
+  // link is an XSS vector, and a card that can't safely link anywhere is
+  // useless. A bad thumbnail just falls back to the pixel mosaic.
+  const url = safeHttpUrl(row.original_url);
+  if (!url) return null;
+
   return {
     id: row.id,
     sourceId: src.slug, // UI keys off slug, not UUID
     title: row.title,
     summary: row.summary ?? "",
-    url: row.original_url,
+    url,
     author: row.author ?? undefined,
     publishedAt: row.published_at ?? row.fetched_at,
     readMinutes: row.read_minutes ?? undefined,
@@ -33,7 +41,7 @@ export function rowToArticle(row: ArticleWithSource): Article | null {
     isFeatured: row.is_featured,
     isMustRead: row.is_must_read,
     swatch: src.swatch ?? undefined,
-    thumbnailUrl: row.thumbnail_url,
+    thumbnailUrl: safeHttpUrl(row.thumbnail_url),
   };
 }
 

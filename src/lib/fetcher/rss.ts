@@ -2,6 +2,7 @@ import Parser from "rss-parser";
 import type { SourceRow } from "@/lib/db/types";
 import type { FetchResult, FetchedItem } from "./types";
 import { contentTypeForSource, parseDurationToMinutes, stripHtml, titleFromUrl } from "./util";
+import { safeHttpUrl } from "@/lib/url";
 
 // Some fields (like iTunes podcast duration / media thumbnails) aren't part of
 // rss-parser's default typed map, so we register them as custom fields.
@@ -66,7 +67,10 @@ export async function fetchRssSource(source: SourceRow): Promise<FetchResult> {
     const now = Date.now();
 
     for (const raw of feed.items.slice(0, MAX_ITEMS_PER_SOURCE * 2)) {
-      const link = raw.link?.trim();
+      // Scheme guard at the door: only absolute http(s) links enter the
+      // pipeline. A javascript:/data: link from a compromised feed would
+      // otherwise be stored and later rendered as an href (stored XSS).
+      const link = safeHttpUrl(raw.link);
       if (!link) continue;
       // Resolve a usable title. Feeds occasionally ship a link with no title,
       // or a title that's just the URL — both render as broken "raw URL" cards.
@@ -101,7 +105,7 @@ export async function fetchRssSource(source: SourceRow): Promise<FetchResult> {
             ? raw.author
             : raw.author?.name ?? null),
         publishedAt: publishedIso,
-        thumbnailUrl: extractThumbnail(raw),
+        thumbnailUrl: safeHttpUrl(extractThumbnail(raw)),
         category: source.category,
         contentType: contentTypeForSource(source),
         durationMinutes: parseDurationToMinutes(raw["itunes:duration"]),
