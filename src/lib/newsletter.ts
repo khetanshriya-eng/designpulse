@@ -149,6 +149,14 @@ function stripDashes(s: string): string {
  * images — they're blocked by default), hard 2–3px borders instead of the
  * site's offset shadows (box-shadow support in email clients is patchy).
  * `{{ unsubscribe_url }}` is substituted per-recipient by Buttondown.
+ *
+ * Dark-mode strategy (audit 2026-07-19): Gmail's apps run an un-opt-outable
+ * "smart invert" that flips light AND dark surfaces — so every text/background
+ * pair here is a SOLID color with a big lightness gap (no alpha-composited
+ * text, no mid-tone-on-mid-tone), which keeps both polarities readable.
+ * Apple Mail / Outlook honor real dark CSS, so the wrapper also ships a
+ * prefers-color-scheme block that re-skins the email in the site's night
+ * palette.
  */
 export function renderDigestHtml(
   articles: DigestArticle[],
@@ -166,7 +174,7 @@ export function renderDigestHtml(
       // quiet byline; (5) the Read button. Generous spacing throughout.
       return `
       <tr>
-        <td style="padding:26px 24px 28px;border-top:2px solid ${NAVY};">
+        <td class="dm-cell" style="padding:26px 24px 28px;border-top:2px solid ${NAVY};">
           <table role="presentation" cellpadding="0" cellspacing="0" border="0">
             <tr>
               <td style="background:${LIME};border:2px solid ${NAVY};font-family:${MONO};font-size:12px;line-height:1;font-weight:bold;color:${NAVY};padding:3px 9px;">${i + 1}</td>
@@ -174,14 +182,14 @@ export function renderDigestHtml(
             </tr>
           </table>
           <div style="height:16px;line-height:16px;font-size:0;">&nbsp;</div>
-          <a href="${esc(a.url)}" style="font-family:${MONO};font-size:19px;line-height:1.4;font-weight:bold;color:${NAVY};text-decoration:none;">${esc(a.title)}</a>
+          <a href="${esc(a.url)}" class="dm-title" style="font-family:${MONO};font-size:19px;line-height:1.4;font-weight:bold;color:${NAVY};text-decoration:none;">${esc(a.title)}</a>
           ${
             a.summary
-              ? `<p style="font-family:${MONO};font-size:14px;line-height:1.65;color:${GRAY};margin:12px 0 0;">${esc(stripDashes(a.summary))}</p>`
+              ? `<p class="dm-sum" style="font-family:${MONO};font-size:14px;line-height:1.65;color:${GRAY};margin:12px 0 0;">${esc(stripDashes(a.summary))}</p>`
               : ""
           }
           <div style="height:14px;line-height:14px;font-size:0;">&nbsp;</div>
-          <div style="font-family:${MONO};font-size:12px;line-height:1;color:${GRAY};">${esc(a.sourceName)} &nbsp;·&nbsp; ${esc(read)}</div>
+          <div class="dm-byline" style="font-family:${MONO};font-size:12px;line-height:1;color:${GRAY};">${esc(a.sourceName)} &nbsp;·&nbsp; ${esc(read)}</div>
           <div style="height:18px;line-height:18px;font-size:0;">&nbsp;</div>
           <a href="${esc(a.url)}" style="font-family:${MONO};font-size:13px;font-weight:bold;color:${NAVY};background:${LIME};padding:6px 12px;border:2px solid ${NAVY};text-decoration:none;">Read&nbsp;→</a>
         </td>
@@ -189,47 +197,70 @@ export function renderDigestHtml(
     })
     .join("");
 
-  return `<!-- designator digest -->
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f0e8;padding:16px 8px;">
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="light dark" />
+<meta name="supported-color-schemes" content="light dark" />
+<style>
+  /* Real dark mode for clients that honor it (Apple Mail, Outlook). Gmail
+     ignores this and runs its own transform — the inline palette is chosen
+     to survive that (solid colors, big lightness gaps). */
+  @media (prefers-color-scheme: dark) {
+    .dm-page { background: #0f0a2a !important; }
+    .dm-card { background: #1a1340 !important; border-color: #7668c2 !important; }
+    .dm-title { color: #f5f0e8 !important; }
+    .dm-sum, .dm-intro { color: #c4bdd3 !important; }
+    .dm-byline { color: #9b93a8 !important; }
+    .dm-cell { border-color: #7668c2 !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;">
+<!-- designator digest -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="dm-page" style="background:#f5f0e8;padding:16px 8px;">
   <tr>
     <td align="center">
-      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:${CREAM};border:3px solid ${NAVY};">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="dm-card" style="max-width:600px;width:100%;background:${CREAM};border:3px solid ${NAVY};">
         <!-- Header band -->
         <tr>
           <td style="background:${PURPLE};padding:26px 24px;border-bottom:3px solid ${NAVY};">
-            <div style="font-family:${MONO};font-size:26px;line-height:1;font-weight:bold;letter-spacing:-1px;color:${LIME};">designator <span style="color:${CREAM};">✦</span></div>
+            <div style="font-family:${MONO};font-size:26px;line-height:1;font-weight:bold;letter-spacing:-1px;color:${CREAM};">designator <span style="color:${LIME};">✦</span></div>
             <div style="font-family:${MONO};font-size:16px;line-height:1.3;font-weight:bold;color:${CREAM};margin-top:12px;">${esc(editionName)}</div>
-            <div style="font-family:${MONO};font-size:12px;line-height:1;color:rgba(255,250,240,0.75);margin-top:8px;">${esc(dateLabel)} &nbsp;·&nbsp; ${articles.length} stories</div>
+            <div style="font-family:${MONO};font-size:12px;line-height:1;color:${CREAM};margin-top:8px;">${esc(dateLabel)} &nbsp;·&nbsp; ${articles.length} stories</div>
           </td>
         </tr>
         <!-- Intro line (keeps the email from being 100% links) -->
         <tr>
           <td style="padding:20px 24px;">
-            <p style="font-family:${MONO};font-size:14px;line-height:1.65;color:${GRAY};margin:0;">Good morning. Here are today's design stories worth your time, picked from 75+ sources and summarized so you can catch up in five minutes.</p>
+            <p class="dm-intro" style="font-family:${MONO};font-size:14px;line-height:1.65;color:${GRAY};margin:0;">Good morning. Here are today's design stories worth your time, picked from 75+ sources and summarized so you can catch up in five minutes.</p>
           </td>
         </tr>
         <!-- Stories -->
         ${rows}
         <!-- CTA -->
         <tr>
-          <td align="center" style="padding:24px;border-top:2px solid ${NAVY};">
+          <td class="dm-cell" align="center" style="padding:24px;border-top:2px solid ${NAVY};">
             <a href="${SITE}" style="font-family:${MONO};font-size:14px;font-weight:bold;color:${NAVY};background:${LIME};padding:12px 20px;border:2px solid ${NAVY};text-decoration:none;display:inline-block;">See today's full edition&nbsp;→</a>
           </td>
         </tr>
         <!-- Footer -->
         <tr>
           <td style="background:${NAVY};padding:18px 24px;">
-            <p style="font-family:${MONO};font-size:12px;line-height:1.7;color:rgba(255,250,240,0.7);margin:0;">
-              You're getting this because you subscribed to <a href="${SITE}" style="color:${LIME};text-decoration:none;">Designator</a>, the daily briefing for product designers.<br />
-              <a href="${UNSUB_PLACEHOLDER}" style="color:rgba(255,250,240,0.9);text-decoration:underline;">Unsubscribe</a>
-              &nbsp;·&nbsp; <a href="${SITE}" style="color:rgba(255,250,240,0.9);text-decoration:underline;">designatorapp.com</a>
+            <p style="font-family:${MONO};font-size:12px;line-height:1.7;color:#cfc9dd;margin:0;">
+              You're getting this because you subscribed to <a href="${SITE}" style="color:${CREAM};font-weight:bold;text-decoration:none;">Designator</a>, the daily briefing for product designers.<br />
+              <a href="${UNSUB_PLACEHOLDER}" style="color:${CREAM};text-decoration:underline;">Unsubscribe</a>
+              &nbsp;·&nbsp; <a href="${SITE}" style="color:${CREAM};text-decoration:underline;">designatorapp.com</a>
             </p>
           </td>
         </tr>
       </table>
     </td>
   </tr>
-</table>`;
+</table>
+</body>
+</html>`;
 }
 
 /**

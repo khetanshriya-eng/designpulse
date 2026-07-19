@@ -11,9 +11,9 @@ type Edition = { date: string; count: number };
 
 /**
  * Browse/jump to any edition. Desktop: a dropdown anchored under the edition
- * name. Mobile: a bottom sheet (slide-up, drag-to-dismiss, scroll lock — all
- * from the shared BottomSheet). Cream panel with fixed navy text (lives
- * outside the card ink re-scope).
+ * name. Mobile: a bottom sheet (slide-up, scroll lock, pixel ✕ — all from the
+ * shared BottomSheet). The panel follows --color-card (cream by day, indigo at
+ * night) with page-scope ink tokens, so it themes with the rest of the site.
  *
  * The filter input is NOT autofocused: on mobile that would summon the iOS
  * keyboard the moment the sheet opens and shift the whole layout. The list is
@@ -83,7 +83,7 @@ export function EditionPicker({
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Jump to a date or edition…"
           aria-label="Filter editions"
-          className="w-full bg-transparent font-mono text-[14px] text-[#1a1340] placeholder:text-[#1a1340]/45 outline-none"
+          className="w-full bg-transparent font-mono text-[14px] text-ink placeholder:text-ink-subtle outline-none"
         />
       </div>
 
@@ -96,7 +96,7 @@ export function EditionPicker({
         {loading && (
           <div className="flex flex-col items-center justify-center gap-2 py-10">
             <PixelLoader loading opacity={1} />
-            <span className="font-mono text-[11px] text-[#1a1340]/55">
+            <span className="font-mono text-[11px] text-ink-subtle">
               Loading editions…
             </span>
           </div>
@@ -107,25 +107,25 @@ export function EditionPicker({
               key={r.date}
               href={`/edition/${r.date}`}
               onClick={onClose}
-              className={`flex items-center justify-between gap-3 px-4 py-3 border-b border-[color:var(--card-border)]/20 transition-colors hover:bg-[#1a1340]/[0.06] ${
-                r.date === currentDate ? "bg-[#1a1340]/[0.06]" : ""
+              className={`flex items-center justify-between gap-3 px-4 py-3 border-b border-[color:var(--card-border)]/20 transition-colors hover:bg-[color:var(--color-paper-tint)] ${
+                r.date === currentDate ? "bg-[color:var(--color-paper-tint)]" : ""
               }`}
             >
               <div className="min-w-0">
-                <div className="font-pixel text-[13px] text-[#1a1340] truncate">
+                <div className="font-pixel text-[13px] text-ink truncate">
                   {r.name}
                 </div>
-                <div className="font-mono text-[11px] text-[#1a1340]/55">
+                <div className="font-mono text-[11px] text-ink-subtle">
                   {r.label}
                 </div>
               </div>
-              <span className="font-mono text-[11px] text-[#1a1340]/55 shrink-0">
+              <span className="font-mono text-[11px] text-ink-subtle shrink-0">
                 {r.count}
               </span>
             </Link>
           ))}
         {!loading && filtered.length === 0 && (
-          <p className="p-4 text-center font-mono text-[12px] text-[#1a1340]/60">
+          <p className="p-4 text-center font-mono text-[12px] text-ink-subtle">
             No editions match &ldquo;{search}&rdquo;.
           </p>
         )}

@@ -199,13 +199,13 @@ export function SearchTrigger() {
       >
         {/* Input — pinned under the handle; 16px rule prevents iOS zoom. */}
         <div className="flex-shrink-0 flex items-center gap-3 px-4 pb-3 border-b-[3px] border-[color:var(--card-border)]">
-          <SearchIcon className="text-[#1a1340]/50" />
+          <SearchIcon className="text-ink-subtle" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search articles, sources, topics…"
             aria-label="Search query"
-            className="flex-1 bg-transparent font-mono text-[14px] text-[#1a1340] placeholder:text-[#1a1340]/45 outline-none py-1"
+            className="flex-1 bg-transparent font-mono text-[14px] text-ink placeholder:text-ink-subtle outline-none py-1"
           />
         </div>
 
@@ -235,18 +235,18 @@ export function SearchTrigger() {
           {!tooShort && loading && (
             <div className="flex flex-col items-center justify-center gap-2 py-10">
               <PixelLoader loading opacity={1} />
-              <span className="font-mono text-[11px] text-[#1a1340]/55">
+              <span className="font-mono text-[11px] text-ink-subtle">
                 Searching…
               </span>
             </div>
           )}
           {!tooShort && !loading && error && (
-            <p className="p-4 text-center font-mono text-[12px] text-[#1a1340]/60">
+            <p className="p-4 text-center font-mono text-[12px] text-ink-subtle">
               Couldn&apos;t search: {error}
             </p>
           )}
           {!tooShort && !loading && !error && visibleResults.length === 0 && (
-            <p className="p-4 text-center font-mono text-[12px] text-[#1a1340]/60">
+            <p className="p-4 text-center font-mono text-[12px] text-ink-subtle">
               No matches for &ldquo;{q}&rdquo;.
             </p>
           )}
@@ -263,11 +263,11 @@ export function SearchTrigger() {
                 }}
                 className="block px-4 py-3 border-b border-[color:var(--card-border)]/20"
               >
-                <p className="font-heading text-[15px] leading-[1.35] text-[#1a1340] line-clamp-2">
+                <p className="font-heading text-[15px] leading-[1.35] text-ink line-clamp-2">
                   {r.title}
                 </p>
-                <div className="mt-1 flex items-center gap-2 font-mono text-[10px] text-[#1a1340]/55">
-                  <span className="font-pixel uppercase tracking-[0.1em] text-[#5b3df5]">
+                <div className="mt-1 flex items-center gap-2 font-mono text-[10px] text-ink-subtle">
+                  <span className="font-pixel uppercase tracking-[0.1em] text-accent">
                     {r.categoryLabel}
                   </span>
                   <span>{r.sourceName}</span>
@@ -425,14 +425,14 @@ function ChipGroup({
   return (
     <div>
       <div className="flex items-center justify-between mb-2.5">
-        <p className="font-pixel text-[11px] uppercase tracking-[0.14em] text-[#1a1340]/55">
+        <p className="font-pixel text-[11px] uppercase tracking-[0.14em] text-ink-subtle">
           {label}
         </p>
         {onClear && (
           <button
             type="button"
             onClick={onClear}
-            className="font-mono text-[11px] text-[#1a1340]/55 underline underline-offset-2"
+            className="font-mono text-[11px] text-ink-subtle underline underline-offset-2"
           >
             Clear
           </button>
@@ -444,7 +444,7 @@ function ChipGroup({
             key={term}
             type="button"
             onClick={() => onPick(term)}
-            className="font-mono text-[12px] px-2.5 py-1.5 border-2 border-[#1a1340] text-[#1a1340] shadow-[2px_2px_0_var(--card-shadow)] active:translate-x-px active:translate-y-px active:shadow-none transition-all"
+            className="font-mono text-[12px] px-2.5 py-1.5 border-2 border-[color:var(--card-border)] text-ink shadow-[2px_2px_0_var(--card-shadow)] active:translate-x-px active:translate-y-px active:shadow-none transition-all"
           >
             {term}
           </button>

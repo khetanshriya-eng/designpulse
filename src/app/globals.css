@@ -118,6 +118,9 @@
      referenced by the search + feedback + edition overlays but never defined,
      so those scrims had been invisible. */
   --color-scrim: rgba(13, 10, 38, 0.55);
+
+  /* Image-fallback tile behind pixel mosaics (dark override at night). */
+  --mosaic-tile: #efe9db;
 }
 
 @media (min-width: 640px) {
@@ -138,15 +141,20 @@
   padding-inline: var(--container-pad);
 }
 
-/* ── Night (dark) palette — arcade cabinet ── */
+/* ── Night (dark) palette — arcade cabinet ──
+   Dark-mode audit 2026-07-19: night cards were cream (17.7:1 glare vs canvas —
+   "dark mode" read as light cards on black), rules sat at 1.30:1 (invisible)
+   and shadows at 2.05:1 (the signature pixel offset vanished). Cards now go
+   truly dark; every replacement value below is contrast-verified
+   (scripts/contrast-audit.mjs). */
 html[data-theme="dark"] {
   --color-paper: #0f0a2a;        /* deep purple-navy canvas */
   --color-paper-tint: #1a1340;
   --color-paper-warm: #1a1340;
-  --color-card: #fdf5e6;         /* cards STAY warm cream for readability */
+  --color-card: #1e1550;         /* night card surface (ink 14.5:1) */
 
-  /* On the dark canvas these go light. Cards re-scope them dark — see
-     .surface-card below — so card text stays dark-on-cream in both themes. */
+  /* On the dark canvas these go light. .surface-card re-scopes per theme —
+     dark-on-cream in morning, light-on-indigo at night. */
   --color-ink: #f5f0e8;
   --color-ink-muted: #c4bdd3;
   --color-ink-subtle: #9b93a8;
@@ -155,17 +163,33 @@ html[data-theme="dark"] {
   --color-accent-hover: #b9abff;
   --color-accent-soft: #d4ff3f;
 
-  --color-rule: #2a2050;
+  --color-rule: #675aad;         /* 3.32:1 vs canvas (was #2a2050 → 1.30:1) */
   --color-rule-strong: #f5f0e8;
 
-  --card-border: #2a2050;
-  /* A visible indigo offset — black is invisible on the near-black canvas,
-     which hid the hover lift at night. This reads as a solid pixel offset. */
-  --card-shadow: #4733a0;
+  --card-border: #7668c2;        /* 3.54:1 vs the night card surface */
+  /* A visible indigo offset — 3.47:1 vs canvas (the old #4733a0 sat at
+     2.05:1 and the hover lift disappeared at night). */
+  --card-shadow: #6455d6;
   --shadow-offset: 5px;
   --nav-bg: #1a1340;             /* dark bar at night */
   --nav-ink: #f5f0e8;
   --marquee-bg: #14102e;         /* a touch darker than the nav bar */
+
+  /* Category markers brighten at night: the deepened light-theme values fall
+     to ~2.8:1 on the night card, so dots/mosaics reuse the vivid stripe
+     palette (4.1–14.2:1 on #1e1550). */
+  --color-cat-design: #d4ff3f;
+  --color-cat-thinking: #7c6bf5;
+  --color-cat-inspiration: #4fffb0;
+  --color-cat-youtube: #ff5252;
+  --color-cat-product: #ff4fd8;
+  --color-cat-tech: #00e5ff;
+  --color-cat-ai: #ffb800;
+  --color-cat-newsletters: #b06bff;
+  --color-cat-podcasts: #ff6b6b;
+
+  /* Image-fallback tile goes dark so vivid mosaics read as native art. */
+  --mosaic-tile: #1a1340;
 }
 
 /*
@@ -292,12 +316,23 @@ h1, h2, h3, h4, h5, h6 {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   overflow: hidden;
 
+  /* Morning: dark ink on the cream card. */
   --color-ink: #1a1340;
   --color-ink-muted: #5c5470;
   --color-ink-subtle: #6b6480;
   --color-accent: #5b3df5;
   --color-accent-hover: #4a2fd0;
   --color-rule: #e3dccb;
+}
+/* Night: light ink on the indigo card (ink 14.5 / muted 9.5 / subtle 5.6 /
+   accent 8.5 on #1e1550 — all AA-verified). */
+html[data-theme="dark"] .surface-card {
+  --color-ink: #f5f0e8;
+  --color-ink-muted: #c4bdd3;
+  --color-ink-subtle: #9b93a8;
+  --color-accent: #b9abff;
+  --color-accent-hover: #cabfff;
+  --color-rule: #35296b;
 }
 .surface-card:hover {
   transform: translate(-2px, -2px);

@@ -93,9 +93,9 @@ export function ArticleImage({
   }
 
   // No-image fallback: a generative pixel mosaic seeded by the article id,
-  // in the category color, on a fixed warm-tint tile (fixed, not themed,
-  // because it lives inside the always-cream card). Replaces the old faded
-  // favicon — reads as a designed sigil, not a missing image.
+  // in the category color, on a themed tile (warm cream by day, deep navy at
+  // night — the night dot palette is vivid, so mosaics read as native art on
+  // the dark tile). Replaces the old faded favicon.
   const categoryLabel =
     CATEGORY_META[article.category]?.label ?? article.category.replace(/-/g, " ");
 
@@ -103,7 +103,7 @@ export function ArticleImage({
     <div
       data-image="fallback"
       className={`${containerSizing} overflow-hidden flex flex-col items-center justify-center gap-2 ${className}`}
-      style={{ background: "#efe9db" }}
+      style={{ background: "var(--mosaic-tile)" }}
     >
       <PixelMosaic
         seed={article.id || article.url}

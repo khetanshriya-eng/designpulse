@@ -13,7 +13,8 @@
     "summarize": "tsx --env-file=.env.local scripts/summarize.ts",
     "curate": "tsx --env-file=.env.local scripts/curate.ts",
     "backfill:images": "tsx --env-file=.env.local scripts/backfill-images.ts",
-    "pipeline": "npm run fetch && npm run summarize && npm run curate"
+    "pipeline": "npm run fetch && npm run summarize && npm run curate",
+    "audit:contrast": "node scripts/contrast-audit.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4",
