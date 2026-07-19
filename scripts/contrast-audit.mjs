@@ -46,6 +46,7 @@ const PAIRS = [
   ["dark: card accent on night card", "#b9abff", "#1e1550", TEXT],
   ["dark: card border vs night card", "#7668c2", "#1e1550", GFX],
   ["dark: nav ink on night bar", "#f5f0e8", "#1a1340", TEXT],
+  ["dark: marquee lime on band", "#d4ff3f", "#3a2b96", TEXT],
   // night dot palette (vivid stripes) on the night card
   ["dark dot: design", "#d4ff3f", "#1e1550", GFX],
   ["dark dot: thinking", "#7c6bf5", "#1e1550", GFX],

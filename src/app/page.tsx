@@ -152,10 +152,17 @@ export default async function Home() {
         </section>
       )}
 
-      {/* Product + Podcasts */}
+      {/* Product + Podcasts. Two columns only when BOTH render — a solo
+          section spans the full width instead of stranding an empty half. */}
       {(showProduct || showPodcasts) && (
         <section className="site-container pb-16">
-          <div className="grid lg:grid-cols-2 gap-12">
+          <div
+            className={
+              showProduct && showPodcasts
+                ? "grid lg:grid-cols-2 gap-12"
+                : "grid gap-12"
+            }
+          >
             {showProduct && (
               <div>
                 <SectionHeader
