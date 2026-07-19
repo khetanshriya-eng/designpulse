@@ -61,17 +61,24 @@ const PAIRS = [
   ["fixed: navy on lime (chips/badges)", "#1a1340", "#d4ff3f", TEXT],
   ["fixed: cream on navy (toast/✕)", "#fffaf0", "#1a1340", TEXT],
 
-  // ── Email (as designed; solid colors so Gmail's flip preserves the gap) ──
-  ["email: cream wordmark on purple band", "#fffaf0", "#5b3df5", TEXT],
-  ["email: title navy on cream", "#1a1340", "#fffaf0", TEXT],
-  ["email: summary gray on cream", "#5c5470", "#fffaf0", TEXT],
-  ["email: chip navy on lime", "#1a1340", "#d4ff3f", TEXT],
+  // ── Email · authored light edition ("one template, two editions": the
+  //    porcelain palette is DESIGNED so Gmail-dark's inversion lands on the
+  //    brand night palette; these are the authored-light pairs) ──
+  ["email: edition name navy on porcelain", "#1a1340", "#f7f5ff", TEXT],
+  ["email: title navy on porcelain", "#1a1340", "#f7f5ff", TEXT],
+  ["email: intro on porcelain", "#3f3556", "#f7f5ff", TEXT],
+  ["email: summary gray on porcelain", "#5c5470", "#f7f5ff", TEXT],
+  ["email: byline on porcelain", "#6b6382", "#f7f5ff", TEXT],
+  ["email: chip cream on purple", "#fffaf0", "#5b3df5", TEXT],
+  ["email: Read btn cream on purple", "#fffaf0", "#5b3df5", TEXT],
+  ["email: CTA cream on navy band", "#fffaf0", "#1a1340", TEXT],
   ["email: footer text on navy", "#cfc9dd", "#1a1340", TEXT],
-  ["email: footer links on navy", "#fffaf0", "#1a1340", TEXT],
-  // email · Apple Mail dark overrides
-  ["email dark: title on night card", "#f5f0e8", "#1a1340", TEXT],
-  ["email dark: summary on night card", "#c4bdd3", "#1a1340", TEXT],
-  ["email dark: byline on night card", "#9b93a8", "#1a1340", TEXT],
+  ["email: footer links lavender on navy", "#9e8cff", "#1a1340", TEXT],
+  // email · Apple Mail night edition (dm- classes on #0f0a2a card)
+  ["email dark: title on canvas", "#f0ecff", "#0f0a2a", TEXT],
+  ["email dark: summary on canvas", "#b6aecf", "#0f0a2a", TEXT],
+  ["email dark: byline lavender on canvas", "#9e8cff", "#0f0a2a", TEXT],
+  ["email dark: chip navy on lime", "#1a1340", "#d4ff3f", TEXT],
 ];
 
 let failed = 0;
