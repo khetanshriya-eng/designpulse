@@ -561,7 +561,12 @@ export async function runSendDigest(
     year: "numeric",
   });
   const isoDate = today.toISOString().slice(0, 10);
-  const subject = `✦ Designator · ${dateLabel}`;
+  // Test sends get a distinct subject — otherwise Gmail threads them into the
+  // same conversation as the day's real digest and design reviews end up
+  // looking at the OLD email.
+  const subject = opts.to
+    ? `✦ Designator · ${dateLabel} · design test`
+    : `✦ Designator · ${dateLabel}`;
   const html = renderDigestHtml(
     selected.map((c) => ({
       title: c.title,
