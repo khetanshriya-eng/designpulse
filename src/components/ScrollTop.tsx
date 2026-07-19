@@ -35,7 +35,7 @@ export function ScrollTop() {
       type="button"
       onClick={scrollToTop}
       aria-label="Back to top"
-      className="fixed bottom-5 right-5 z-40 grid place-items-center w-11 h-11 border-[3px] text-[color:var(--nav-ink)] shadow-[3px_3px_0_var(--card-shadow)] transition-transform hover:-translate-y-0.5 active:translate-y-0.5"
+      className="fixed bottom-5 right-5 z-40 grid place-items-center w-11 h-11 border-[3px] text-[color:var(--color-paper)] shadow-[3px_3px_0_var(--card-shadow)] transition-transform hover:-translate-y-0.5 active:translate-y-0.5"
       style={{ background: "var(--color-accent)", borderColor: "var(--card-border)" }}
     >
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" shapeRendering="crispEdges" aria-hidden>

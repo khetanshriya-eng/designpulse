@@ -80,7 +80,7 @@ export default function AboutPage() {
           {STEPS.map((s) => (
             <div key={s.n} className="surface-card p-5 flex flex-col gap-3">
               <span
-                className="font-pixel text-[13px] w-8 h-8 grid place-items-center text-white"
+                className="font-pixel text-[13px] w-8 h-8 grid place-items-center text-[color:var(--color-paper)]"
                 style={{ background: "var(--color-accent)" }}
                 aria-hidden
               >
@@ -124,7 +124,7 @@ export default function AboutPage() {
                 href={s.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-pixel text-[12px] uppercase tracking-[0.06em] px-3 py-2 border-2 border-[color:var(--card-border)] text-ink hover:bg-accent hover:text-white transition-colors"
+                className="font-pixel text-[12px] uppercase tracking-[0.06em] px-3 py-2 border-2 border-[color:var(--card-border)] text-ink hover:bg-accent hover:text-[color:var(--color-paper)] transition-colors"
               >
                 {s.label}
               </a>

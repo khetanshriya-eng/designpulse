@@ -60,6 +60,11 @@ const PAIRS = [
   // fixed-color elements
   ["fixed: navy on lime (chips/badges)", "#1a1340", "#d4ff3f", TEXT],
   ["fixed: cream on navy (toast/✕)", "#fffaf0", "#1a1340", TEXT],
+  // paper-token glyphs on the accent (ScrollTop, About chips, feedback submit):
+  // paper flips with the theme so the glyph always opposes the accent.
+  ["light: paper glyph on accent", "#f5f0e8", "#5b3df5", TEXT],
+  ["dark: paper glyph on accent", "#0f0a2a", "#9e8cff", TEXT],
+  ["dark: paper glyph on in-card accent", "#0f0a2a", "#b9abff", TEXT],
 
   // ── Email · authored light edition ("one template, two editions": the
   //    porcelain palette is DESIGNED so Gmail-dark's inversion lands on the

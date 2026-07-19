@@ -160,7 +160,7 @@ export function FeedbackWidget() {
                     type="button"
                     onClick={submit}
                     disabled={status === "sending" || (!rating && !comment.trim())}
-                    className="font-pixel text-[13px] uppercase tracking-[0.08em] bg-accent text-white px-4 py-2 rounded-md disabled:opacity-50 transition-opacity"
+                    className="font-pixel text-[13px] uppercase tracking-[0.08em] bg-accent text-[color:var(--color-paper)] px-4 py-2 rounded-md disabled:opacity-50 transition-opacity"
                   >
                     {status === "sending" ? "Sending…" : "Send"}
                   </button>

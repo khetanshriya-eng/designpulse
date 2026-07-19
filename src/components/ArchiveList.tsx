@@ -117,9 +117,9 @@ export function ArchiveList({
           type="button"
           onClick={loadMore}
           disabled={loading}
-          className="mt-8 surface-card font-pixel text-[13px] uppercase tracking-[0.06em] px-5 py-3 text-ink disabled:opacity-60"
+          className="mt-8 mx-auto block surface-card font-pixel text-[13px] uppercase tracking-[0.06em] px-5 py-3 text-ink disabled:opacity-60"
         >
-          {loading ? "Loading…" : "← Load more editions"}
+          {loading ? "Loading…" : "↓ Load more editions"}
         </button>
       )}
     </>
