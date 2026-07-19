@@ -622,11 +622,12 @@ export async function runSendDigest(
     year: "numeric",
   });
   const isoDate = today.toISOString().slice(0, 10);
-  // Test sends get a distinct subject — otherwise Gmail threads them into the
-  // same conversation as the day's real digest and design reviews end up
-  // looking at the OLD email.
+  // Test sends get a UNIQUE subject (time-stamped) — a same-subject test
+  // threads into the previous one, and Gmail then trims the near-identical
+  // body as "quoted content", which renders as an empty-looking email.
+  const testStamp = new Date().toISOString().slice(11, 16).replace(":", "");
   const subject = opts.to
-    ? `✦ Designator · ${dateLabel} · design test`
+    ? `✦ Designator · ${dateLabel} · test ${testStamp}`
     : `✦ Designator · ${dateLabel}`;
   const html = renderDigestHtml(
     selected.map((c) => ({
