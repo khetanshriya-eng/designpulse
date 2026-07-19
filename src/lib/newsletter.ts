@@ -309,10 +309,10 @@ ${nightCatRules}
         <!-- Footer: unpinned navy, solid colors only. -->
         <tr>
           <td style="background:${NAVY};padding:18px 24px;">
-            <p style="font-family:${MONO};font-size:12px;line-height:1.7;color:#cfc9dd;margin:0;">
+            <p style="font-family:${MONO};font-size:12px;line-height:1.7;color:#e3def0;margin:0;">
               You're getting this because you subscribed to <a href="${SITE}" style="color:${CREAM};font-weight:bold;text-decoration:none;">Designator</a>, the daily briefing for product designers.<br />
-              <a href="${UNSUB_PLACEHOLDER}" style="color:#9e8cff;text-decoration:underline;">Unsubscribe</a>
-              &nbsp;·&nbsp; <a href="${SITE}" style="color:#9e8cff;text-decoration:underline;">designatorapp.com</a>
+              <a href="${UNSUB_PLACEHOLDER}" style="color:${CREAM};text-decoration:underline;">Unsubscribe</a>
+              &nbsp;·&nbsp; <a href="${SITE}" style="color:${CREAM};text-decoration:underline;">designatorapp.com</a>
             </p>
           </td>
         </tr>

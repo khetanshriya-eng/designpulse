@@ -46,7 +46,7 @@ const PAIRS = [
   ["dark: card accent on night card", "#b9abff", "#1e1550", TEXT],
   ["dark: card border vs night card", "#7668c2", "#1e1550", GFX],
   ["dark: nav ink on night bar", "#f5f0e8", "#1a1340", TEXT],
-  ["dark: marquee lime on band", "#d4ff3f", "#3a2b96", TEXT],
+  ["dark: marquee lime on band", "#d4ff3f", "#2a1f6e", TEXT],
   // night dot palette (vivid stripes) on the night card
   ["dark dot: design", "#d4ff3f", "#1e1550", GFX],
   ["dark dot: thinking", "#7c6bf5", "#1e1550", GFX],
@@ -72,8 +72,11 @@ const PAIRS = [
   ["email: chip cream on purple", "#fffaf0", "#5b3df5", TEXT],
   ["email: Read btn cream on purple", "#fffaf0", "#5b3df5", TEXT],
   ["email: CTA cream on navy band", "#fffaf0", "#1a1340", TEXT],
-  ["email: footer text on navy", "#cfc9dd", "#1a1340", TEXT],
-  ["email: footer links lavender on navy", "#9e8cff", "#1a1340", TEXT],
+  // Footer text sits high-L* on purpose: Gmail's flip previously landed the
+  // #9e8cff links LIGHT on the pale inverted band (field evidence 2026-07-19)
+  // — cream links flip near-black instead.
+  ["email: footer text on navy", "#e3def0", "#1a1340", TEXT],
+  ["email: footer links cream on navy", "#fffaf0", "#1a1340", TEXT],
   // email · Apple Mail night edition (dm- classes on #0f0a2a card)
   ["email dark: title on canvas", "#f0ecff", "#0f0a2a", TEXT],
   ["email dark: summary on canvas", "#b6aecf", "#0f0a2a", TEXT],

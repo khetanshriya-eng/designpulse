@@ -173,11 +173,11 @@ html[data-theme="dark"] {
   --shadow-offset: 5px;
   --nav-bg: #1a1340;             /* dark bar at night */
   --nav-ink: #f5f0e8;
-  /* Saturated indigo-purple so the ticker reads as its own band — mirroring
-     the light theme's nav/marquee/tabs banding. The old #14102e was near-
-     identical to both the nav and the canvas, collapsing the header stack
-     into one slab. Lime text: 9.3:1. */
-  --marquee-bg: #3a2b96;
+  /* Muted indigo so the ticker reads as its own band without shouting —
+     mirroring the light theme, where the marquee is a RECESSIVE sibling of
+     the nav. #14102e was indistinguishable from nav+canvas (one slab);
+     #3a2b96 overshot into neon and grabbed the whole header. Lime 12:1. */
+  --marquee-bg: #2a1f6e;
 
   /* Category markers brighten at night: the deepened light-theme values fall
      to ~2.8:1 on the night card, so dots/mosaics reuse the vivid stripe
