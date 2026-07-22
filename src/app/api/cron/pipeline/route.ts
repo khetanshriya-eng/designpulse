@@ -12,6 +12,7 @@
  * NULL, curate idempotently resets flags).
  */
 import type { NextRequest } from "next/server";
+import { revalidateTag, revalidatePath } from "next/cache";
 import { runFetch } from "@/lib/pipeline/fetch";
 import { runSummarize } from "@/lib/pipeline/summarize";
 import { runCurate } from "@/lib/pipeline/curate";
@@ -71,6 +72,23 @@ async function handle(req: NextRequest) {
     out.curate = { error };
     log.error("curate step failed", { error });
     failures.push({ step: "curate", error });
+  }
+
+  // Content just changed — bust the site's caches so the NEXT visitor sees the
+  // new edition immediately, instead of waiting out the 10-min ISR + data-cache
+  // windows (and the stale-while-revalidate double-load on a low-traffic site).
+  // expire:0 = immediate expiry, the documented pattern for an external caller
+  // (Vercel Cron) hitting a Route Handler. Everything content-facing is tagged
+  // "content"; the homepage/archive shells are revalidated by path.
+  if (!(out.curate as { error?: string })?.error) {
+    try {
+      revalidateTag("content", { expire: 0 });
+      revalidatePath("/");
+      revalidatePath("/archive");
+      log.info("caches revalidated after curate");
+    } catch (err) {
+      log.error("revalidation failed", { error: (err as Error).message });
+    }
   }
 
   // Email digest: only on the run flagged ?digest=1 (the morning cron), so

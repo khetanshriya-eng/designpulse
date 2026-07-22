@@ -73,8 +73,10 @@ export default async function Home() {
 
   return (
     <>
-      {/* Named edition + date picker + prominent share, directly below tabs. */}
-      <EditionBar date={edition.date} />
+      {/* Named edition + date picker + share. `live`: on the homepage the bar
+          rolls the date to "today" at IST midnight and shows a countdown to the
+          morning drop, since the day's edition isn't curated until ~08:00 IST. */}
+      <EditionBar date={edition.date} live />
 
       {/* Hero — starts promptly after the edition bar. */}
       {edition.hero && (

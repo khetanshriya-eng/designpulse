@@ -97,7 +97,7 @@ export const getEdition = unstable_cache(
     };
   },
   ["edition-view"],
-  { revalidate: 600 }
+  { revalidate: 600, tags: ["content"] }
 );
 
 /**
@@ -120,7 +120,7 @@ export const listEditionDates = unstable_cache(
     return (data ?? []).map((r) => r.edition_date);
   },
   ["edition-dates"],
-  { revalidate: 600 }
+  { revalidate: 600, tags: ["content"] }
 );
 
 async function getArticleById(id: string): Promise<Article | null> {
@@ -255,7 +255,7 @@ export const getLatest = unstable_cache(
     return rowsToArticles(balanceByCategory(pool, limit));
   },
   ["latest-articles"],
-  { revalidate: 600 }
+  { revalidate: 600, tags: ["content"] }
 );
 
 /**
@@ -307,7 +307,7 @@ export const getArticlesForEdition = unstable_cache(
     return rowsToArticles(rows);
   },
   ["articles-for-edition"],
-  { revalidate: 600 }
+  { revalidate: 600, tags: ["content"] }
 );
 
 /**
@@ -434,7 +434,7 @@ export const getByCategory = unstable_cache(
     return rowsToArticles(diversifyBySource(pool, limit, 1));
   },
   ["by-category"],
-  { revalidate: 600 }
+  { revalidate: 600, tags: ["content"] }
 );
 
 /**
@@ -481,7 +481,7 @@ export const getRecentHeadlines = unstable_cache(
       .map((r) => ({ title: r.title, url: r.original_url }));
   },
   ["recent-headlines-design"],
-  { revalidate: 600 }
+  { revalidate: 600, tags: ["content"] }
 );
 
 /** Full category page — bigger N, paginated by offset. Cached per page. */
@@ -514,7 +514,7 @@ export const getCategoryPage = unstable_cache(
     };
   },
   ["category-page"],
-  { revalidate: 600 }
+  { revalidate: 600, tags: ["content"] }
 );
 
 /**
@@ -602,7 +602,7 @@ export const getFeedArticles = unstable_cache(
     );
   },
   ["feed-articles"],
-  { revalidate: 600 }
+  { revalidate: 600, tags: ["content"] }
 );
 
 /**
@@ -683,7 +683,7 @@ export const getArchiveEditions = unstable_cache(
     return { editions, total: count ?? 0 };
   },
   ["archive-editions"],
-  { revalidate: 600 }
+  { revalidate: 600, tags: ["content"] }
 );
 
 /** Total article count for the nav "N stories curated" meter. Cached (10 min). */
@@ -699,5 +699,5 @@ export const getArticleCount = unstable_cache(
     return count ?? 0;
   },
   ["article-count"],
-  { revalidate: 600 }
+  { revalidate: 600, tags: ["content"] }
 );
