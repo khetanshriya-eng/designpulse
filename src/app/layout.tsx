@@ -7,6 +7,7 @@ import { ScrollTop } from "@/components/ScrollTop";
 import { ScrollReset } from "@/components/ScrollReset";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
+import { Analytics } from "@/components/Analytics";
 
 // Pixel face — chrome accents (logo, badges, kickers, nav).
 const pixel = Pixelify_Sans({
@@ -141,6 +142,8 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
           <Footer />
         </div>
+        {/* GA4 — production host only, App Router pageviews (see component). */}
+        <Analytics />
       </body>
     </html>
   );

@@ -16,17 +16,24 @@ import type { NextConfig } from "next";
  * img-src is intentionally broad (https:): article thumbnails come from ~75
  * arbitrary publisher domains.
  */
+// Google Analytics (gtag.js) hosts. GA is otherwise blocked by the policy —
+// the loader script comes from googletagmanager.com and the beacons POST to
+// the analytics/doubleclick endpoints, none of which are 'self'.
+const GA_SCRIPT = "https://www.googletagmanager.com";
+const GA_CONNECT =
+  "https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.g.doubleclick.net";
+
 const CSP = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  `script-src 'self' 'unsafe-inline' ${GA_SCRIPT}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
   "font-src 'self' data:",
-  "connect-src 'self'",
+  `connect-src 'self' ${GA_CONNECT}`,
   "manifest-src 'self'",
   "frame-src 'none'",
   "upgrade-insecure-requests",
