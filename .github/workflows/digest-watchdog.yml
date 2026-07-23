@@ -36,6 +36,17 @@ jobs:
           set -u
           health() { curl -sf --max-time 30 "$BASE/api/health"; }
 
+          # Verify the secret EVERY run (harmless dry-run, sends nothing).
+          # Without this, a wrong/missing CRON_SECRET only surfaces during a
+          # real incident — exactly when recovery must not fail.
+          auth_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 55 \
+            -H "Authorization: Bearer $CRON_SECRET" "$BASE/api/send-digest?dry=1")
+          if [ "$auth_code" != "200" ]; then
+            echo "::error::CRON_SECRET check failed (HTTP $auth_code) — fix the repo secret; auto-recovery would not work"
+            exit 1
+          fi
+          echo "auth ok (dry-run 200)"
+
           h=$(health) || { echo "::error::/api/health unreachable — site may be down"; exit 1; }
           echo "health: $h"
           edition=$(echo "$h" | jq -r .editionFresh)
