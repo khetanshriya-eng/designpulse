@@ -1,0 +1,69 @@
+# Digest watchdog — the alarm that lives OUTSIDE the pipeline.
+#
+# The pipeline can't reliably alert about its own death (a 60s Vercel Hobby
+# timeout kills the function, admin alert included — incident 2026-07-23).
+# This runs on GitHub's infrastructure 45 minutes after the morning cron
+# (02:30 UTC → here 03:15 UTC = 08:45 IST), checks /api/health, attempts
+# auto-recovery, and FAILS the workflow if anything was wrong — a failed
+# workflow makes GitHub email the repo owner, an alert channel independent
+# of Vercel, Resend, and our own code.
+#
+# Recovery is safe by construction: /api/send-digest is idempotent per IST
+# day (digest_log, migration 0003), so re-triggering can never double-email
+# subscribers; the pipeline re-run omits ?digest so it only rebuilds content.
+#
+# Requires one repo secret: CRON_SECRET (Settings → Secrets and variables →
+# Actions), same value as the Vercel env var.
+name: digest-watchdog
+
+on:
+  schedule:
+    - cron: "15 3 * * *" # 03:15 UTC ≈ 08:45 IST (GitHub cron can lag a few min)
+  workflow_dispatch: {} # manual runs from the Actions tab
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check health and auto-recover
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          BASE: https://www.designatorapp.com
+        run: |
+          set -u
+          health() { curl -sf --max-time 30 "$BASE/api/health"; }
+
+          h=$(health) || { echo "::error::/api/health unreachable — site may be down"; exit 1; }
+          echo "health: $h"
+          edition=$(echo "$h" | jq -r .editionFresh)
+          digest=$(echo "$h" | jq -r .digestSentToday)
+
+          bad=0
+
+          if [ "$digest" = "false" ]; then
+            echo "::warning::digest NOT sent today — recovering (idempotent send)"
+            curl -sf --max-time 60 -H "Authorization: Bearer $CRON_SECRET" \
+              "$BASE/api/send-digest" || echo "::error::recovery send failed"
+            bad=1
+          elif [ "$digest" = "null" ]; then
+            echo "::warning::digest status unknown — run migration 0003 (digest_log) in Supabase"
+          fi
+
+          if [ "$edition" != "true" ]; then
+            echo "::warning::today's edition missing — re-running pipeline (no digest flag)"
+            curl -sf --max-time 90 -H "Authorization: Bearer $CRON_SECRET" \
+              "$BASE/api/cron/pipeline" > /dev/null || echo "::error::pipeline re-run failed"
+            bad=1
+          fi
+
+          if [ "$bad" = "1" ]; then
+            sleep 10
+            echo "post-recovery: $(health || echo unreachable)"
+            echo "::error::Morning pipeline needed watchdog recovery — check Vercel logs for /api/cron/pipeline"
+            exit 1
+          fi
+
+          echo "all healthy — edition fresh, digest sent"

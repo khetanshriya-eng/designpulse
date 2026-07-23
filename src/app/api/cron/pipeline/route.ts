@@ -34,6 +34,38 @@ export const dynamic = "force-dynamic";
 // Hobby plan caps at 60s.
 export const maxDuration = 60;
 
+/**
+ * Race a RESUMABLE step against a deadline so the tail of the pipeline
+ * (curate + cache revalidation + the admin alert) always gets its turn —
+ * without this, one slow step ate the whole 60s and Vercel killed the
+ * function before anything downstream ran (incident 2026-07-23). On timeout
+ * the in-flight work is simply abandoned: fetch upserts on original_url and
+ * summarize only loads summary-IS-NULL rows, so the next run resumes exactly
+ * where this one stopped.
+ */
+async function withStepDeadline<T>(
+  step: Promise<T>,
+  deadlineMs: number
+): Promise<{ result?: T; timedOut: boolean }> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      step.then((result) => ({ result, timedOut: false as const })),
+      new Promise<{ timedOut: true }>((resolve) => {
+        timer = setTimeout(() => resolve({ timedOut: true }), deadlineMs);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Absolute elapsed-time budgets (ms since function start). Fetch must yield
+// by 30s, summarize by 45s — leaving ≥15s for curate, revalidation, the
+// admin alert, and the response. The digest (sent first) typically uses ~5s.
+const FETCH_BUDGET_AT = 30_000;
+const SUMMARIZE_BUDGET_AT = 45_000;
+
 async function handle(req: NextRequest) {
   const denied = checkCronAuth(req);
   if (denied) return denied;
@@ -53,7 +85,9 @@ async function handle(req: NextRequest) {
     try {
       const result = await runSendDigest({ log: logger("cron.pipeline.digest") });
       out.digest = result;
-      if (!result.sent) {
+      // "already sent today" = the idempotency guard doing its job (e.g. the
+      // watchdog recovered before this run) — success, not a failure.
+      if (!result.sent && result.reason !== "already sent today") {
         failures.push({ step: "digest", error: result.reason ?? "not sent" });
       }
     } catch (err) {
@@ -67,12 +101,18 @@ async function handle(req: NextRequest) {
   // Each step is independent re: errors. If one throws we still return
   // partial progress for the others — the next run will retry.
   try {
-    // Concurrency 4 fits ~60 RSS sources inside ~15-20s on a Vercel function,
-    // leaving room for summarize + curate before the 60s Hobby cap.
-    out.fetch = await runFetch({
-      concurrency: 4,
-      log: logger("cron.pipeline.fetch"),
-    });
+    // Concurrency 4 fits ~60 RSS sources inside ~15-20s on a Vercel function.
+    const fetched = await withStepDeadline(
+      runFetch({ concurrency: 4, log: logger("cron.pipeline.fetch") }),
+      Math.max(1_000, t0 + FETCH_BUDGET_AT - Date.now())
+    );
+    if (fetched.timedOut) {
+      out.fetch = { timedOut: true };
+      log.error("fetch step hit its deadline — moving on (resumable)");
+      failures.push({ step: "fetch", error: "step deadline exceeded" });
+    } else {
+      out.fetch = fetched.result;
+    }
   } catch (err) {
     const error = (err as Error).message;
     out.fetch = { error };
@@ -81,11 +121,21 @@ async function handle(req: NextRequest) {
   }
 
   try {
-    out.summarize = await runSummarize({
-      limit: 15,
-      concurrency: 3,
-      log: logger("cron.pipeline.summarize"),
-    });
+    const summarized = await withStepDeadline(
+      runSummarize({
+        limit: 15,
+        concurrency: 3,
+        log: logger("cron.pipeline.summarize"),
+      }),
+      Math.max(1_000, t0 + SUMMARIZE_BUDGET_AT - Date.now())
+    );
+    if (summarized.timedOut) {
+      out.summarize = { timedOut: true };
+      log.error("summarize step hit its deadline — moving on (resumable)");
+      failures.push({ step: "summarize", error: "step deadline exceeded" });
+    } else {
+      out.summarize = summarized.result;
+    }
   } catch (err) {
     const error = (err as Error).message;
     out.summarize = { error };

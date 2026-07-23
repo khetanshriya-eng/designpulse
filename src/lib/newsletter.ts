@@ -13,7 +13,7 @@
  * Deploy-safe: if BUTTONDOWN_API_KEY is unset it logs + skips.
  */
 import "server-only";
-import { createPublicClient } from "@/lib/db/client";
+import { createPublicClient, createServiceClient } from "@/lib/db/client";
 import { sourcePriority, CATEGORY_META, type SourceCategory } from "@/data/sources";
 import { getEditionName } from "@/lib/editionName";
 import { isOffBrand } from "@/lib/content/filter";
@@ -374,6 +374,55 @@ export function generateDigestMarkdown(
  * Send                                                                *
  * ------------------------------------------------------------------ */
 
+/** Editorial day key — the digest is a per-IST-day broadcast. */
+function istToday(): string {
+  return new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
+}
+
+/**
+ * Idempotency guard (digest_log, migration 0003): exactly one broadcast per
+ * IST day, no matter how many times the send path is invoked — the pipeline,
+ * a manual recovery, and the external watchdog can all call it safely.
+ * Deploy-safe: if the table doesn't exist yet, reads/writes fail soft and the
+ * behavior is exactly the pre-guard behavior.
+ */
+async function digestAlreadySentToday(log: Logger): Promise<boolean> {
+  try {
+    const svc = createServiceClient();
+    const { data, error } = await svc
+      .from("digest_log")
+      .select("send_date")
+      .eq("send_date", istToday())
+      .maybeSingle();
+    if (error) throw error;
+    return !!data;
+  } catch (err) {
+    log.warn("digest_log read failed (run migration 0003?)", {
+      error: (err as Error).message,
+    });
+    return false;
+  }
+}
+
+async function recordDigestSent(
+  recipients: number,
+  storyCount: number,
+  log: Logger
+): Promise<void> {
+  try {
+    const svc = createServiceClient();
+    const { error } = await svc.from("digest_log").upsert(
+      { send_date: istToday(), recipients, story_count: storyCount },
+      { onConflict: "send_date" }
+    );
+    if (error) throw error;
+  } catch (err) {
+    log.warn("digest_log write failed (run migration 0003?)", {
+      error: (err as Error).message,
+    });
+  }
+}
+
 export type SendDigestResult = {
   sent: boolean;
   count: number;
@@ -721,6 +770,21 @@ export async function runSendDigest(
     };
   }
 
+  // Idempotency: exactly one real broadcast per IST day. Applies to the
+  // Resend AND Buttondown broadcast paths below; dry/draft/test sends are
+  // exempt (they don't reach the subscriber list).
+  if (!opts.draft && (await digestAlreadySentToday(log))) {
+    log.info("digest already sent today — skipping duplicate send");
+    return {
+      sent: false,
+      count: selected.length,
+      subject,
+      pass,
+      via,
+      reason: "already sent today",
+    };
+  }
+
   // Real sends go through RESEND from our own verified domain — the exact
   // sender identity (From + SPF/DKIM) as the welcome email, which already
   // lands in inboxes. Buttondown's shared sending domain (the free tier's
@@ -756,6 +820,7 @@ export async function runSendDigest(
         resend: failure,
       };
     }
+    await recordDigestSent(sentCount, selected.length, log);
     log.info("digest sent via resend", {
       count: selected.length,
       subject,
@@ -828,6 +893,7 @@ export async function runSendDigest(
     };
   }
 
+  await recordDigestSent(0, selected.length, log);
   log.info("digest sent via buttondown", {
     count: selected.length,
     subject,

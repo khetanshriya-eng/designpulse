@@ -83,6 +83,13 @@ export type EditionRow = {
 // The Database shape must satisfy supabase-js's GenericSchema (Tables,
 // Views, Functions all present, each table carrying a Relationships array).
 // We have no DB views or functions yet, so those are empty Records.
+export type DigestLogRow = {
+  send_date: string; // date (YYYY-MM-DD), primary key — one send per IST day
+  sent_at: string;
+  recipients: number;
+  story_count: number;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -104,6 +111,13 @@ export type Database = {
             referencedColumns: ["id"];
           }
         ];
+      };
+      digest_log: {
+        Row: DigestLogRow;
+        Insert: Partial<Pick<DigestLogRow, "sent_at">> &
+          Omit<DigestLogRow, "sent_at">;
+        Update: Partial<DigestLogRow>;
+        Relationships: [];
       };
       editions: {
         Row: EditionRow;

@@ -43,7 +43,7 @@ export type CompletionInput = {
   temperature?: number;
 };
 
-const DEFAULT_TIMEOUT_MS = 30_000;
+const DEFAULT_TIMEOUT_MS = 12_000;
 
 function classifyStatus(status: number): ProviderFailureReason {
   if (status === 429) return "rate_limit";
@@ -51,14 +51,21 @@ function classifyStatus(status: number): ProviderFailureReason {
   return "permanent";
 }
 
+/**
+ * Run a fetch-thunk with a REAL timeout. The previous version created an
+ * AbortController but never handed the signal to the thunk — the timer
+ * aborted nothing, so a hung provider request pinned the serverless function
+ * until Vercel's 60s kill (root cause of the 2026-07-23 missed-digest
+ * incident). The thunk now receives the signal and MUST pass it to fetch.
+ */
 async function withTimeout<T>(
-  promise: () => Promise<T>,
+  promise: (signal: AbortSignal) => Promise<T>,
   ms: number
 ): Promise<T> {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), ms);
   try {
-    return await promise();
+    return await promise(controller.signal);
   } finally {
     clearTimeout(t);
   }
@@ -117,11 +124,12 @@ export async function callGemini(
   let res: Response;
   try {
     res = await withTimeout(
-      () =>
+      (signal) =>
         fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
+          signal,
         }),
       DEFAULT_TIMEOUT_MS
     );
@@ -227,7 +235,7 @@ export async function callGroq(
   let res: Response;
   try {
     res = await withTimeout(
-      () =>
+      (signal) =>
         fetch(GROQ_URL, {
           method: "POST",
           headers: {
@@ -235,6 +243,7 @@ export async function callGroq(
             Authorization: `Bearer ${key}`,
           },
           body: JSON.stringify(body),
+          signal,
         }),
       DEFAULT_TIMEOUT_MS
     );
