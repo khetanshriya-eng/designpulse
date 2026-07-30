@@ -39,6 +39,24 @@ export function Footer() {
               The daily briefing for product designers. 70+ sources,
               summarized, in one tab.
             </p>
+            {/* Product Hunt featured badge (launch 2026-07). Plain <img>: the
+                badge is a remote SVG served by PH's widget API — next/image
+                adds nothing here. CSP img-src allows https:. */}
+            <a
+              href="https://www.producthunt.com/products/designator-2?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-designator-2"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 inline-block transition-opacity hover:opacity-90"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                alt="Designator - Your 5-minute morning briefing for design and product | Product Hunt"
+                width={250}
+                height={54}
+                loading="lazy"
+                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1210927&theme=neutral&t=1785431348576"
+              />
+            </a>
           </div>
 
           <div>
