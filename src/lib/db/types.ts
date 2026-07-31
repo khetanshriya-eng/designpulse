@@ -83,6 +83,16 @@ export type EditionRow = {
 // The Database shape must satisfy supabase-js's GenericSchema (Tables,
 // Views, Functions all present, each table carrying a Relationships array).
 // We have no DB views or functions yet, so those are empty Records.
+export type SubscriberRow = {
+  email: string;
+  status: "active" | "unsubscribed";
+  source: string | null;
+  created_at: string;
+  unsubscribed_at: string | null;
+  resubscribed_at: string | null;
+  unsub_reason: string | null;
+};
+
 export type DigestLogRow = {
   send_date: string; // date (YYYY-MM-DD), primary key — one send per IST day
   sent_at: string;
@@ -111,6 +121,14 @@ export type Database = {
             referencedColumns: ["id"];
           }
         ];
+      };
+      subscribers: {
+        Row: SubscriberRow;
+        Insert: Partial<
+          Pick<SubscriberRow, "status" | "source" | "created_at" | "unsubscribed_at" | "resubscribed_at" | "unsub_reason">
+        > & { email: string };
+        Update: Partial<SubscriberRow>;
+        Relationships: [];
       };
       digest_log: {
         Row: DigestLogRow;

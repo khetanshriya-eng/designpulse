@@ -7,13 +7,12 @@
  * unauthenticated POST.
  */
 import type { NextRequest } from "next/server";
+import { createServiceClient } from "@/lib/db/client";
 import { logger } from "@/lib/logger";
 import { sendAdminAlert } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 const log = logger("api.subscribe");
-
-const BUTTONDOWN_API = "https://api.buttondown.com/v1";
 
 // Per-IP rate limit: max 5 attempts / hour. In-memory (resets on cold start) —
 // blunts scripted signup floods without a KV dependency.
@@ -142,139 +141,65 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const apiKey = process.env.BUTTONDOWN_API_KEY;
-  if (!apiKey) {
-    log.warn("subscribe skipped — BUTTONDOWN_API_KEY not set");
-    return Response.json(
-      { error: "Subscriptions aren't set up yet — check back soon." },
-      { status: 503 }
-    );
-  }
-
+  // Our own list (Supabase). Re-subscribing an opted-out address is just a
+  // status flip — no external suppression wall (that was the Buttondown
+  // problem this migration removed).
+  const sb = createServiceClient();
+  const now = new Date().toISOString();
   try {
-    const res = await fetch(`${BUTTONDOWN_API}/subscribers`, {
-      method: "POST",
-      headers: {
-        Authorization: `Token ${apiKey}`,
-        "Content-Type": "application/json",
-        // This form is a trusted source (honeypot + per-IP rate limit +
-        // validation above), so bypass Buttondown's account Firewall, which
-        // otherwise blocks these server-side signups ("subscriber_blocked").
-        "X-Buttondown-Bypass-Firewall": "true",
-      },
-      body: JSON.stringify({ email_address: email, type: "regular" }),
-    });
+    const { data: existing, error: readErr } = await sb
+      .from("subscribers")
+      .select("email, status")
+      .eq("email", email)
+      .maybeSingle();
+    if (readErr) throw readErr;
 
-    if (res.status === 201) {
-      // Best-effort welcome via Resend — never block/fail the signup on it.
+    if (existing?.status === "active") {
+      return Response.json({ success: true, message: "You're already subscribed." });
+    }
+
+    if (existing) {
+      // Was unsubscribed → they're back. Filling the form is fresh consent, so
+      // we honor it (the whole point of owning the list).
+      const { error } = await sb
+        .from("subscribers")
+        .update({ status: "active", resubscribed_at: now, unsub_reason: null })
+        .eq("email", email);
+      if (error) throw error;
       await sendWelcomeEmail(email);
       return Response.json({
         success: true,
-        message: "You're in — check your inbox. First edition lands tomorrow morning.",
+        message: "Welcome back — you're re-subscribed! First edition lands tomorrow morning.",
       });
     }
 
-    const detail = (await res.text().catch(() => "")).toLowerCase();
-
-    // Rate-limited (429) — transient, retry.
-    if (res.status === 429) {
-      return Response.json(
-        { error: "We're getting a lot of signups — try again in a minute.", code: 429 },
-        { status: 429 }
-      );
-    }
-
-    // Genuinely-invalid address (reserved/undeliverable domain).
-    if (
-      res.status === 400 &&
-      /invalid|deliverab|disposab|not a valid|valid email|bounce/.test(detail)
-    ) {
-      return Response.json(
-        { error: "That email looks invalid — double-check it?", code: res.status },
-        { status: 400 }
-      );
-    }
-
-    // Suppressed: this address unsubscribed / marked us spam before, so
-    // Buttondown blocks re-adding it (anti-spam compliance — we must NOT force
-    // it). An honest, specific message; not an error worth alerting on.
-    if (/suppress|previously unsubscribed|cannot resubscribe|rejected your newsletter/.test(detail)) {
-      return Response.json(
-        { error: "This address opted out earlier, so we can't re-add it automatically. Email hello@designatorapp.com and we'll sort it out." },
-        { status: 400 }
-      );
-    }
-
-    // VERIFY the true state before claiming anything. The create response body
-    // is unreliable to string-match — "unsubscribed" contains "subscribed", so
-    // the old `/subscribed/` check reported a false "you're already subscribed"
-    // for a whole class of FAILURES, silently dropping real signups (incident
-    // 2026-07-31: Buttondown had 2 subscribers after a launch). A follow-up
-    // lookup is the only trustworthy signal.
-    const auth = { Authorization: `Token ${apiKey}` };
-    const check = await fetch(
-      `${BUTTONDOWN_API}/subscribers/${encodeURIComponent(email)}`,
-      { headers: auth }
-    );
-
-    if (check.ok) {
-      const sub = (await check.json().catch(() => ({}))) as { type?: string };
-      const type = String(sub.type ?? "").toLowerCase();
-      // Active subscriber → genuinely already in. (Buttondown active types:
-      // regular / premium / gifted.)
-      if (/regular|premium|gift/.test(type)) {
-        return Response.json({ success: true, message: "You're already subscribed." });
-      }
-      // Exists but dormant (unactivated / unsubscribed) → reactivate them.
-      const react = await fetch(
-        `${BUTTONDOWN_API}/subscribers/${encodeURIComponent(email)}`,
-        {
-          method: "PATCH",
-          headers: { ...auth, "Content-Type": "application/json", "X-Buttondown-Bypass-Firewall": "true" },
-          body: JSON.stringify({ type: "regular" }),
-        }
-      );
-      if (react.ok) {
-        await sendWelcomeEmail(email);
-        return Response.json({ success: true, message: "You're in — welcome back! First edition lands tomorrow morning." });
-      }
-      log.warn("subscribe: dormant subscriber, reactivation failed", {
-        type,
-        status: react.status,
-      });
-      return Response.json(
-        { error: "This address opted out before — reply to any past edition and we'll add you back." },
-        { status: 400 }
-      );
-    }
-
-    // Not created AND not found → a genuine failure. NEVER tell the user they
-    // subscribed. Log + alert the admin so this can't leak silently again.
-    log.error("subscribe failed — not created and not found", {
-      createStatus: res.status,
-      lookupStatus: check.status,
-      detail: detail.slice(0, 200),
+    // Brand new.
+    const { error } = await sb
+      .from("subscribers")
+      .insert({ email, status: "active", source: "form" });
+    if (error) throw error;
+    await sendWelcomeEmail(email);
+    return Response.json({
+      success: true,
+      message: "You're in — check your inbox. First edition lands tomorrow morning.",
     });
+  } catch (err) {
+    // Never tell the user they subscribed if the write failed. Log + alert so
+    // it can't leak silently (the 2026-07-31 lesson).
+    const msg = (err as Error).message;
+    log.error("subscribe write failed", { error: msg });
     await sendAdminAlert({
       subject: "Designator: a signup FAILED",
       body: [
         `Email: ${email}`,
-        `Buttondown create: ${res.status}`,
-        `Lookup after: ${check.status}`,
-        `Detail: ${detail.slice(0, 300)}`,
+        `Error: ${msg}`,
         "",
-        "The subscriber was NOT added. Check Buttondown account limits / firewall.",
+        "Subscriber was NOT added — check the `subscribers` table (migration 0004).",
       ].join("\n"),
     }).catch(() => {});
     return Response.json(
-      { error: "Something went wrong on our end — please try again in a moment.", code: res.status },
+      { error: "Something went wrong on our end — please try again in a moment." },
       { status: 502 }
-    );
-  } catch (err) {
-    log.error("subscribe threw", { error: (err as Error).message });
-    return Response.json(
-      { error: "Couldn't subscribe right now. Please try again." },
-      { status: 500 }
     );
   }
 }

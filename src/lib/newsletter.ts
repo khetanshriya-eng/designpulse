@@ -8,9 +8,10 @@
  * no CSS vars) that carries the pixel brand into Gmail.
  *
  * `runSendDigest` is called by the /api/send-digest route (manual trigger,
- * supports ?dry=1 and ?draft=1) and the morning pipeline run (the scheduled
+ * supports ?dry=1 and ?to=) and the morning pipeline run (the scheduled
  * path — Hobby's 2-cron limit means the send is folded into the pipeline).
- * Deploy-safe: if BUTTONDOWN_API_KEY is unset it logs + skips.
+ * Sends via Resend from our own verified domain; subscribers come from our
+ * own Supabase list. Deploy-safe: if RESEND_API_KEY is unset it logs + skips.
  */
 import "server-only";
 import { createPublicClient, createServiceClient } from "@/lib/db/client";
@@ -21,7 +22,6 @@ import { unsubscribeUrl } from "@/lib/unsubscribe";
 import { safeHttpUrl } from "@/lib/url";
 import { logger, type Logger } from "@/lib/logger";
 
-const BUTTONDOWN_API = "https://api.buttondown.com/v1";
 const SITE = "https://designatorapp.com";
 
 /** Swapped for a per-recipient HMAC link on the Resend path, or for
@@ -430,12 +430,10 @@ export type SendDigestResult = {
   reason?: string;
   /** Which relaxation pass filled the quota (1 = strict 24h). */
   pass?: number;
-  /** Delivery channel actually used (or that would be used, on a dry run). */
-  via?: "resend" | "buttondown";
+  /** Delivery channel (always resend now). */
+  via?: "resend";
   /** How many addresses the digest went to (Resend path). */
   recipients?: number;
-  /** Populated on Buttondown failures so cron logs / manual runs show WHY. */
-  buttondown?: { status: number; detail: string };
   /** Populated on Resend failures. */
   resend?: { status: number; detail: string };
 };
@@ -445,44 +443,28 @@ export type SendDigestResult = {
  * signup flow is unchanged). Defensive about field names (email/email_address)
  * and filters out any non-deliverable subscriber types.
  */
-async function fetchButtondownSubscribers(
-  apiKey: string,
-  log: Logger
-): Promise<string[]> {
-  const out: string[] = [];
-  let url: string | null = `${BUTTONDOWN_API}/subscribers`;
-  for (let pageN = 0; url && pageN < 20; pageN++) {
-    const res: Response = await fetch(url, {
-      headers: { Authorization: `Token ${apiKey}` },
-    });
-    if (!res.ok) {
-      log.error("subscriber fetch failed", { status: res.status });
-      break;
+async function fetchActiveSubscribers(log: Logger): Promise<string[]> {
+  try {
+    const svc = createServiceClient();
+    const { data, error } = await svc
+      .from("subscribers")
+      .select("email")
+      .eq("status", "active");
+    if (error) throw error;
+    const out: string[] = [];
+    for (const r of data ?? []) {
+      const email = String((r as { email?: string }).email ?? "").toLowerCase();
+      // Skip malformed / reserved test domains — one bad address makes Resend
+      // 422 the whole batch it lands in.
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) continue;
+      if (/@(example|test)\.(com|org|net)$|@example\./.test(email)) continue;
+      out.push(email);
     }
-    const data = (await res.json()) as {
-      results?: Record<string, unknown>[];
-      next?: string | null;
-    };
-    for (const s of data.results ?? []) {
-      const email = (s.email_address ?? s.email) as string | undefined;
-      const type = String(s.type ?? s.subscriber_type ?? "");
-      if (!email) continue;
-      // Skip anything not plainly deliverable (unactivated double-opt-ins,
-      // unsubscribed, complained, paused, …).
-      if (/unactiv|unsub|spam|trash|block|paused|churn|complain/i.test(type)) {
-        continue;
-      }
-      // Skip malformed addresses and reserved test domains (a leftover
-      // signup-test subscriber like foo@example.com makes Resend 422 the
-      // whole batch it appears in).
-      const lower = email.toLowerCase();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lower)) continue;
-      if (/@(example|test)\.(com|org|net)$|@example\./.test(lower)) continue;
-      out.push(lower);
-    }
-    url = data.next ?? null;
+    return [...new Set(out)];
+  } catch (err) {
+    log.error("subscriber fetch failed", { error: (err as Error).message });
+    return [];
   }
-  return [...new Set(out)];
 }
 
 /**
@@ -572,18 +554,11 @@ export async function runSendDigest(
   opts: {
     log?: Logger;
     dryRun?: boolean;
-    draft?: boolean;
     /** Send the real rendered email to ONE address only (design review). */
     to?: string;
   } = {}
 ): Promise<SendDigestResult> {
   const log = opts.log ?? logger("newsletter.send");
-
-  const apiKey = process.env.BUTTONDOWN_API_KEY;
-  if (!apiKey) {
-    log.warn("digest skipped — BUTTONDOWN_API_KEY not set");
-    return { sent: false, count: 0, reason: "no api key" };
-  }
 
   // One 48h fetch; the 24h strict pass filters in memory (fewer round trips
   // than querying per pass).
@@ -696,20 +671,13 @@ export async function runSendDigest(
   );
 
   const resendKey = process.env.RESEND_API_KEY;
-  const via: "resend" | "buttondown" = resendKey ? "resend" : "buttondown";
+  if (!resendKey) {
+    log.error("digest cannot send — RESEND_API_KEY not set");
+    return { sent: false, count: selected.length, subject, pass, reason: "no resend key" };
+  }
 
-  // Design-review send: the real rendered email, to exactly one address —
-  // never the subscriber list. Takes precedence over everything but dry runs.
+  // Design-review send: the real rendered email to ONE address, never the list.
   if (opts.to && !opts.dryRun) {
-    if (!resendKey) {
-      return {
-        sent: false,
-        count: selected.length,
-        subject,
-        pass,
-        reason: "test send needs RESEND_API_KEY",
-      };
-    }
     const { sentCount, failure } = await sendViaResend(
       resendKey,
       subject,
@@ -719,185 +687,38 @@ export async function runSendDigest(
     );
     log.info("digest test send", { to: opts.to, ok: sentCount === 1 });
     return sentCount === 1
-      ? {
-          sent: true,
-          count: selected.length,
-          subject,
-          pass,
-          via: "resend",
-          recipients: 1,
-          reason: "test send",
-        }
-      : {
-          sent: false,
-          count: selected.length,
-          subject,
-          pass,
-          via: "resend",
-          reason: "resend error",
-          resend: failure,
-        };
+      ? { sent: true, count: selected.length, subject, pass, via: "resend", recipients: 1, reason: "test send" }
+      : { sent: false, count: selected.length, subject, pass, via: "resend", reason: "resend error", resend: failure };
   }
 
-  // Dry run: everything above (DB read, selection, rendering) executed for
-  // real; no email created anywhere. Reports which channel a real send would
-  // use and (on the Resend path) how many recipients it would go to.
+  // Dry run: selection + rendering ran for real; nothing sent. Reports the
+  // live recipient count from our own list.
   if (opts.dryRun) {
-    let recipients: number | undefined;
-    if (resendKey) {
-      try {
-        recipients = (await fetchButtondownSubscribers(apiKey, log)).length;
-      } catch {
-        /* diagnosis only — never fail a dry run on this */
-      }
-    }
+    const recipients = (await fetchActiveSubscribers(log)).length;
     log.info("digest dry run — send skipped", {
-      count: selected.length,
-      subject,
-      pass,
-      via,
-      recipients,
+      count: selected.length, subject, pass, recipients,
       sources: selected.map((c) => c.srcSlug),
     });
-    return {
-      sent: false,
-      count: selected.length,
-      subject,
-      pass,
-      via,
-      recipients,
-      reason: "dry run",
-    };
+    return { sent: false, count: selected.length, subject, pass, via: "resend", recipients, reason: "dry run" };
   }
 
-  // Idempotency: exactly one real broadcast per IST day. Applies to the
-  // Resend AND Buttondown broadcast paths below; dry/draft/test sends are
-  // exempt (they don't reach the subscriber list).
-  if (!opts.draft && (await digestAlreadySentToday(log))) {
+  // Idempotency: exactly one real broadcast per IST day (digest_log).
+  if (await digestAlreadySentToday(log)) {
     log.info("digest already sent today — skipping duplicate send");
-    return {
-      sent: false,
-      count: selected.length,
-      subject,
-      pass,
-      via,
-      reason: "already sent today",
-    };
+    return { sent: false, count: selected.length, subject, pass, via: "resend", reason: "already sent today" };
   }
 
-  // Real sends go through RESEND from our own verified domain — the exact
-  // sender identity (From + SPF/DKIM) as the welcome email, which already
-  // lands in inboxes. Buttondown's shared sending domain (the free tier's
-  // only option) is what kept flagging the digest as spam.
-  if (!opts.draft && resendKey) {
-    const recipients = await fetchButtondownSubscribers(apiKey, log);
-    if (recipients.length === 0) {
-      log.warn("digest skipped — no deliverable subscribers");
-      return {
-        sent: false,
-        count: selected.length,
-        subject,
-        pass,
-        via,
-        reason: "no subscribers",
-      };
-    }
-    const { sentCount, failure } = await sendViaResend(
-      resendKey,
-      subject,
-      html,
-      recipients,
-      log
-    );
-    if (sentCount === 0) {
-      return {
-        sent: false,
-        count: selected.length,
-        subject,
-        pass,
-        via,
-        reason: "resend error",
-        resend: failure,
-      };
-    }
-    await recordDigestSent(sentCount, selected.length, log);
-    log.info("digest sent via resend", {
-      count: selected.length,
-      subject,
-      pass,
-      recipients: sentCount,
-    });
-    return {
-      sent: true,
-      count: selected.length,
-      subject,
-      pass,
-      via,
-      recipients: sentCount,
-    };
+  // Broadcast via Resend from our verified domain, to our active list.
+  const recipients = await fetchActiveSubscribers(log);
+  if (recipients.length === 0) {
+    log.warn("digest skipped — no active subscribers");
+    return { sent: false, count: selected.length, subject, pass, via: "resend", reason: "no subscribers" };
   }
-
-  // Buttondown path: ?draft=1 design previews (dashboard render + test sends)
-  // and the fallback when RESEND_API_KEY is absent. Buttondown substitutes its
-  // own per-recipient unsubscribe variable here.
-  const bdHtml = html
-    .split(UNSUB_PLACEHOLDER)
-    .join("{{ unsubscribe_url }}");
-
-  // status "about_to_send" = create AND deliver immediately; "draft" parks it
-  // in the Buttondown dashboard for design review / test sends. ("sent" is a
-  // terminal state Buttondown sets itself — creating with it 400s.)
-  const res = await fetch(`${BUTTONDOWN_API}/emails`, {
-    method: "POST",
-    headers: {
-      Authorization: `Token ${apiKey}`,
-      "Content-Type": "application/json",
-      // Buttondown's one-time-per-key confirmation that programmatic sending
-      // is intentional (400 sending_requires_confirmation without it). Kept
-      // permanently — same pattern as the subscribe route's firewall bypass.
-      "X-Buttondown-Live-Dangerously": "true",
-    },
-    body: JSON.stringify({
-      subject,
-      body: bdHtml,
-      status: opts.draft ? "draft" : "about_to_send",
-    }),
-  });
-
-  if (!res.ok) {
-    // Surface Buttondown's own explanation (plan limits, key issues, …) in
-    // both the log and the result, so a failing cron is diagnosable from the
-    // Vercel dashboard and a manual run shows the reason in the response.
-    const detail = await res.text().catch(() => "");
-    log.error("digest send failed", { status: res.status, detail });
-    return {
-      sent: false,
-      count: selected.length,
-      subject,
-      pass,
-      via: "buttondown",
-      reason: "buttondown error",
-      buttondown: { status: res.status, detail: detail.slice(0, 500) },
-    };
+  const { sentCount, failure } = await sendViaResend(resendKey, subject, html, recipients, log);
+  if (sentCount === 0) {
+    return { sent: false, count: selected.length, subject, pass, via: "resend", reason: "resend error", resend: failure };
   }
-
-  if (opts.draft) {
-    log.info("digest draft created", { count: selected.length, subject, pass });
-    return {
-      sent: false,
-      count: selected.length,
-      subject,
-      pass,
-      via: "buttondown",
-      reason: "draft created",
-    };
-  }
-
-  await recordDigestSent(0, selected.length, log);
-  log.info("digest sent via buttondown", {
-    count: selected.length,
-    subject,
-    pass,
-  });
-  return { sent: true, count: selected.length, subject, pass, via: "buttondown" };
+  await recordDigestSent(sentCount, selected.length, log);
+  log.info("digest sent via resend", { count: selected.length, subject, pass, recipients: sentCount });
+  return { sent: true, count: selected.length, subject, pass, via: "resend", recipients: sentCount };
 }

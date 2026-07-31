@@ -11,7 +11,7 @@
  *                     not applied yet, status unknowable).
  *
  * AUTHED-ONLY field (Bearer CRON_SECRET) — a business metric, not public:
- *   subscribers     — total Buttondown subscribers (watch signups grow /
+ *   subscribers     — active subscribers in our own list (watch signups grow /
  *                     catch a drop). null when unauthenticated or unavailable.
  */
 import type { NextRequest } from "next/server";
@@ -19,8 +19,6 @@ import { createPublicClient, createServiceClient } from "@/lib/db/client";
 import { checkCronAuth } from "@/lib/cron-auth";
 
 export const dynamic = "force-dynamic";
-
-const BUTTONDOWN_API = "https://api.buttondown.com/v1";
 
 function istToday(): string {
   return new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
@@ -63,24 +61,15 @@ export async function GET(req: NextRequest) {
   let subscribers: number | null = null;
   if (checkCronAuth(req) === null) {
     try {
-      const apiKey = process.env.BUTTONDOWN_API_KEY;
-      if (apiKey) {
-        const res = await fetch(`${BUTTONDOWN_API}/subscribers`, {
-          headers: { Authorization: `Token ${apiKey}` },
-        });
-        if (res.ok) {
-          const data = (await res.json()) as {
-            count?: number;
-            results?: unknown[];
-          };
-          subscribers =
-            typeof data.count === "number"
-              ? data.count
-              : (data.results?.length ?? null);
-        }
-      }
+      const svc = createServiceClient();
+      const { count, error } = await svc
+        .from("subscribers")
+        .select("email", { count: "exact", head: true })
+        .eq("status", "active");
+      if (error) throw error;
+      subscribers = count ?? null;
     } catch {
-      /* leave null */
+      /* leave null (table missing / query failed) */
     }
   }
 
