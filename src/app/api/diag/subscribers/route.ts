@@ -1,67 +1,89 @@
 /**
  * GET /api/diag/subscribers  — TEMPORARY diagnostic (auth: Bearer CRON_SECRET).
  *
- * Incident 2026-07-31: "already subscribed" but no emails ever delivered, and
- * the digest's deliverable count is frozen at 4 across a Product Hunt launch.
- * This returns the Buttondown subscriber breakdown by `type` (COUNTS ONLY — no
- * email addresses, so no PII in logs) plus how many our digest filter would
- * actually treat as deliverable. Delete after diagnosis.
+ * Incident 2026-07-31: "already subscribed" but no delivery; Buttondown shows
+ * only 2 subscribers after a Product Hunt launch. Modes:
+ *   (default)      → counts by type + raw subscriber field names (no PII).
+ *   ?email=<addr>  → look up ONE address's state (its own owner is asking).
+ *   ?probe=1       → replay a REAL signup (same payload as the subscribe
+ *                    route) with a throwaway address, return Buttondown's raw
+ *                    status + body, then delete the probe. This is the exact
+ *                    thing a visitor hits. Delete this route after diagnosis.
  */
 import type { NextRequest } from "next/server";
 import { checkCronAuth } from "@/lib/cron-auth";
 
 export const dynamic = "force-dynamic";
 const BUTTONDOWN_API = "https://api.buttondown.com/v1";
-// Mirror of the digest's deliverability filter (lib/newsletter.ts).
 const UNDELIVERABLE = /unactiv|unsub|spam|trash|block|paused|churn|complain/i;
 
 export async function GET(req: NextRequest) {
   const denied = checkCronAuth(req);
   if (denied) return denied;
-
   const apiKey = process.env.BUTTONDOWN_API_KEY;
-  if (!apiKey) {
-    return Response.json({ error: "BUTTONDOWN_API_KEY not set" }, { status: 503 });
+  if (!apiKey) return Response.json({ error: "no BUTTONDOWN_API_KEY" }, { status: 503 });
+  const auth = { Authorization: `Token ${apiKey}` };
+  const params = new URL(req.url).searchParams;
+
+  // ── Single-address lookup ──
+  const email = params.get("email");
+  if (email) {
+    const res = await fetch(
+      `${BUTTONDOWN_API}/subscribers/${encodeURIComponent(email.toLowerCase())}`,
+      { headers: auth }
+    );
+    if (res.status === 404) return Response.json({ email, found: false });
+    if (!res.ok) {
+      return Response.json({ email, error: `Buttondown ${res.status}`, detail: (await res.text()).slice(0, 300) });
+    }
+    const s = (await res.json()) as Record<string, unknown>;
+    return Response.json({
+      email,
+      found: true,
+      type: s.type,
+      creation_date: s.creation_date,
+      source: s.source,
+      firewall_reasons: s.firewall_reasons,
+      undeliverability_reason: s.undeliverability_reason,
+      bounce_reason: s.bounce_reason,
+      unsubscription_reason: s.unsubscription_reason,
+    });
   }
 
-  const byType: Record<string, number> = {};
-  let total = 0;
-  let deliverable = 0;
-  const fieldSamples = new Set<string>();
-  let url: string | null = `${BUTTONDOWN_API}/subscribers`;
-
-  for (let page = 0; url && page < 50; page++) {
-    const res: Response = await fetch(url, {
-      headers: { Authorization: `Token ${apiKey}` },
+  // ── Replay a real signup ──
+  if (params.get("probe")) {
+    const probe = `phtest+${Date.now()}@gmail.com`;
+    const res = await fetch(`${BUTTONDOWN_API}/subscribers`, {
+      method: "POST",
+      headers: { ...auth, "Content-Type": "application/json", "X-Buttondown-Bypass-Firewall": "true" },
+      body: JSON.stringify({ email_address: probe, type: "regular" }),
     });
-    if (!res.ok) {
-      return Response.json(
-        { error: `Buttondown ${res.status}`, detail: (await res.text()).slice(0, 300) },
-        { status: 502 }
-      );
+    const body = (await res.text()).slice(0, 600);
+    // Clean up the probe if it was created.
+    if (res.status === 201) {
+      await fetch(`${BUTTONDOWN_API}/subscribers/${encodeURIComponent(probe)}`, {
+        method: "DELETE",
+        headers: auth,
+      }).catch(() => {});
     }
-    const data = (await res.json()) as {
-      results?: Record<string, unknown>[];
-      next?: string | null;
-      count?: number;
-    };
+    return Response.json({ probeEmail: probe, status: res.status, ok: res.ok, body });
+  }
+
+  // ── Default: aggregate breakdown ──
+  const byType: Record<string, number> = {};
+  let total = 0, deliverable = 0;
+  let url: string | null = `${BUTTONDOWN_API}/subscribers`;
+  for (let page = 0; url && page < 50; page++) {
+    const res: Response = await fetch(url, { headers: auth });
+    if (!res.ok) return Response.json({ error: `Buttondown ${res.status}`, detail: (await res.text()).slice(0, 300) }, { status: 502 });
+    const data = (await res.json()) as { results?: Record<string, unknown>[]; next?: string | null };
     for (const s of data.results ?? []) {
       total++;
-      // Capture the raw field names Buttondown actually returns, once, so we
-      // can see if the state lives in a field our filter isn't reading.
-      if (fieldSamples.size === 0) Object.keys(s).forEach((k) => fieldSamples.add(k));
-      const type = String(s.type ?? s.subscriber_type ?? s.subscription_status ?? "unknown");
+      const type = String(s.type ?? "unknown");
       byType[type] = (byType[type] ?? 0) + 1;
-      const email = String(s.email_address ?? s.email ?? "");
-      if (email && !UNDELIVERABLE.test(type)) deliverable++;
+      if (s.email_address && !UNDELIVERABLE.test(type)) deliverable++;
     }
     url = data.next ?? null;
   }
-
-  return Response.json({
-    total,
-    byType,
-    deliverableByCurrentFilter: deliverable,
-    subscriberObjectFields: [...fieldSamples].sort(),
-  });
+  return Response.json({ total, byType, deliverableByCurrentFilter: deliverable });
 }
