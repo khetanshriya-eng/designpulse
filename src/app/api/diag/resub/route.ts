@@ -48,8 +48,28 @@ export async function GET(req: NextRequest) {
     })
   );
 
-  // C) GET again — did B resurrect it?
-  await run("C_get_after", fetch(`${API}/subscribers/${enc}`, { headers: auth }));
+  // C) POST create with collision-behavior: overwrite (docs' override header).
+  await run(
+    "C_create_overwrite",
+    fetch(`${API}/subscribers`, {
+      method: "POST",
+      headers: { ...bypass, "X-Buttondown-Collision-Behavior": "overwrite" },
+      body: JSON.stringify({ email_address: email, type: "regular" }),
+    })
+  );
+
+  // D) POST create with collision-behavior: add.
+  await run(
+    "D_create_add",
+    fetch(`${API}/subscribers`, {
+      method: "POST",
+      headers: { ...bypass, "X-Buttondown-Collision-Behavior": "add" },
+      body: JSON.stringify({ email_address: email, type: "regular" }),
+    })
+  );
+
+  // E) GET again — did C or D resurrect it?
+  await run("E_get_after", fetch(`${API}/subscribers/${enc}`, { headers: auth }));
 
   return Response.json({ email, steps });
 }
