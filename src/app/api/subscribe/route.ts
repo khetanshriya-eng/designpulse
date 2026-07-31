@@ -8,6 +8,7 @@
  */
 import type { NextRequest } from "next/server";
 import { logger } from "@/lib/logger";
+import { sendAdminAlert } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 const log = logger("api.subscribe");
@@ -175,33 +176,7 @@ export async function POST(req: NextRequest) {
 
     const detail = (await res.text().catch(() => "")).toLowerCase();
 
-    // Already-subscribed is a success from the user's POV. Buttondown returns
-    // 400 (or 409) for a duplicate; match on any of its wordings rather than a
-    // single phrase, so this can't fall through to a generic error again.
-    const isDuplicate =
-      (res.status === 400 || res.status === 409) &&
-      /already|exists|duplicate|collision|subscribed/.test(detail);
-    if (isDuplicate) {
-      return Response.json({
-        success: true,
-        message: "You're already subscribed.",
-      });
-    }
-
-    // Buttondown also 400s an address it considers invalid/undeliverable
-    // (e.g. reserved domains). Tell the user it's their email, not a glitch.
-    const looksInvalid =
-      res.status === 400 &&
-      /invalid|deliverab|disposab|not a valid|valid email|bounce/.test(detail);
-    if (looksInvalid) {
-      return Response.json(
-        { error: "That email looks invalid — double-check it?", code: res.status },
-        { status: 400 }
-      );
-    }
-
-    // Buttondown rate-limited our key (HTTP 429) — transient. Tell the user to
-    // retry rather than implying their email is bad.
+    // Rate-limited (429) — transient, retry.
     if (res.status === 429) {
       return Response.json(
         { error: "We're getting a lot of signups — try again in a minute.", code: 429 },
@@ -209,13 +184,81 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Anything else is a real failure. Surface the upstream status (not the
-    // body) so the cause is diagnosable from the network tab without leaking
-    // Buttondown internals.
-    log.warn("buttondown subscribe error", { status: res.status, detail });
+    // Genuinely-invalid address (reserved/undeliverable domain).
+    if (
+      res.status === 400 &&
+      /invalid|deliverab|disposab|not a valid|valid email|bounce/.test(detail)
+    ) {
+      return Response.json(
+        { error: "That email looks invalid — double-check it?", code: res.status },
+        { status: 400 }
+      );
+    }
+
+    // VERIFY the true state before claiming anything. The create response body
+    // is unreliable to string-match — "unsubscribed" contains "subscribed", so
+    // the old `/subscribed/` check reported a false "you're already subscribed"
+    // for a whole class of FAILURES, silently dropping real signups (incident
+    // 2026-07-31: Buttondown had 2 subscribers after a launch). A follow-up
+    // lookup is the only trustworthy signal.
+    const auth = { Authorization: `Token ${apiKey}` };
+    const check = await fetch(
+      `${BUTTONDOWN_API}/subscribers/${encodeURIComponent(email)}`,
+      { headers: auth }
+    );
+
+    if (check.ok) {
+      const sub = (await check.json().catch(() => ({}))) as { type?: string };
+      const type = String(sub.type ?? "").toLowerCase();
+      // Active subscriber → genuinely already in. (Buttondown active types:
+      // regular / premium / gifted.)
+      if (/regular|premium|gift/.test(type)) {
+        return Response.json({ success: true, message: "You're already subscribed." });
+      }
+      // Exists but dormant (unactivated / unsubscribed) → reactivate them.
+      const react = await fetch(
+        `${BUTTONDOWN_API}/subscribers/${encodeURIComponent(email)}`,
+        {
+          method: "PATCH",
+          headers: { ...auth, "Content-Type": "application/json", "X-Buttondown-Bypass-Firewall": "true" },
+          body: JSON.stringify({ type: "regular" }),
+        }
+      );
+      if (react.ok) {
+        await sendWelcomeEmail(email);
+        return Response.json({ success: true, message: "You're in — welcome back! First edition lands tomorrow morning." });
+      }
+      log.warn("subscribe: dormant subscriber, reactivation failed", {
+        type,
+        status: react.status,
+      });
+      return Response.json(
+        { error: "This address opted out before — reply to any past edition and we'll add you back." },
+        { status: 400 }
+      );
+    }
+
+    // Not created AND not found → a genuine failure. NEVER tell the user they
+    // subscribed. Log + alert the admin so this can't leak silently again.
+    log.error("subscribe failed — not created and not found", {
+      createStatus: res.status,
+      lookupStatus: check.status,
+      detail: detail.slice(0, 200),
+    });
+    await sendAdminAlert({
+      subject: "Designator: a signup FAILED",
+      body: [
+        `Email: ${email}`,
+        `Buttondown create: ${res.status}`,
+        `Lookup after: ${check.status}`,
+        `Detail: ${detail.slice(0, 300)}`,
+        "",
+        "The subscriber was NOT added. Check Buttondown account limits / firewall.",
+      ].join("\n"),
+    }).catch(() => {});
     return Response.json(
-      { error: "Something went wrong. Please try again.", code: res.status },
-      { status: 400 }
+      { error: "Something went wrong on our end — please try again in a moment.", code: res.status },
+      { status: 502 }
     );
   } catch (err) {
     log.error("subscribe threw", { error: (err as Error).message });
