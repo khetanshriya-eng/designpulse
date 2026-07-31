@@ -51,16 +51,20 @@ export async function GET(req: NextRequest) {
   }
 
   // ── Replay a real signup ──
+  // ?probe=1            → random throwaway email (auto-deleted).
+  // ?probe=1&as=<email> → that exact email, kept if created (so it also
+  //                       recovers a real user), raw Buttondown body returned.
   if (params.get("probe")) {
-    const probe = `phtest+${Date.now()}@gmail.com`;
+    const as = params.get("as");
+    const probe = as ? as.toLowerCase() : `phtest+${Date.now()}@gmail.com`;
     const res = await fetch(`${BUTTONDOWN_API}/subscribers`, {
       method: "POST",
       headers: { ...auth, "Content-Type": "application/json", "X-Buttondown-Bypass-Firewall": "true" },
       body: JSON.stringify({ email_address: probe, type: "regular" }),
     });
-    const body = (await res.text()).slice(0, 600);
-    // Clean up the probe if it was created.
-    if (res.status === 201) {
+    const body = (await res.text()).slice(0, 800);
+    // Auto-delete only the throwaway probe, never a real address.
+    if (res.status === 201 && !as) {
       await fetch(`${BUTTONDOWN_API}/subscribers/${encodeURIComponent(probe)}`, {
         method: "DELETE",
         headers: auth,
