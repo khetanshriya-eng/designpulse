@@ -195,6 +195,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Suppressed: this address unsubscribed / marked us spam before, so
+    // Buttondown blocks re-adding it (anti-spam compliance — we must NOT force
+    // it). An honest, specific message; not an error worth alerting on.
+    if (/suppress|previously unsubscribed|cannot resubscribe|rejected your newsletter/.test(detail)) {
+      return Response.json(
+        { error: "This address opted out earlier, so we can't re-add it automatically. Email hello@designatorapp.com and we'll sort it out." },
+        { status: 400 }
+      );
+    }
+
     // VERIFY the true state before claiming anything. The create response body
     // is unreliable to string-match — "unsubscribed" contains "subscribed", so
     // the old `/subscribed/` check reported a false "you're already subscribed"
