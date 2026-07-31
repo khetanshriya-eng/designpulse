@@ -75,6 +75,13 @@ export function NewsletterCTA() {
               </span>
               {message}
             </p>
+            <p className="mt-3 text-[13px] leading-relaxed text-ink-muted max-w-[52ch]">
+              One thing — peek in your{" "}
+              <span className="text-ink font-semibold">Spam</span> and{" "}
+              <span className="text-ink font-semibold">Promotions</span> tabs. If
+              Designator landed there, drag it to Primary so you never miss an
+              edition.
+            </p>
           </div>
         ) : (
           <div className="grid md:grid-cols-[1fr_300px] items-stretch">

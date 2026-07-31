@@ -370,6 +370,105 @@ export function generateDigestMarkdown(
   return { subject, body };
 }
 
+/**
+ * Welcome email — same visual language as the digest (mono type, gradient-
+ * pinned purple band with the pixel wordmark, porcelain card, lime keylines,
+ * navy footer, and the same prefers-color-scheme dark edition). Shares the
+ * digest's palette constants so the two never drift.
+ */
+export function renderWelcomeEmail(opts: { returning?: boolean } = {}): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const heading = opts.returning ? "Welcome back." : "You're in.";
+  const subject = opts.returning
+    ? "✦ Welcome back to Designator"
+    : "✦ Welcome to Designator";
+
+  const text = [
+    `${heading} ✦`,
+    "",
+    "Each morning you'll get Designator: the day's best design and product",
+    "stories, summarized so you can catch up in five minutes.",
+    "",
+    "Your first edition lands tomorrow morning. Today's is already live:",
+    SITE,
+    "",
+    "P.S. If this lands in Spam or Promotions, drag it to your Primary inbox",
+    "so you don't miss an edition.",
+    "",
+    "Aditya, Confused Designer",
+  ].join("\n");
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="light dark" />
+<meta name="supported-color-schemes" content="light dark" />
+<style>
+  .gp-purple { background-image: linear-gradient(${PURPLE}, ${PURPLE}); }
+  .gp-lime { background-image: linear-gradient(${LIME}, ${LIME}); }
+  @media (prefers-color-scheme: dark) {
+    .dm-page { background: #0a0620 !important; }
+    .dm-card { background: #0f0a2a !important; border-color: #7668c2 !important; }
+    .dm-title { color: #f0ecff !important; }
+    .dm-sum { color: #c4bdd3 !important; }
+    .dm-foot { color: #9e8cff !important; }
+    .dm-ctabtn { background: ${LIME} !important; color: ${NAVY} !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="dm-page" style="background:${PAGE_BG};padding:16px 8px;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="dm-card" style="max-width:600px;width:100%;background:${CARD_BG};border:3px solid ${NAVY};">
+        <tr>
+          <td class="gp-purple" align="center" style="background-color:${PURPLE};background-image:linear-gradient(${PURPLE},${PURPLE});padding:24px;">
+            <img src="${WORDMARK_URL}" width="292" height="56" alt="DESIGNATOR ✦" style="display:block;border:0;max-width:100%;height:auto;color:${CREAM};font-family:${MONO};font-size:24px;font-weight:bold;" />
+          </td>
+        </tr>
+        <tr>
+          <td class="gp-lime" style="background-color:${LIME};background-image:linear-gradient(${LIME},${LIME});height:4px;line-height:4px;font-size:0;">&nbsp;</td>
+        </tr>
+        <tr>
+          <td style="padding:26px 24px 8px;">
+            <div class="dm-title" style="font-family:${MONO};font-size:22px;line-height:1.3;font-weight:bold;color:${NAVY};">${heading} <span style="color:${PURPLE};">✦</span></div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:12px 24px 0;">
+            <p class="dm-sum" style="font-family:${MONO};font-size:14px;line-height:1.65;color:${GRAY};margin:0 0 14px;">Each morning you'll get Designator: the day's best design and product stories, summarized so you can catch up in five minutes.</p>
+            <p class="dm-sum" style="font-family:${MONO};font-size:14px;line-height:1.65;color:${GRAY};margin:0 0 20px;">Your first edition lands tomorrow morning. Today's is already live.</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 24px 22px;">
+            <a href="${SITE}" class="dm-ctabtn" style="font-family:${MONO};font-size:14px;font-weight:bold;color:${NAVY};background:${LIME};padding:12px 20px;border:2px solid ${NAVY};text-decoration:none;display:inline-block;">Read today's edition&nbsp;→</a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 24px 26px;">
+            <p class="dm-sum" style="font-family:${MONO};font-size:12.5px;line-height:1.6;color:${GRAY};margin:0;">P.S. If this lands in Spam or Promotions, drag it to your Primary inbox so you don't miss an edition.</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:${NAVY};padding:16px 24px;">
+            <p class="dm-foot" style="font-family:${MONO};font-size:12px;line-height:1;color:${CREAM};margin:0;">Aditya, Confused Designer</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>`;
+
+  return { subject, html, text };
+}
+
 /* ------------------------------------------------------------------ *
  * Send                                                                *
  * ------------------------------------------------------------------ */
