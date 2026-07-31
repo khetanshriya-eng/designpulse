@@ -34,7 +34,8 @@ jobs:
           BASE: https://www.designatorapp.com
         run: |
           set -u
-          health() { curl -sf --max-time 30 "$BASE/api/health"; }
+          # Authenticated so /api/health includes the subscriber count.
+          health() { curl -sf --max-time 30 -H "Authorization: Bearer $CRON_SECRET" "$BASE/api/health"; }
 
           # Verify the secret EVERY run (harmless dry-run, sends nothing).
           # Without this, a wrong/missing CRON_SECRET only surfaces during a
@@ -51,8 +52,17 @@ jobs:
           echo "health: $h"
           edition=$(echo "$h" | jq -r .editionFresh)
           digest=$(echo "$h" | jq -r .digestSentToday)
+          subs=$(echo "$h" | jq -r .subscribers)
 
           bad=0
+
+          # Subscriber count — logged every run so growth (or a drop) is
+          # visible in the Actions history. Zero is almost always a bug
+          # (bad API key / list wiped), so warn on it.
+          echo "subscribers: $subs"
+          if [ "$subs" = "0" ]; then
+            echo "::warning::subscriber count is 0 — check Buttondown"
+          fi
 
           if [ "$digest" = "false" ]; then
             echo "::warning::digest NOT sent today — recovering (idempotent send)"
