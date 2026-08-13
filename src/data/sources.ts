@@ -45,7 +45,11 @@ export const SOURCES: Source[] = [
   { id: "figma-blog", name: "Figma Blog", slug: "figma-blog", url: "https://www.figma.com/blog/", type: "blog", category: "design-tools", initials: "Fi", swatch: "thumb-grad-2" },
   // figma-shortcuts — removed 2026-05-27, covered by figma-blog.
   { id: "toools", name: "TOOOLS.design", slug: "toools", url: "https://www.toools.design/", type: "newsletter", category: "design-tools", initials: "To", swatch: "thumb-grad-10" },
-  { id: "sidebar", name: "Sidebar.io", slug: "sidebar", url: "https://sidebar.io", feedUrl: "https://sidebar.io/feed.xml", type: "newsletter", category: "design-tools", initials: "Sb", swatch: "thumb-grad-3" },
+  // preferMosaic: Sidebar.io is a curated-links roundup — each item points to
+  // an arbitrary external site, so its scraped og:images are unpredictable
+  // (generic site logos, relative/broken URLs). Use the branded pixel mosaic
+  // instead, like HN and Hugging Face.
+  { id: "sidebar", name: "Sidebar.io", slug: "sidebar", url: "https://sidebar.io", feedUrl: "https://sidebar.io/feed.xml", type: "newsletter", category: "design-tools", initials: "Sb", swatch: "thumb-grad-3", preferMosaic: true },
   { id: "uxtools", name: "UX Tools", slug: "uxtools", url: "https://www.uxtools.co/", type: "blog", category: "design-tools", initials: "Ux", swatch: "thumb-grad-5" },
   { id: "prototypr", name: "Prototypr.io", slug: "prototypr", url: "https://prototypr.io", feedUrl: "https://prototypr.io/feed.xml", type: "newsletter", category: "design-tools", initials: "Pr", swatch: "thumb-grad-7" },
   { id: "csstricks", name: "CSS-Tricks", slug: "csstricks", url: "https://css-tricks.com", feedUrl: "https://css-tricks.com/feed/", type: "blog", category: "design-tools", initials: "CT", swatch: "thumb-grad-5" },

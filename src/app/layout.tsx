@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Pixelify_Sans, Jersey_10, Space_Mono } from "next/font/google";
 import "./globals.css";
 import { Navigation } from "@/components/Navigation";
-import { AttentionBanner } from "@/components/AttentionBanner";
 import { Footer } from "@/components/Footer";
 import { ScrollTop } from "@/components/ScrollTop";
 import { ScrollReset } from "@/components/ScrollReset";
@@ -121,17 +120,6 @@ export default function RootLayout({
               "try{var d=document.documentElement,h=new Date().getHours(),a=(h<6||h>=19)?'dark':'light';d.dataset.autoTheme=a;var t=localStorage.getItem('designator-theme');var th=(t==='light'||t==='dark')?t:a;d.dataset.theme=th;var m=document.querySelector('meta[name=\"theme-color\"]');if(!m){m=document.createElement('meta');m.setAttribute('name','theme-color');document.head.appendChild(m);}m.setAttribute('content',th==='dark'?'#1a1340':'#5b3df5');}catch(e){}",
           }}
         />
-        {/*
-          Pre-paint: hide the temporary service notice (AttentionBanner) for
-          readers who've already dismissed it, before first paint — no flash,
-          no layout shift. Keep the key in sync with DismissNoticeButton.
-        */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html:
-              "try{if(localStorage.getItem('designator-notice-v1')==='dismissed')document.documentElement.classList.add('notice-dismissed');}catch(e){}",
-          }}
-        />
       </head>
       <body className="text-ink">
         {/* Keeps the iOS status-bar/notch region in the nav color (see globals). */}
@@ -151,7 +139,6 @@ export default function RootLayout({
         */}
         <div id="app-scroll" className="app-scroll min-h-screen flex flex-col">
           <Navigation />
-          <AttentionBanner />
           <main className="flex-1">{children}</main>
           <Footer />
         </div>

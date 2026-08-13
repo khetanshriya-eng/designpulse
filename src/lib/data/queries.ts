@@ -430,8 +430,20 @@ export const getByCategory = unstable_cache(
     const pool = ((data ?? []) as ArticleWithSource[]).filter(
       (r) => !isOffBrand(r.title, r.original_url)
     );
+    // "Inspiration" is a VISUAL section (site showcases, award galleries), so
+    // keep only gallery-type sources here. Publication-type feeds mapped to
+    // inspiration (Muzli, Codrops) publish articles/tutorials — e.g. "Exploring
+    // Procedural Geometry with Three.js and WebGPU" — which aren't visual picks
+    // and don't belong in the strip. They stay on /category/inspiration.
+    const visualPool =
+      category === "inspiration"
+        ? pool.filter((r) => {
+            const src = Array.isArray(r.sources) ? r.sources[0] : r.sources;
+            return src?.type === "gallery";
+          })
+        : pool;
     // Category previews show 2 cards — keep them from different sources.
-    return rowsToArticles(diversifyBySource(pool, limit, 1));
+    return rowsToArticles(diversifyBySource(visualPool, limit, 1));
   },
   ["by-category"],
   { revalidate: 600, tags: ["content"] }

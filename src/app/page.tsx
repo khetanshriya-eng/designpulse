@@ -129,9 +129,12 @@ export default async function Home() {
             title="AI & Tools"
             href="/category/ai-tools"
           />
-          <div className="grid lg:grid-cols-2 gap-6 lg:gap-8 items-start">
+          {/* No items-start: the grid stretches both columns to equal height,
+              so the strip column (h-full + flex-1 strips) fills the featured
+              card's height instead of leaving a gap below the last strip. */}
+          <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
             <ArticleCard article={aiArticles[0]} variant="default" />
-            <div className="flex flex-col">
+            <div className="flex flex-col h-full">
               {aiArticles.slice(1, 6).map((a) => (
                 <ArticleCard key={a.id} article={a} variant="list" />
               ))}

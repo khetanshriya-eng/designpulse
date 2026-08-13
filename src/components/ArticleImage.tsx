@@ -26,6 +26,14 @@ type Props = {
    * Largest Contentful Paint.
    */
   priority?: boolean;
+  /**
+   * Tiny thumbnail (e.g. the 56x56 AI & Tools list strip). Shrinks the
+   * fallback to a centered mosaic + the SHORT category label so the
+   * graphic+text unit sits dead-center instead of the full label wrapping
+   * ragged-left. Set explicitly — do NOT infer from size, since larger
+   * cards (Must-read secondary, Product/Podcasts rows) also use size="sm".
+   */
+  compact?: boolean;
 };
 
 const ASPECT: Record<Aspect, string> = {
@@ -49,6 +57,7 @@ export function ArticleImage({
   className = "",
   fill = false,
   priority = false,
+  compact = false,
 }: Props) {
   const [failed, setFailed] = useState(false);
   // Some sources (e.g. Hugging Face) emit generic title-banner images that
@@ -96,13 +105,17 @@ export function ArticleImage({
   // in the category color, on a themed tile (warm cream by day, deep navy at
   // night — the night dot palette is vivid, so mosaics read as native art on
   // the dark tile). Replaces the old faded favicon.
-  const categoryLabel =
-    CATEGORY_META[article.category]?.label ?? article.category.replace(/-/g, " ");
+  // Compact thumbnails use the SHORT label ("AI", "Tools", "Inspo") so it fits
+  // one centered line in a ~56px box; larger fallbacks keep the full label.
+  const categoryLabel = compact
+    ? CATEGORY_META[article.category]?.short ?? article.category
+    : CATEGORY_META[article.category]?.label ??
+      article.category.replace(/-/g, " ");
 
   return (
     <div
       data-image="fallback"
-      className={`${containerSizing} overflow-hidden flex flex-col items-center justify-center gap-2 ${className}`}
+      className={`${containerSizing} overflow-hidden flex flex-col items-center justify-center ${compact ? "gap-1" : "gap-2"} ${className}`}
       style={{ background: "var(--mosaic-tile)" }}
     >
       <PixelMosaic
@@ -111,7 +124,7 @@ export function ArticleImage({
         className={MOSAIC_SIZE[size]}
       />
       <span
-        className="font-pixel text-[10px] font-bold uppercase tracking-[0.18em]"
+        className="font-pixel text-[10px] font-bold uppercase tracking-[0.18em] text-center leading-none max-w-full px-1"
         style={{ color: CATEGORY_META[article.category].dotVar }}
       >
         {categoryLabel}

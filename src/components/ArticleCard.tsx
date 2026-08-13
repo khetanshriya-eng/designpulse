@@ -31,10 +31,10 @@ function ListCard({ article }: { article: Article }) {
       href={article.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex gap-3 py-3 border-b border-rule first:border-t items-center"
+      className="group flex gap-3 py-3 border-b border-rule first:border-t items-center flex-1"
     >
       <div className="w-14 h-14 shrink-0 relative overflow-hidden">
-        <ArticleImage article={article} fill size="sm" />
+        <ArticleImage article={article} fill size="sm" compact />
       </div>
       <div className="flex-1 min-w-0">
         <h3 className="font-heading text-[1.05rem] leading-[1.3] text-ink group-hover:text-accent transition-colors line-clamp-2">
@@ -94,9 +94,11 @@ function MediumCard({ article }: { article: Article }) {
           <SourceBadge sourceId={article.sourceId} />
           <CategoryDot category={article.category} />
         </div>
-        {/* Clamp to 2 lines (clean truncation). Equal tile height comes from
-            the grid stretch + meta pinned to the bottom, not a min-height. */}
-        <h3 className="font-heading text-[1.15rem] leading-[1.45] text-ink group-hover:text-accent transition-colors line-clamp-2">
+        {/* Reserve 2 lines (min-h) and clamp at 2: a 1-line title no longer
+            makes this card shorter than its neighbour (e.g. Design Tools vs
+            UX & Thinking), so paired category cards are always equal height.
+            2 lines x leading-1.45 = 2.9em. */}
+        <h3 className="font-heading text-[1.15rem] leading-[1.45] text-ink group-hover:text-accent transition-colors line-clamp-2 min-h-[2.9em]">
           {article.title}
         </h3>
         <div className="flex items-center gap-2 text-[11px] text-ink-subtle pt-0.5 mt-auto">
