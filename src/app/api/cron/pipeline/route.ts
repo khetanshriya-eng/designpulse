@@ -74,8 +74,14 @@ async function handle(req: NextRequest) {
   const t0 = Date.now();
   const out: Record<string, unknown> = {};
   // Collect step failures so we can send a single consolidated admin
-  // alert at the end instead of one per step.
+  // alert at the end instead of one per step. ONLY genuine failures go here
+  // (a missed digest, a failed curate, an unexpected throw).
   const failures: { step: string; error: string }[] = [];
+  // Benign, self-healing events: a resumable step (fetch/summarize) hitting its
+  // time budget under the 60s Hobby cap. Expected — the next run resumes where
+  // this one stopped — so these are LOGGED, never emailed. Alerting on them just
+  // trains the operator to ignore alerts (the daily false alarm this removed).
+  const deadlines: string[] = [];
 
   // ── Digest FIRST (morning run only) — see the header comment for why. ──
   // A non-send for ANY reason (thrown, or a returned reason like a Buttondown/
@@ -108,8 +114,9 @@ async function handle(req: NextRequest) {
     );
     if (fetched.timedOut) {
       out.fetch = { timedOut: true };
-      log.error("fetch step hit its deadline — moving on (resumable)");
-      failures.push({ step: "fetch", error: "step deadline exceeded" });
+      // Benign: resumable, next run continues. Log, don't alert.
+      log.warn("fetch step hit its deadline — moving on (resumable)");
+      deadlines.push("fetch");
     } else {
       out.fetch = fetched.result;
     }
@@ -131,8 +138,9 @@ async function handle(req: NextRequest) {
     );
     if (summarized.timedOut) {
       out.summarize = { timedOut: true };
-      log.error("summarize step hit its deadline — moving on (resumable)");
-      failures.push({ step: "summarize", error: "step deadline exceeded" });
+      // Benign: resumable, next run continues. Log, don't alert.
+      log.warn("summarize step hit its deadline — moving on (resumable)");
+      deadlines.push("summarize");
     } else {
       out.summarize = summarized.result;
     }
@@ -170,7 +178,13 @@ async function handle(req: NextRequest) {
   }
 
   const durationMs = Date.now() - t0;
-  log.info("pipeline complete", { durationMs, failureCount: failures.length });
+  log.info("pipeline complete", {
+    durationMs,
+    failureCount: failures.length,
+    // Visible in logs for tuning (are we regularly bumping the 60s cap?),
+    // but not an alert-worthy event on its own.
+    deadlineHits: deadlines,
+  });
 
   // Admin alert: any step that hard-failed is worth an email. We don't
   // alert on partial summarize results (some articles failing to
@@ -189,7 +203,12 @@ async function handle(req: NextRequest) {
     });
   }
 
-  return Response.json({ success: failures.length === 0, durationMs, ...out });
+  return Response.json({
+    success: failures.length === 0,
+    durationMs,
+    deadlineHits: deadlines,
+    ...out,
+  });
 }
 
 export const GET = handle;
