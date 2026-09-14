@@ -64,10 +64,18 @@ type Candidate = {
  * cap, then finally admit tier-3 sources to fill remaining slots.
  */
 const PASSES = [
-  { hours: 24, maxTier: 2, maxPerCat: 2, maxPerSource: 2 },
-  { hours: 48, maxTier: 2, maxPerCat: 2, maxPerSource: 2 },
-  { hours: 48, maxTier: 2, maxPerCat: 3, maxPerSource: 2 },
-  { hours: 48, maxTier: 3, maxPerCat: 3, maxPerSource: 2 },
+  { hours: 24, maxTier: 2, maxPerCat: 2, maxPerSource: 2, requireSummary: true },
+  { hours: 48, maxTier: 2, maxPerCat: 2, maxPerSource: 2, requireSummary: true },
+  { hours: 48, maxTier: 2, maxPerCat: 3, maxPerSource: 2, requireSummary: true },
+  { hours: 48, maxTier: 3, maxPerCat: 3, maxPerSource: 2, requireSummary: true },
+  // Last resort so a thin/weekend morning NEVER skips the day. Admits fresh
+  // articles that simply haven't been summarized yet (the AI summarize backlog
+  // is rate-limited, so on low-inflow days the summarized pool can dip below the
+  // floor before the morning send). These render as title + source with no
+  // summary line — an on-time curated link beats a missed send that the
+  // watchdog then recovers hours late (the afternoon-delivery bug this fixes).
+  // Normal days fill from the summarized passes above and never reach here.
+  { hours: 48, maxTier: 9, maxPerCat: 3, maxPerSource: 3, requireSummary: false },
 ] as const;
 
 /** Greedy multi-pass pick. Returns the selection and the last pass used. */
@@ -87,6 +95,7 @@ function selectDigestArticles(
     for (const c of candidates) {
       if (selected.length >= DIGEST_TARGET) break;
       if (seen.has(c.url)) continue;
+      if (p.requireSummary && !c.summary) continue;
       if (c.tier > p.maxTier) continue;
       if (c.publishedMs < cutoff) continue;
       if ((catCount[c.category] ?? 0) >= p.maxPerCat) continue;
@@ -670,13 +679,16 @@ export async function runSendDigest(
       "title, summary, original_url, category, read_minutes, published_at, sources(name, slug)"
     )
     .gte("published_at", since)
-    .not("summary", "is", null)
-    .neq("summary", "")
+    // No summary filter: unsummarized fresh articles are eligible as a
+    // last-resort backfill (see PASSES) so the morning digest never skips when
+    // the rate-limited summarize backlog is behind. Summarized articles are
+    // still strongly preferred — passes 1-4 require a summary; only the final
+    // pass admits summary-less ones. Fetch more rows to compensate.
     .not("title", "is", null)
     .neq("title", "")
     .not("title", "ilike", "http%")
     .order("published_at", { ascending: false, nullsFirst: false })
-    .limit(100);
+    .limit(150);
   if (error) throw error;
 
   type Row = {
