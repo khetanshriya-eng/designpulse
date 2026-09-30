@@ -23,17 +23,24 @@ const GA_SCRIPT = "https://www.googletagmanager.com";
 const GA_CONNECT =
   "https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.g.doubleclick.net";
 
+// Microsoft Clarity (session recordings + heatmaps). Same story as GA: the
+// snippet pulls the tag from www.clarity.ms, which in turn loads a regional
+// script from a *.clarity.ms subdomain, and recordings upload by XHR to a
+// regional collector — so both script-src and connect-src need the wildcard.
+const CLARITY_SCRIPT = "https://www.clarity.ms https://*.clarity.ms";
+const CLARITY_CONNECT = "https://*.clarity.ms";
+
 const CSP = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  `script-src 'self' 'unsafe-inline' ${GA_SCRIPT}`,
+  `script-src 'self' 'unsafe-inline' ${GA_SCRIPT} ${CLARITY_SCRIPT}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
   "font-src 'self' data:",
-  `connect-src 'self' ${GA_CONNECT}`,
+  `connect-src 'self' ${GA_CONNECT} ${CLARITY_CONNECT}`,
   "manifest-src 'self'",
   "frame-src 'none'",
   "upgrade-insecure-requests",

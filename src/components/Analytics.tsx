@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Google Analytics 4 (gtag.js). Loaded via next/script (afterInteractive) with
- * two guards:
+ * Analytics mount: Google Analytics 4 (gtag.js) + Microsoft Clarity (session
+ * recordings + heatmaps). Both load via next/script (afterInteractive) behind
+ * the same two guards:
  *
  *  1. Production host only — never loads on localhost or *.vercel.app preview
  *     deploys, so your stats aren't polluted by dev/test traffic. (Checked
@@ -16,11 +17,13 @@ import { useEffect, useRef, useState } from "react";
  *     sent by `config`; each subsequent route change re-sends `page_view` on
  *     pathname change (query strings are intentionally omitted — no
  *     useSearchParams, which would force the layout dynamic and break caching).
+ *     Clarity needs no equivalent — its tag hooks history itself.
  *
- * The CSP in next.config.ts is opened for exactly Google's hosts; without that
- * this would be blocked.
+ * The CSP in next.config.ts is opened for exactly Google's and Clarity's hosts;
+ * without that both would be blocked.
  */
 const GA_ID = "G-X889ET99VX";
+const CLARITY_ID = "yq8ghemrz1";
 const PROD_HOSTS = new Set(["designatorapp.com", "www.designatorapp.com"]);
 
 type GtagWindow = Window & {
@@ -61,6 +64,11 @@ export function Analytics() {
       />
       <Script id="ga-init" strategy="afterInteractive">
         {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID}');`}
+      </Script>
+      {/* Microsoft Clarity — official snippet, verbatim apart from the id being
+          templated. It stubs a window.clarity queue, then injects the tag. */}
+      <Script id="clarity-init" strategy="afterInteractive">
+        {`(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","${CLARITY_ID}");`}
       </Script>
     </>
   );
