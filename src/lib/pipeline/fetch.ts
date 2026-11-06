@@ -86,6 +86,28 @@ async function syncSourcesFromCode(log: Logger): Promise<void> {
     return;
   }
   log.debug("source sync ok", { upserted: count ?? rows.length });
+
+  // Upsert alone never retires a source: one deleted from SOURCES stayed
+  // is_active in the DB and kept being fetched (and erroring) every run. Code
+  // is the registry, so deactivate any active row whose slug is no longer in
+  // it. Rows are kept (not deleted) so their articles keep their source join.
+  if (rows.length === 0) return; // never wipe everything on an empty registry
+  const slugs = rows.map((r) => `"${r.slug}"`).join(",");
+  const { data: retired, error: retireError } = await supabase
+    .from("sources")
+    .update({ is_active: false })
+    .eq("is_active", true)
+    .not("slug", "in", `(${slugs})`)
+    .select("slug");
+  if (retireError) {
+    log.warn("source retire failed", { error: retireError.message });
+    return;
+  }
+  if (retired && retired.length > 0) {
+    log.info("retired sources removed from code", {
+      slugs: retired.map((r) => r.slug),
+    });
+  }
 }
 
 async function loadSources(opts: FetchOptions): Promise<SourceRow[]> {

@@ -8,6 +8,7 @@ import { ScrollReset } from "@/components/ScrollReset";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { Analytics } from "@/components/Analytics";
+import { SITE_URL } from "@/lib/site";
 
 // Pixel face — chrome accents (logo, badges, kickers, nav).
 const pixel = Pixelify_Sans({
@@ -34,7 +35,7 @@ const mono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://designatorapp.com"),
+  metadataBase: new URL(SITE_URL),
   title: "Designator",
   description:
     "A daily briefing for product designers. Curated updates from Figma, NN/g, UX Collective, Lenny's, The Verge, and 70+ trusted sources, summarized so you stay current in under five minutes.",
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
     siteName: "Designator",
     title: "Designator",
     description: "Your daily design briefing — 70+ sources, summarized.",
-    url: "https://designatorapp.com",
+    url: SITE_URL,
   },
   twitter: {
     card: "summary_large_image",

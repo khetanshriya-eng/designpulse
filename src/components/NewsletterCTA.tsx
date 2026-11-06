@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 /**
- * Homepage email-capture CTA. Posts to /api/subscribe (Buttondown).
+ * Homepage email-capture CTA. Posts to /api/subscribe (Supabase list + Resend welcome).
  *
  * Design: a cream pixel card (consistent with every article card) color-blocked
  * with a flat accent-purple panel — the same flat-color, hard-edged language as

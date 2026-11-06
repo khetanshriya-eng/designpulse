@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
 import { listEditionDates } from "@/lib/data/queries";
 import { CATEGORY_META, type SourceCategory } from "@/data/sources";
+import { SITE_URL } from "@/lib/site";
 
-const BASE = "https://designatorapp.com";
+const BASE = SITE_URL;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static pages.

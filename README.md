@@ -25,9 +25,9 @@ Copy `.env.local.example` to `.env.local` and fill in:
 | `GEMINI_API_KEY`                | Primary summarization provider                                  |
 | `GROQ_API_KEY`                  | Fallback summarization provider                                 |
 | `CRON_SECRET`                   | Random string; auths every `/api/cron/*` call                   |
-| `RESEND_API_KEY`                | Email sending (feedback + admin alerts)                         |
+| `UNSUBSCRIBE_SECRET` (recommended) | HMAC key for unsubscribe links; falls back to `CRON_SECRET`. Set it before ever rotating `CRON_SECRET`, or links in sent emails break. |
+| `RESEND_API_KEY`                | All outgoing email: daily digest, welcome, feedback, admin alerts |
 | `ADMIN_EMAIL`                   | Where pipeline-failure alerts go                                |
-| `BUTTONDOWN_API_KEY`            | Newsletter subscribe + daily digest (Buttondown). Optional — subscribe/digest degrade gracefully if unset. |
 | `FEEDBACK_EMAIL` (optional)     | Feedback recipient (default `designatorapp@gmail.com`)          |
 | `RESEND_FROM_EMAIL` (optional)  | Sender override (default `@designatorapp.com` addresses)        |
 | `LOG_LEVEL` (optional)          | `debug` \| `info` \| `warn` \| `error`. Default `info`.         |
@@ -72,7 +72,7 @@ curl -H "Authorization: Bearer $CRON_SECRET" \
    | 14:30      | 8:00 PM | pipeline                         |
 
    The morning cron path carries `?digest=1`, so after it curates the fresh
-   edition it sends the daily Buttondown digest (top 7 design-first picks).
+   edition it sends the daily digest via Resend (top 7 design-first picks).
    The digest is folded into the pipeline rather than a 3rd cron because Hobby
    caps the project at 2. `/api/send-digest` also exists for manual sends.
 

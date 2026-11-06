@@ -61,7 +61,7 @@ jobs:
           # (bad API key / list wiped), so warn on it.
           echo "subscribers: $subs"
           if [ "$subs" = "0" ]; then
-            echo "::warning::subscriber count is 0 — check Buttondown"
+            echo "::warning::subscriber count is 0 — check the Supabase subscribers table"
           fi
 
           if [ "$digest" = "false" ]; then

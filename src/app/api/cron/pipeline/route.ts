@@ -84,7 +84,7 @@ async function handle(req: NextRequest) {
   const deadlines: string[] = [];
 
   // ── Digest FIRST (morning run only) — see the header comment for why. ──
-  // A non-send for ANY reason (thrown, or a returned reason like a Buttondown/
+  // A non-send for ANY reason (thrown, or a returned reason like a
   // Resend error / too-few-articles) is pushed to `failures` so it triggers the
   // admin alert — no more silent misses.
   if (new URL(req.url).searchParams.get("digest")) {

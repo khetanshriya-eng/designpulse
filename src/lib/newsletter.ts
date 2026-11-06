@@ -1,5 +1,5 @@
 /**
- * Daily email digest — selection + rendering + send via Buttondown.
+ * Daily email digest — selection + rendering + send via Resend.
  *
  * Selection guarantees a floor of {@link DIGEST_MIN} stories (target
  * {@link DIGEST_TARGET}) by progressively relaxing constraints across
@@ -21,11 +21,11 @@ import { isOffBrand } from "@/lib/content/filter";
 import { unsubscribeUrl } from "@/lib/unsubscribe";
 import { safeHttpUrl } from "@/lib/url";
 import { logger, type Logger } from "@/lib/logger";
+import { SITE_URL } from "@/lib/site";
 
-const SITE = "https://designatorapp.com";
+const SITE = SITE_URL;
 
-/** Swapped for a per-recipient HMAC link on the Resend path, or for
- * Buttondown's own template variable on the draft/fallback path. */
+/** Swapped for a per-recipient HMAC unsubscribe link at send time. */
 const UNSUB_PLACEHOLDER = "%%UNSUBSCRIBE_URL%%";
 
 const DIGEST_TARGET = 7; // aim for this many stories
@@ -335,51 +335,6 @@ ${nightCatRules}
 }
 
 /**
- * Plaintext (Markdown) fallback — kept for tests and for clients/contexts
- * where the HTML template isn't wanted.
- */
-export function generateDigestMarkdown(
-  articles: DigestArticle[],
-  dateLabel: string
-): { subject: string; body: string } {
-  const subject = `✦ Designator — ${dateLabel}`;
-
-  const blocks = articles
-    .map((a, i) => {
-      const cat =
-        CATEGORY_META[a.category as SourceCategory]?.label ?? a.category;
-      const read = a.readMinutes ? `${a.readMinutes} min read` : "quick read";
-      return [
-        `**${i + 1}. ${a.title}**`,
-        `*${a.sourceName} · ${cat} · ${read}*`,
-        "",
-        a.summary,
-        "",
-        `[Read full article →](${a.url})`,
-      ].join("\n");
-    })
-    .join("\n\n---\n\n");
-
-  const body = [
-    `# ✦ Today's Top Picks`,
-    "",
-    `*${articles.length} stories worth your time.*`,
-    "",
-    "---",
-    "",
-    blocks,
-    "",
-    "---",
-    "",
-    `[See today's full edition on Designator →](${SITE})`,
-    "",
-    `*You're receiving this because you subscribed to Designator — the daily briefing for product designers. Curated sources, summarized, in one tab.*`,
-  ].join("\n");
-
-  return { subject, body };
-}
-
-/**
  * Welcome email — same visual language as the digest (mono type, gradient-
  * pinned purple band with the pixel wordmark, porcelain card, lime keylines,
  * navy footer, and the same prefers-color-scheme dark edition). Shares the
@@ -547,9 +502,8 @@ export type SendDigestResult = {
 };
 
 /**
- * Active subscriber emails from Buttondown (still the list of record — the
- * signup flow is unchanged). Defensive about field names (email/email_address)
- * and filters out any non-deliverable subscriber types.
+ * Active subscriber emails from our own Supabase `subscribers` table
+ * (status = 'active').
  */
 async function fetchActiveSubscribers(log: Logger): Promise<string[]> {
   try {
@@ -579,8 +533,7 @@ async function fetchActiveSubscribers(log: Logger): Promise<string[]> {
  * Deliver via Resend from our own verified domain — the same sender identity
  * as the welcome email, which already reaches inboxes. Per-recipient HMAC
  * unsubscribe link in the footer plus List-Unsubscribe headers (Gmail's
- * one-click), both strong deliverability signals the shared Buttondown
- * domain couldn't give us on the free tier.
+ * one-click), both strong deliverability signals.
  */
 async function sendViaResend(
   resendKey: string,

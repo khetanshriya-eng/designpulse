@@ -8,8 +8,9 @@
  */
 import { getFeedArticles } from "@/lib/data/queries";
 import { sourceById, CATEGORY_META, SOURCES } from "@/data/sources";
+import { SITE_URL } from "@/lib/site";
 
-const SITE = "https://designatorapp.com";
+const SITE = SITE_URL;
 
 // XML-escape attribute/element text (URLs, category labels).
 function esc(s: string): string {

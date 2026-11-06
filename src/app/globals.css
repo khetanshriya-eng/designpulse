@@ -9,8 +9,9 @@
  * re-skins the whole site because components already use `font-heading` for
  * titles and the default font for summaries/meta.
  *
- * Theme: server picks light/dark from the visitor's sunrise/sunset (see
- * src/lib/theme.ts) and sets <html data-theme>. A client toggle can override.
+ * Theme: a pre-paint script in app/layout.tsx picks light/dark from the
+ * visitor's local clock (dark 19:00–06:00) and sets <html data-theme>. A client
+ * toggle can override.
  * "Morning" == light (warm paper zine); "night" == dark (arcade cabinet).
  *
  * NOTE: plain `@theme`, never `@theme inline` — inline bakes literal hex into

@@ -1,10 +1,10 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { SITE_URL } from "@/lib/site";
 
 /**
  * Self-hosted unsubscribe links for the digest (which is delivered via Resend
- * from our own domain — see lib/newsletter.ts — so Buttondown's per-recipient
- * `{{ unsubscribe_url }}` variable never gets substituted). Links are
+ * from our own domain — see lib/newsletter.ts). Links are
  * HMAC-signed so nobody can unsubscribe an address they don't control.
  *
  * Secret: UNSUBSCRIBE_SECRET, falling back to CRON_SECRET (always set in
@@ -15,7 +15,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 // www host on purpose: the apex 308-redirects, and Gmail's RFC 8058 one-click
 // unsubscribe POST won't reliably follow redirects.
-const SITE = "https://www.designatorapp.com";
+const SITE = SITE_URL;
 
 function secret(): string {
   return process.env.UNSUBSCRIBE_SECRET ?? process.env.CRON_SECRET ?? "";

@@ -5,6 +5,7 @@ import { getEditionName } from "@/lib/editionName";
 import { formatEditionDate } from "@/lib/format";
 import { EditionPicker } from "./EditionPicker";
 import { ShareEditionButton } from "./ShareEditionButton";
+import { SITE_URL } from "@/lib/site";
 
 /**
  * Identity bar for an edition, below the category tabs: the quirky edition
@@ -119,7 +120,7 @@ export function EditionBar({
         {awaiting ? (
           <NextDropChip ms={liveState.countdownMs} />
         ) : (
-          <ShareEditionButton editionUrl={`https://designatorapp.com/edition/${date}`} />
+          <ShareEditionButton editionUrl={`${SITE_URL}/edition/${date}`} />
         )}
 
         <EditionPicker open={open} onClose={() => setOpen(false)} currentDate={date} />

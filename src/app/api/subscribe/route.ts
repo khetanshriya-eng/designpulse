@@ -1,8 +1,8 @@
 /**
  * POST /api/subscribe
  *
- * Adds an email to the Buttondown list. Deploy-safe: if BUTTONDOWN_API_KEY
- * isn't set it returns a clear, non-crashing error. Lightly abuse-hardened
+ * Adds an email to our own subscriber list (Supabase `subscribers`) and sends
+ * a welcome email via Resend (skipped if RESEND_API_KEY is unset). Lightly abuse-hardened
  * (honeypot + per-IP rate limit) like /api/feedback, since it's a public
  * unauthenticated POST.
  */
@@ -39,7 +39,7 @@ function rateLimited(ip: string): boolean {
 }
 
 function validEmail(email: string): boolean {
-  // Deliberately loose — Buttondown does the authoritative validation.
+  // Deliberately loose — a bad address just bounces at Resend.
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 

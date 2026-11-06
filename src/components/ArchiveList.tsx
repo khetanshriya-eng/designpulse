@@ -4,8 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { CopyLink } from "./CopyLink";
 import type { ArchiveEdition } from "@/lib/data/queries";
+import { SITE_URL } from "@/lib/site";
 
-const SITE = "https://designatorapp.com";
+const SITE = SITE_URL;
 
 function dateLabel(date: string): string {
   return new Date(`${date}T00:00:00`).toLocaleDateString("en-US", {
