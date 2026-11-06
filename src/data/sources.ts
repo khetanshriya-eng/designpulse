@@ -82,10 +82,8 @@ export const SOURCES: Source[] = [
   { id: "landingfolio", name: "Landingfolio", slug: "landingfolio", url: "https://landingfolio.com", type: "gallery", category: "inspiration", initials: "Lf", swatch: "thumb-grad-3" },
   { id: "pageflows", name: "Page Flows", slug: "pageflows", url: "https://pageflows.com", type: "gallery", category: "inspiration", initials: "Pf", swatch: "thumb-grad-5" },
   // Inspiration — added 2026-05-27, feeds verified live.
-  { id: "codrops", name: "Codrops", slug: "codrops", url: "https://tympanus.net/codrops", feedUrl: "https://tympanus.net/codrops/feed/", type: "publication", category: "inspiration", initials: "Cd", swatch: "thumb-grad-6" },
   { id: "onepagelove", name: "One Page Love", slug: "onepagelove", url: "https://onepagelove.com", feedUrl: "https://onepagelove.com/feed", type: "gallery", category: "inspiration", initials: "Op", swatch: "thumb-grad-7" },
   { id: "muzli", name: "Muzli", slug: "muzli", url: "https://medium.com/muzli-design-inspiration", feedUrl: "https://medium.com/feed/muzli-design-inspiration", type: "publication", category: "inspiration", initials: "Mz", swatch: "thumb-grad-4" },
-  { id: "cssda", name: "CSS Design Awards", slug: "cssda", url: "https://www.cssdesignawards.com", feedUrl: "https://www.cssdesignawards.com/sites-of-the-day-feed.xml", type: "gallery", category: "inspiration", initials: "CA", swatch: "thumb-grad-8" },
 
   // YouTube
   { id: "yt-figma", name: "Figma (YT)", slug: "yt-figma", url: "https://youtube.com/@figma", type: "youtube", category: "youtube", initials: "Fi", swatch: "thumb-grad-2", youtubeChannelId: "UCQsVmhSa4X-G3lHlUtejzLA" },

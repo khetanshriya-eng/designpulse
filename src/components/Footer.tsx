@@ -120,6 +120,11 @@ export function Footer() {
                   Subscribe
                 </Link>
               </li>
+              <li>
+                <Link href="/privacy" className="text-white/70 hover:text-[color:var(--color-lime)] transition-colors">
+                  Privacy
+                </Link>
+              </li>
               {/* RSS deliberately not linked here — autodiscovery lives in the
                   <head> and the About page colophon still points to /api/rss. */}
             </ul>
