@@ -22,8 +22,8 @@ Copy `.env.local.example` to `.env.local` and fill in:
 | `NEXT_PUBLIC_SUPABASE_URL`      | Supabase project URL                                            |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon key (RLS-bound reads from the app)                         |
 | `SUPABASE_SERVICE_ROLE_KEY`     | Service-role key (cron + scripts; bypasses RLS)                 |
-| `GEMINI_API_KEY`                | Primary summarization provider                                  |
-| `GROQ_API_KEY`                  | Fallback summarization provider                                 |
+| `GEMINI_API_KEY`                | Fallback summarization provider (Gemini 2.5 Flash; free tier is 20 req/day) |
+| `GROQ_API_KEY`                  | Primary summarization provider (`openai/gpt-oss-120b`; override with `GROQ_MODEL`) |
 | `CRON_SECRET`                   | Random string; auths every `/api/cron/*` call                   |
 | `UNSUBSCRIBE_SECRET` (recommended) | HMAC key for unsubscribe links; falls back to `CRON_SECRET`. Set it before ever rotating `CRON_SECRET`, or links in sent emails break. |
 | `RESEND_API_KEY`                | All outgoing email: daily digest, welcome, feedback, admin alerts |

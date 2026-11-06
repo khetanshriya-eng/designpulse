@@ -196,11 +196,16 @@ export async function callGemini(
 
 // ─── Groq ────────────────────────────────────────────────────────────────
 //
-// Groq exposes an OpenAI-compatible Chat Completions API. We use
-// llama-3.3-70b-versatile as the fallback model — fast, capable, and
-// available on Groq's free tier.
+// Groq exposes an OpenAI-compatible Chat Completions API. Groq shut down
+// llama-3.3-70b-versatile on 2026-08-16 (every call since returned "model does
+// not exist", silently leaving Gemini's free tier as the only provider).
+// openai/gpt-oss-120b is Groq's recommended replacement. It is a reasoning
+// model: effort "low" keeps it fast, reasoning is excluded from the reply, and
+// the token cap leaves room for the hidden reasoning tokens it still spends.
+// Override with GROQ_MODEL when Groq retires this one too.
 
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+const GROQ_IS_REASONING = GROQ_MODEL.startsWith("openai/gpt-oss");
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 type GroqResponse = {
@@ -229,7 +234,13 @@ export async function callGroq(
       { role: "user", content: input.user },
     ],
     temperature: input.temperature ?? 0.4,
-    max_tokens: input.maxOutputTokens ?? 200,
+    ...(GROQ_IS_REASONING
+      ? {
+          reasoning_effort: "low",
+          include_reasoning: false,
+          max_completion_tokens: Math.max(1024, input.maxOutputTokens ?? 200),
+        }
+      : { max_tokens: input.maxOutputTokens ?? 200 }),
   };
 
   let res: Response;

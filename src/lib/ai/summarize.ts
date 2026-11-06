@@ -1,13 +1,13 @@
 /**
  * The summarizer wraps the provider chain:
  *
- *   Gemini 2.5 Flash  (primary)
+ *   Groq openai/gpt-oss-120b  (primary — larger free tier)
  *        ↓ failure
- *   Groq llama-3.3-70b  (fallback)
+ *   Gemini 2.5 Flash          (fallback)
  *
  * Any failure on the primary — rate-limit, 5xx, network timeout, even empty
  * completion — triggers the fallback. Permanent errors (e.g. invalid API key
- * on Gemini) also fall back, because the operator's intent for the daily
+ * on one provider) also fall back, because the operator's intent for the daily
  * pipeline is "don't crash; degrade gracefully".
  *
  * Result is normalised so the caller only sees a clean `{ summary, provider }`
@@ -59,6 +59,9 @@ function postProcess(raw: string): { text: string | null; skipped: boolean } {
   return { text: trimmed, skipped: false };
 }
 
+/** Providers whose daily quota is exhausted, for this serverless instance. */
+const dailyQuotaGone = new Set<ProviderName>();
+
 export async function summarizeArticle(
   input: SummarizeInput
 ): Promise<SummarizeOutcome> {
@@ -75,14 +78,16 @@ export async function summarizeArticle(
     message: string;
   }> = [];
 
-  // Order matters: gemini first, groq as fallback. We loop with an internal
-  // retry on `rate_limit` so a single article gets a brief backoff before
-  // we give up entirely. This avoids losing ~80% of a batch when free-tier
-  // RPM caps trip simultaneously on both providers.
+  // Order matters: Groq first (its free tier allows ~1,000 requests/day),
+  // Gemini as fallback (its free tier for gemini-2.5-flash is now 20/day and
+  // 5/min). We loop with an internal retry on `rate_limit` so a single article
+  // gets a brief backoff before we give up entirely. A provider that reports
+  // its DAILY quota is gone is skipped for the rest of this process — retrying
+  // it can't succeed for hours and only burns the function's time budget.
   const callers = [
-    { name: "gemini" as const, call: () => callGemini(payload) },
     { name: "groq" as const, call: () => callGroq(payload) },
-  ];
+    { name: "gemini" as const, call: () => callGemini(payload) },
+  ].filter((c) => !dailyQuotaGone.has(c.name));
 
   // 3 sweeps: 0s, 8s, 20s. Total worst-case wait per article ≈ 28s.
   const RETRY_DELAYS_MS = [0, 8_000, 20_000];
@@ -109,6 +114,10 @@ export async function summarizeArticle(
         reason: result.reason,
         message: result.message,
       });
+
+      if (result.reason === "rate_limit" && /per ?day|daily/i.test(result.message)) {
+        dailyQuotaGone.add(result.provider);
+      }
 
       // On non-rate-limit failures, jump to the next provider immediately.
       // On rate_limit, also try the next provider once, then break out of
