@@ -407,12 +407,16 @@ export const getByCategory = unstable_cache(
   ): Promise<Article[]> => {
     const sb = createPublicClient();
     const poolSize = Math.max(limit * 6, 18);
-    let q = sb
-      .from("articles")
-      .select(SELECT)
-      .eq("category", category)
-      .not("summary", "is", null)
-      .neq("summary", "")
+    // The Inspiration strip is image + title only, so it needs a thumbnail,
+    // not a summary. Requiring a summary hid gallery posts (e.g. an Awwwards
+    // "site of the day" is just a name), which the summarizer correctly SKIPs
+    // as too thin — leaving the strip to whichever gallery feed writes prose.
+    const visualOnly = category === "inspiration";
+    let q = sb.from("articles").select(SELECT).eq("category", category);
+    q = visualOnly
+      ? q.not("thumbnail_url", "is", null)
+      : q.not("summary", "is", null).neq("summary", "");
+    q = q
       .not("title", "is", null)
       .neq("title", "")
       .not("title", "ilike", "http%")
@@ -436,7 +440,7 @@ export const getByCategory = unstable_cache(
     // Procedural Geometry with Three.js and WebGPU" — which aren't visual picks
     // and don't belong in the strip. They stay on /category/inspiration.
     const visualPool =
-      category === "inspiration"
+      visualOnly
         ? pool.filter((r) => {
             const src = Array.isArray(r.sources) ? r.sources[0] : r.sources;
             return src?.type === "gallery";

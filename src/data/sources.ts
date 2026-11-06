@@ -82,6 +82,7 @@ export const SOURCES: Source[] = [
   { id: "landingfolio", name: "Landingfolio", slug: "landingfolio", url: "https://landingfolio.com", type: "gallery", category: "inspiration", initials: "Lf", swatch: "thumb-grad-3" },
   { id: "pageflows", name: "Page Flows", slug: "pageflows", url: "https://pageflows.com", type: "gallery", category: "inspiration", initials: "Pf", swatch: "thumb-grad-5" },
   // Inspiration — added 2026-05-27, feeds verified live.
+  { id: "siteinspire", name: "SiteInspire", slug: "siteinspire", url: "https://www.siteinspire.com", feedUrl: "https://www.siteinspire.com/websites/feed", type: "gallery", category: "inspiration", initials: "Si", swatch: "thumb-grad-2" },
   { id: "onepagelove", name: "One Page Love", slug: "onepagelove", url: "https://onepagelove.com", feedUrl: "https://onepagelove.com/feed", type: "gallery", category: "inspiration", initials: "Op", swatch: "thumb-grad-7" },
   { id: "muzli", name: "Muzli", slug: "muzli", url: "https://medium.com/muzli-design-inspiration", feedUrl: "https://medium.com/feed/muzli-design-inspiration", type: "publication", category: "inspiration", initials: "Mz", swatch: "thumb-grad-4" },
 
