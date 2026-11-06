@@ -26,6 +26,7 @@ Copy `.env.local.example` to `.env.local` and fill in:
 | `GROQ_API_KEY`                  | Primary summarization provider (`openai/gpt-oss-120b`; override with `GROQ_MODEL`) |
 | `CRON_SECRET`                   | Random string; auths every `/api/cron/*` call                   |
 | `UNSUBSCRIBE_SECRET` (recommended) | HMAC key for unsubscribe links; falls back to `CRON_SECRET`. Set it before ever rotating `CRON_SECRET`, or links in sent emails break. |
+| `RESEND_WEBHOOK_SECRET` (recommended) | Signing secret (`whsec_…`) of the Resend webhook pointed at `/api/resend-webhook` (events: email.bounced, email.complained). Auto-unsubscribes hard bounces and spam complaints. |
 | `RESEND_API_KEY`                | All outgoing email: daily digest, welcome, feedback, admin alerts |
 | `ADMIN_EMAIL`                   | Where pipeline-failure alerts go                                |
 | `FEEDBACK_EMAIL` (optional)     | Feedback recipient (default `designatorapp@gmail.com`)          |

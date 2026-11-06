@@ -23,6 +23,7 @@ import { safeHttpUrl } from "@/lib/url";
 import { logger, type Logger } from "@/lib/logger";
 import { SITE_URL } from "@/lib/site";
 import { istToday } from "@/lib/ist";
+import { sendAdminAlert } from "@/lib/notify";
 
 const SITE = SITE_URL;
 
@@ -464,11 +465,45 @@ async function digestAlreadySentToday(log: Logger): Promise<boolean> {
   }
 }
 
+/**
+ * Subscriber-drop alarm. Compares today's recipient count with the most
+ * recent earlier send in digest_log and emails the admin if the list shrank
+ * sharply (a wiped table, a bad migration, a bounce storm). Thresholds keep
+ * it quiet at small scale: at least 2 fewer AND at least 20% fewer.
+ */
+async function checkSubscriberDrop(recipients: number, log: Logger): Promise<void> {
+  try {
+    const svc = createServiceClient();
+    const { data, error } = await svc
+      .from("digest_log")
+      .select("send_date, recipients")
+      .lt("send_date", istToday())
+      .order("send_date", { ascending: false })
+      .limit(1);
+    if (error || !data?.[0]) return;
+    const prev = data[0].recipients as number;
+    const drop = prev - recipients;
+    if (drop >= 2 && drop / prev >= 0.2) {
+      log.warn("subscriber drop", { prev, now: recipients });
+      await sendAdminAlert({
+        subject: `[Designator] Subscribers dropped ${prev} → ${recipients}`,
+        body:
+          `Today's digest went to ${recipients} subscribers, down from ${prev} on ${data[0].send_date}.\n\n` +
+          `Check the Supabase subscribers table (status / unsub_reason) for what changed: ` +
+          `a burst of 'bounced' or 'complained' points at deliverability; missing rows point at data loss.`,
+      });
+    }
+  } catch (err) {
+    log.warn("subscriber drop check failed", { error: (err as Error).message });
+  }
+}
+
 async function recordDigestSent(
   recipients: number,
   storyCount: number,
   log: Logger
 ): Promise<void> {
+  await checkSubscriberDrop(recipients, log);
   try {
     const svc = createServiceClient();
     const { error } = await svc.from("digest_log").upsert(

@@ -249,6 +249,29 @@ export async function runFetch(opts: FetchOptions = {}): Promise<FetchResult> {
       inserted += count ?? 0;
     }
     log.info("insert complete", { inserted, fetched: allInserts.length });
+
+    // Gallery items stored before screenshots were extracted from feed HTML
+    // have no image, and the upsert above ignores duplicates. Fill the gap
+    // when a feed repeats them. Only gallery items (~25/run) and only rows
+    // still missing an image, so this is a handful of cheap updates.
+    const galleryWithThumb = allInserts.filter(
+      (a) => a.content_type === "gallery-item" && a.thumbnail_url
+    );
+    let backfilled = 0;
+    for (const a of galleryWithThumb) {
+      const { data, error } = await supabase
+        .from("articles")
+        .update({ thumbnail_url: a.thumbnail_url })
+        .eq("original_url", a.original_url)
+        .is("thumbnail_url", null)
+        .select("id");
+      if (error) {
+        log.warn("gallery thumbnail backfill failed", { error: error.message });
+        break;
+      }
+      backfilled += data?.length ?? 0;
+    }
+    if (backfilled > 0) log.info("gallery thumbnails backfilled", { backfilled });
   }
 
   log.info("done", {
