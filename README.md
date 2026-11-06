@@ -68,7 +68,7 @@ curl -H "Authorization: Bearer $CRON_SECRET" \
 
    | Time (UTC) | IST     | Job                              |
    | ---------- | ------- | -------------------------------- |
-   | 02:30      | 8:00 AM | pipeline **+ email digest**      |
+   | 00:30      | 6:00 AM | pipeline **+ email digest**      |
    | 14:30      | 8:00 PM | pipeline                         |
 
    The morning cron path carries `?digest=1`, so after it curates the fresh

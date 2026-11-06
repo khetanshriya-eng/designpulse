@@ -1,7 +1,7 @@
 /**
  * GET /api/health
  *
- * Uncached health snapshot for the external watchdog (GitHub Actions, 03:15
+ * Uncached health snapshot for the external watchdog (GitHub Actions, 01:15
  * UTC — see .github/workflows/digest-watchdog.yml).
  *
  * PUBLIC fields (safe — edition dates are already public via /api/archive, the
@@ -17,12 +17,9 @@
 import type { NextRequest } from "next/server";
 import { createPublicClient, createServiceClient } from "@/lib/db/client";
 import { checkCronAuth } from "@/lib/cron-auth";
+import { istToday } from "@/lib/ist";
 
 export const dynamic = "force-dynamic";
-
-function istToday(): string {
-  return new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
-}
 
 export async function GET(req: NextRequest) {
   const today = istToday();

@@ -2,8 +2,10 @@
 #
 # The pipeline can't reliably alert about its own death (a 60s Vercel Hobby
 # timeout kills the function, admin alert included — incident 2026-07-23).
-# This runs on GitHub's infrastructure 45 minutes after the morning cron
-# (02:30 UTC → here 03:15 UTC = 08:45 IST), checks /api/health, attempts
+# Nominally 45 minutes after the morning cron (00:30 UTC → here 01:15 UTC =
+# 06:45 IST). In practice GitHub starts scheduled runs hours late (5–8 h seen
+# in Oct–Nov 2026), so treat this as a same-day safety net, not a punctual
+# one. It checks /api/health, attempts
 # auto-recovery, and FAILS the workflow if anything was wrong — a failed
 # workflow makes GitHub email the repo owner, an alert channel independent
 # of Vercel, Resend, and our own code.
@@ -18,7 +20,7 @@ name: digest-watchdog
 
 on:
   schedule:
-    - cron: "15 3 * * *" # 03:15 UTC ≈ 08:45 IST (GitHub cron can lag a few min)
+    - cron: "15 1 * * *" # 01:15 UTC ≈ 06:45 IST nominal; GitHub often runs it hours late
   workflow_dispatch: {} # manual runs from the Actions tab
 
 permissions: {}

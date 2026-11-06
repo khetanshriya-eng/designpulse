@@ -42,7 +42,7 @@ export type EditionView = {
 /*
  * Page-level caching: all the read queries below are wrapped in
  * unstable_cache(revalidate: 600). Content only changes when the cron
- * pipeline runs (02:30 / 14:30 UTC), so 10-minute staleness is invisible —
+ * pipeline runs (00:30 / 14:30 UTC), so 10-minute staleness is invisible —
  * but it collapses the ~13 Supabase round-trips a cold homepage render used
  * to make into cache reads (QA audit 2026-06-10: TTFB 1–3s → target <600ms).
  * Cache keys include function args, so per-date / per-category entries are

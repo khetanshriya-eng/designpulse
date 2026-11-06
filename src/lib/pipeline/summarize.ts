@@ -6,6 +6,8 @@ import { createServiceClient } from "@/lib/db/client";
 import type { ArticleRow } from "@/lib/db/types";
 import { summarizeArticle } from "@/lib/ai/summarize";
 import { logger, type Logger } from "@/lib/logger";
+import { sourcePriority } from "@/data/sources";
+import { isOffBrand } from "@/lib/content/filter";
 
 export type SummarizeOptions = {
   limit?: number;
@@ -28,32 +30,87 @@ type Pickable = Pick<
   "id" | "title" | "raw_content" | "source_id" | "published_at"
 > & { source_name: string };
 
+/** Recent window that matters: curate and the digest only look back 48h. */
+const PRIORITY_WINDOW_MS = 48 * 3_600_000;
+/** How many recent unsummarized rows to rank per run (cheap: no bodies). */
+const PRIORITY_POOL = 300;
+/** Source types curate never features (see curate/pick.ts FORBIDDEN_TYPES). */
+const UNFEATURABLE_TYPES = new Set(["forum", "gallery"]);
+
+type CandidateRow = Pick<ArticleRow, "id" | "title" | "raw_content" | "source_id" | "published_at" | "original_url"> & {
+  sources: SourceJoin | SourceJoin[];
+};
+type SourceJoin = { name: string; slug: string; type: string };
+
+function toPickable(r: CandidateRow): Pickable & { slug: string; type: string; url: string } {
+  const src = Array.isArray(r.sources) ? r.sources[0] : r.sources;
+  return {
+    id: r.id,
+    title: r.title,
+    raw_content: r.raw_content,
+    source_id: r.source_id,
+    published_at: r.published_at,
+    source_name: src?.name ?? "Unknown",
+    slug: src?.slug ?? "",
+    type: src?.type ?? "",
+    url: r.original_url,
+  };
+}
+
+/**
+ * Pick what to summarize this run. Free-tier AI throughput (~30/day) is far
+ * below inflow (40–180/day), so plain newest-first spent much of the budget
+ * on items that can never be featured (tier-3 tech news, forum/gallery posts,
+ * off-brand listicles) while featurable design stories waited, which is why
+ * thin mornings ran short of summarized candidates. Now, within the 48h
+ * window curate and the digest actually use: featurable items first (tier 1,
+ * then tier 2), then the rest of the window, newest first within each group;
+ * any remaining budget falls back to older backlog, newest first.
+ */
 async function loadCandidates(opts: Required<Pick<SummarizeOptions, "limit">> & SummarizeOptions): Promise<Pickable[]> {
   const supabase = createServiceClient();
-  let q = supabase
-    .from("articles")
-    .select("id, title, raw_content, source_id, published_at, sources!inner(name, slug)")
-    .is("summary", null)
-    .order("published_at", { ascending: false })
-    .limit(opts.limit);
-  if (opts.slug) q = q.eq("sources.slug", opts.slug);
-  const { data, error } = await q;
-  if (error) throw error;
+  const cols = "id, title, raw_content, source_id, published_at, original_url, sources!inner(name, slug, type)";
+  const since = new Date(Date.now() - PRIORITY_WINDOW_MS).toISOString();
 
-  type Row = Pick<ArticleRow, "id" | "title" | "raw_content" | "source_id" | "published_at"> & {
-    sources: { name: string; slug: string } | { name: string; slug: string }[];
+  let recentQ = supabase
+    .from("articles")
+    .select(cols)
+    .is("summary", null)
+    .gte("published_at", since)
+    .order("published_at", { ascending: false })
+    .limit(PRIORITY_POOL);
+  if (opts.slug) recentQ = recentQ.eq("sources.slug", opts.slug);
+  const { data: recentData, error: recentErr } = await recentQ;
+  if (recentErr) throw recentErr;
+
+  // Rank: 0 = featurable tier 1, 1 = featurable tier 2, 2 = everything else.
+  const rank = (a: ReturnType<typeof toPickable>): number => {
+    const tier = sourcePriority(a.slug);
+    const featurable =
+      tier <= 2 && !UNFEATURABLE_TYPES.has(a.type) && !isOffBrand(a.title, a.url);
+    return featurable ? tier - 1 : 2;
   };
-  return ((data ?? []) as Row[]).map((r) => {
-    const src = Array.isArray(r.sources) ? r.sources[0] : r.sources;
-    return {
-      id: r.id,
-      title: r.title,
-      raw_content: r.raw_content,
-      source_id: r.source_id,
-      published_at: r.published_at,
-      source_name: src?.name ?? "Unknown",
-    };
-  });
+  const recent = ((recentData ?? []) as CandidateRow[])
+    .map(toPickable)
+    .map((a, i) => ({ a, r: rank(a), i })) // i keeps newest-first within a rank
+    .sort((x, y) => x.r - y.r || x.i - y.i)
+    .map((x) => x.a)
+    .slice(0, opts.limit);
+
+  if (recent.length >= opts.limit) return recent;
+
+  // Budget left: older backlog, newest first.
+  let olderQ = supabase
+    .from("articles")
+    .select(cols)
+    .is("summary", null)
+    .lt("published_at", since)
+    .order("published_at", { ascending: false })
+    .limit(opts.limit - recent.length);
+  if (opts.slug) olderQ = olderQ.eq("sources.slug", opts.slug);
+  const { data: olderData, error: olderErr } = await olderQ;
+  if (olderErr) throw olderErr;
+  return [...recent, ...((olderData ?? []) as CandidateRow[]).map(toPickable)];
 }
 
 export async function runSummarize(opts: SummarizeOptions = {}): Promise<SummarizeResult> {

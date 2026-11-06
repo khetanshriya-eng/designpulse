@@ -13,7 +13,7 @@ import { SITE_URL } from "@/lib/site";
  * right.
  *
  * `live` (homepage only): the day's edition is produced by the morning
- * pipeline (~08:00 IST), so between IST midnight and the drop the newest
+ * pipeline (~06:00 IST), so between IST midnight and the drop the newest
  * edition in the DB is still yesterday's. Rather than sit on a stale date all
  * morning, the bar rolls the header to *today* at midnight and shows a
  * countdown to the drop — the existing content stays visible underneath until
@@ -21,8 +21,8 @@ import { SITE_URL } from "@/lib/site";
  * never `live` — they're fixed snapshots.
  */
 const IST_OFFSET_MS = 5.5 * 3_600_000;
-const MORNING_DROP_HOUR = 8; // 02:30 UTC pipeline ≈ 08:00 IST
-const GRACE_HOUR = 10; // past this (IST) with no drop, stop the optimistic roll
+const MORNING_DROP_HOUR = 6; // 00:30 UTC pipeline ≈ 06:00 IST
+const GRACE_HOUR = 9; // past this (IST) with no drop, stop the optimistic roll
 
 type Live = { rolledDate: string; countdownMs: number | null } | null;
 
@@ -47,7 +47,7 @@ function computeLive(editionDate: string): Live {
     d.getUTCMilliseconds();
   const dropMs = istMs - sinceMidnightMs + MORNING_DROP_HOUR * 3_600_000;
   const remaining = dropMs - istMs;
-  // remaining <= 0 → we're in the brief 08:00-10:00 window where the pipeline
+  // remaining <= 0 → we're in the brief 06:00-09:00 window where the pipeline
   // is running but content hasn't flipped yet: "cooking, any minute".
   return { rolledDate: istDate, countdownMs: remaining > 0 ? remaining : null };
 }

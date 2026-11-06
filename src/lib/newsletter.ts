@@ -22,6 +22,7 @@ import { unsubscribeUrl } from "@/lib/unsubscribe";
 import { safeHttpUrl } from "@/lib/url";
 import { logger, type Logger } from "@/lib/logger";
 import { SITE_URL } from "@/lib/site";
+import { istToday } from "@/lib/ist";
 
 const SITE = SITE_URL;
 
@@ -438,10 +439,6 @@ export function renderWelcomeEmail(opts: { returning?: boolean } = {}): {
  * ------------------------------------------------------------------ */
 
 /** Editorial day key — the digest is a per-IST-day broadcast. */
-function istToday(): string {
-  return new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
-}
-
 /**
  * Idempotency guard (digest_log, migration 0003): exactly one broadcast per
  * IST day, no matter how many times the send path is invoked — the pipeline,

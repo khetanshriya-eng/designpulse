@@ -6,6 +6,7 @@ import { createServiceClient } from "@/lib/db/client";
 import type { ArticleRow, SourceRow } from "@/lib/db/types";
 import { pickCuration, type Candidate } from "@/lib/curate/pick";
 import { logger, type Logger } from "@/lib/logger";
+import { istToday } from "@/lib/ist";
 
 export type CurateOptions = {
   dryRun?: boolean;
@@ -116,7 +117,7 @@ export async function runCurate(opts: CurateOptions = {}): Promise<CurateResult>
   }
 
   // 4. Upsert today's edition.
-  const today = new Date().toISOString().slice(0, 10);
+  const today = istToday(); // IST editorial day, not UTC (see lib/ist.ts)
   const { error: edErr } = await supabase.from("editions").upsert(
     {
       edition_date: today,
