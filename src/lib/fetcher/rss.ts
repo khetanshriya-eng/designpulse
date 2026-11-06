@@ -105,7 +105,16 @@ export async function fetchRssSource(source: SourceRow): Promise<FetchResult> {
             ? raw.author
             : raw.author?.name ?? null),
         publishedAt: publishedIso,
-        thumbnailUrl: safeHttpUrl(extractThumbnail(raw)),
+        thumbnailUrl: safeHttpUrl(
+          extractThumbnail(raw) ??
+            // Gallery feeds (Awwwards, One Page Love, SiteInspire) carry the
+            // site screenshot as an <img> in the item HTML rather than in an
+            // enclosure/media tag, and gallery items skip page enrichment — so
+            // without this they were stored with no image at all.
+            (contentTypeForSource(source) === "gallery-item"
+              ? firstContentImage(raw)
+              : null)
+        ),
         category: source.category,
         contentType: contentTypeForSource(source),
         durationMinutes: parseDurationToMinutes(raw["itunes:duration"]),
@@ -120,6 +129,18 @@ export async function fetchRssSource(source: SourceRow): Promise<FetchResult> {
 
   result.durationMs = Date.now() - started;
   return result;
+}
+
+/** First real <img src> in the item's HTML body (skips 1x1 tracking pixels). */
+function firstContentImage(raw: CustomItem & Parser.Item): string | null {
+  const html = `${(raw as { "content:encoded"?: string })["content:encoded"] ?? ""} ${raw.content ?? ""}`;
+  const re = /<img\b[^>]*?\bsrc=["']([^"']+)["'][^>]*>/gi;
+  for (const m of html.matchAll(re)) {
+    const tag = m[0];
+    if (/\b(width|height)=["']?1["'\s>]/i.test(tag)) continue;
+    return m[1].replace(/&amp;/g, "&");
+  }
+  return null;
 }
 
 function extractThumbnail(raw: CustomItem & Parser.Item): string | null {

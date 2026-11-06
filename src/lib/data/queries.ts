@@ -407,15 +407,14 @@ export const getByCategory = unstable_cache(
   ): Promise<Article[]> => {
     const sb = createPublicClient();
     const poolSize = Math.max(limit * 6, 18);
-    // The Inspiration strip is image + title only, so it needs a thumbnail,
-    // not a summary. Requiring a summary hid gallery posts (e.g. an Awwwards
-    // "site of the day" is just a name), which the summarizer correctly SKIPs
-    // as too thin — leaving the strip to whichever gallery feed writes prose.
+    // The Inspiration strip is image + title only (ArticleImage falls back to
+    // the pixel mosaic), so it doesn't need a summary. Requiring one hid
+    // gallery posts — an Awwwards "site of the day" is just a site name, which
+    // the summarizer correctly SKIPs as too thin — leaving the strip to
+    // whichever gallery feed happens to write prose.
     const visualOnly = category === "inspiration";
     let q = sb.from("articles").select(SELECT).eq("category", category);
-    q = visualOnly
-      ? q.not("thumbnail_url", "is", null)
-      : q.not("summary", "is", null).neq("summary", "");
+    if (!visualOnly) q = q.not("summary", "is", null).neq("summary", "");
     q = q
       .not("title", "is", null)
       .neq("title", "")
