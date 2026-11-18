@@ -205,8 +205,16 @@ function stripDashes(s: string): string {
 export function renderDigestHtml(
   articles: DigestArticle[],
   editionName: string,
-  dateLabel: string
+  dateLabel: string,
+  /** Today's edition page: a stable link readers can pass on. */
+  editionUrl: string = SITE
 ): string {
+  // utm tags let Clarity/GA tell email-driven visits (and passed-on links)
+  // apart from search and direct traffic.
+  const utm = (url: string, campaign: string) =>
+    `${url}${url.includes("?") ? "&" : "?"}utm_source=designator-email&utm_medium=email&utm_campaign=${campaign}`;
+  const shareUrl = utm(editionUrl, "forward");
+  const shareLabel = editionUrl.replace(/^https?:\/\/(www\.)?/, "");
   const rows = articles
     .map((a, i) => {
       const cat = CATEGORY_META[a.category as SourceCategory]?.label ?? a.category;
@@ -308,10 +316,18 @@ ${nightCatRules}
         </tr>
         <!-- Stories -->
         ${rows}
+        <!-- Share ask: word of mouth is the main way a daily briefing grows. -->
+        <tr>
+          <td class="dm-cell" style="padding:22px 24px 24px;border-top:2px solid ${NAVY};">
+            <p class="dm-sum" style="font-family:${MONO};font-size:14px;line-height:1.65;color:${GRAY};margin:0;">Know a designer who'd like this? Forward this email, or send them today's edition:</p>
+            <div style="height:10px;line-height:10px;font-size:0;">&nbsp;</div>
+            <a href="${esc(shareUrl)}" class="dm-title" style="font-family:${MONO};font-size:14px;font-weight:bold;color:${PURPLE};text-decoration:underline;">${esc(shareLabel)}</a>
+          </td>
+        </tr>
         <!-- CTA band: unpinned navy — inverts to a lavender callout card. -->
         <tr>
           <td align="center" style="background:${NAVY};padding:24px;">
-            <a href="${SITE}" class="dm-ctabtn" style="font-family:${MONO};font-size:14px;font-weight:bold;color:${CREAM};border:2px solid ${CREAM};padding:12px 20px;text-decoration:none;display:inline-block;">See today's full edition&nbsp;→</a>
+            <a href="${esc(utm(SITE, "full-edition"))}" class="dm-ctabtn" style="font-family:${MONO};font-size:14px;font-weight:bold;color:${CREAM};border:2px solid ${CREAM};padding:12px 20px;text-decoration:none;display:inline-block;">See today's full edition&nbsp;→</a>
           </td>
         </tr>
         <!-- Pinned lime keyline above the footer -->
@@ -360,6 +376,9 @@ export function renderWelcomeEmail(opts: { returning?: boolean } = {}): {
     "",
     "Your first edition lands tomorrow morning. Today's is already live:",
     SITE,
+    "",
+    "One question: which design source do you read that Designator should",
+    "add? Just hit reply. I read every one.",
     "",
     "P.S. If this lands in Spam or Promotions, drag it to your Primary inbox",
     "so you don't miss an edition.",
@@ -413,6 +432,11 @@ export function renderWelcomeEmail(opts: { returning?: boolean } = {}): {
         <tr>
           <td style="padding:0 24px 22px;">
             <a href="${SITE}" class="dm-ctabtn" style="font-family:${MONO};font-size:14px;font-weight:bold;color:${NAVY};background:${LIME};padding:12px 20px;border:2px solid ${NAVY};text-decoration:none;display:inline-block;">Read today's edition&nbsp;→</a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 24px 18px;">
+            <p class="dm-sum" style="font-family:${MONO};font-size:14px;line-height:1.65;color:${GRAY};margin:0;"><strong style="color:${NAVY};" class="dm-title">One question:</strong> which design source do you read that Designator should add? Just hit reply. I read every one.</p>
           </td>
         </tr>
         <tr>
@@ -763,7 +787,8 @@ export async function runSendDigest(
       readMinutes: c.readMinutes,
     })),
     getEditionName(isoDate),
-    dateLabel
+    dateLabel,
+    `${SITE}/edition/${istToday()}`
   );
 
   const resendKey = process.env.RESEND_API_KEY;
