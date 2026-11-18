@@ -23,15 +23,21 @@ export function FeedbackWidget() {
   // the top. Desktop keeps it visible (it sits in the empty left margin).
   const [tucked, setTucked] = useState(false);
   useEffect(() => {
-    let last = window.scrollY;
+    // On touch devices the scroller is #app-scroll, not the document (same
+    // rule as ScrollTop).
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
+    const sc = coarse ? document.getElementById("app-scroll") : null;
+    const src: HTMLElement | Window = sc ?? window;
+    const top = () => (sc ? sc.scrollTop : window.scrollY);
+    let last = top();
     const onScroll = () => {
-      const y = window.scrollY;
+      const y = top();
       if (window.innerWidth >= 640 || y < 120) setTucked(false);
       else if (Math.abs(y - last) > 8) setTucked(y > last);
       last = y;
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    src.addEventListener("scroll", onScroll as EventListener, { passive: true });
+    return () => src.removeEventListener("scroll", onScroll as EventListener);
   }, []);
 
   function close() {
