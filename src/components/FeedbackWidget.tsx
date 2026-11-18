@@ -29,12 +29,30 @@ export function FeedbackWidget() {
     const sc = coarse ? document.getElementById("app-scroll") : null;
     const src: HTMLElement | Window = sc ?? window;
     const top = () => (sc ? sc.scrollTop : window.scrollY);
-    let last = top();
+    // Hysteresis: tuck only after a deliberate 60px scroll down, reveal after
+    // 24px up. Lazy images shift layout by tens of pixels, which with a
+    // per-event check re-tucked the button right after the reader scrolled up.
+    let isTucked = false;
+    let anchor = top(); // lowest y while shown, highest y while tucked
+    const set = (v: boolean, y: number) => {
+      isTucked = v;
+      anchor = y;
+      setTucked(v);
+    };
     const onScroll = () => {
       const y = top();
-      if (window.innerWidth >= 640 || y < 120) setTucked(false);
-      else if (Math.abs(y - last) > 8) setTucked(y > last);
-      last = y;
+      if (window.innerWidth >= 640 || y < 120) {
+        if (isTucked) set(false, y);
+        else anchor = y;
+        return;
+      }
+      if (!isTucked) {
+        if (y < anchor) anchor = y;
+        else if (y - anchor > 60) set(true, y);
+      } else {
+        if (y > anchor) anchor = y;
+        else if (anchor - y > 24) set(false, y);
+      }
     };
     src.addEventListener("scroll", onScroll as EventListener, { passive: true });
     return () => src.removeEventListener("scroll", onScroll as EventListener);
