@@ -36,6 +36,8 @@ const mono = Space_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  // Google Search Console ownership check (URL-prefix property, HTML tag).
+  verification: { google: "fiMMiZUjHCpCofsuJO6nn0ShoXOi5tnGYBqwzDRM8zw" },
   title: "Designator",
   description:
     "A daily briefing for product designers. Curated updates from Figma, NN/g, UX Collective, Lenny's, The Verge, and 70+ trusted sources, summarized so you stay current in under five minutes.",
