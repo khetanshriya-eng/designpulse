@@ -23,10 +23,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  // Edition archive (most recent 60; cached query, never block the sitemap
-  // on a DB hiccup).
+  // Every edition: each is a distinct, rankable page (search and AI answers
+  // already land visitors on old ones). Cached query; never block the
+  // sitemap on a DB hiccup.
   try {
-    const dates = await listEditionDates(60);
+    const dates = await listEditionDates(5000);
     for (const d of dates) {
       entries.push({
         url: `${BASE}/edition/${d}`,

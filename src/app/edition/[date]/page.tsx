@@ -17,6 +17,8 @@ import { formatEditionDate } from "@/lib/format";
 import { getEdition, getArticlesForEdition } from "@/lib/data/queries";
 import type { SourceCategory } from "@/data/sources";
 import type { Article } from "@/data/articles";
+import { SITE_URL } from "@/lib/site";
+import { NewsletterCTA } from "@/components/NewsletterCTA";
 
 // Real month/day ranges — 2026-99-99 should 404 at the regex, not hit the DB.
 const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -32,10 +34,79 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { date } = await params;
   if (!DATE_RE.test(date)) return { title: "Not found" };
+  // Lead with the day's top story: "Edition · Sunday, 15 November 2026" told
+  // searchers (and Google) nothing about what the page holds, and edition
+  // pages are where search and AI-answer visitors land.
+  const edition = await getEdition(date).catch(() => null);
+  const day = shortEditionDate(date);
+  const url = `/edition/${date}`;
+  const top = edition?.hero?.title;
+  const title = top ? `${clip(top, 60)} · Designator, ${day}` : `Designator · ${formatEditionDate(date)}`;
+  const picks = [edition?.hero, edition?.editorsPick, ...(edition?.mustReads ?? [])]
+    .filter((a): a is Article => !!a)
+    .map((a) => a.title);
+  const unique = [...new Set(picks)].slice(0, 3);
+  const description = clip(
+    unique.length
+      ? `The design briefing for ${day}: ${unique.join("; ")}. Curated daily from 80+ design, UX and product sources.`
+      : `Designator's daily design briefing for ${formatEditionDate(date)}, curated from 80+ design, UX and product sources.`,
+    300
+  );
   return {
-    title: `Edition · ${formatEditionDate(date)} · Designator`,
-    description: `Designator daily edition for ${formatEditionDate(date)}.`,
+    title,
+    description,
+    // Page-level alternates replace the layout's, so RSS discovery is repeated.
+    alternates: { canonical: url, types: { "application/rss+xml": "/api/rss" } },
+    openGraph: {
+      type: "article",
+      url,
+      title,
+      description,
+      publishedTime: `${date}T00:30:00Z`,
+      ...(edition?.hero?.thumbnailUrl ? { images: [{ url: edition.hero.thumbnailUrl }] } : {}),
+    },
   };
+}
+
+/** "17 Nov 2026" — compact enough for a search-result title. */
+function shortEditionDate(iso: string): string {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+function clip(s: string, max: number): string {
+  return s.length <= max ? s : `${s.slice(0, max - 1).trimEnd()}…`;
+}
+
+/**
+ * schema.org markup: the edition as a CollectionPage whose main entity is the
+ * ordered list of curated stories, so search engines and AI answer engines
+ * can read what the page is about without parsing the layout.
+ */
+function editionJsonLd(date: string, stories: Article[]): string {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: `Designator · ${formatEditionDate(date)}`,
+    url: `${SITE_URL}/edition/${date}`,
+    datePublished: date,
+    isPartOf: { "@type": "WebSite", name: "Designator", url: SITE_URL },
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: stories.map((a, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: a.url,
+        name: a.title,
+      })),
+    },
+  };
+  // Escape "<" so a title can never close the script tag.
+  return JSON.stringify(data).replace(/</g, "\\u003c");
 }
 
 export default async function EditionPage({
@@ -101,8 +172,16 @@ export default async function EditionPage({
     .filter((a) => a.category === "inspiration")
     .slice(0, 4);
 
+  const listed = [edition.hero, edition.editorsPick, ...mustReads, ...dayStories]
+    .filter((a): a is Article => !!a)
+    .filter((a, i, all) => all.findIndex((b) => b.id === a.id) === i);
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: editionJsonLd(edition.date, listed) }}
+      />
       {/* Named edition + date picker + share (replaces the old prev/next nav). */}
       <EditionBar date={edition.date} />
 
@@ -149,6 +228,10 @@ export default async function EditionPage({
 
       {/* No trailing "all editions" list — the edition dropdown in the bar
           above and /archive already cover finding other editions. */}
+
+      {/* Search and AI-answer visitors land on edition pages, not the
+          homepage, so the subscribe ask has to be here too. */}
+      <NewsletterCTA />
     </>
   );
 }

@@ -5,6 +5,7 @@ import { ArticleCard } from "@/components/ArticleCard";
 import { SectionHeader } from "@/components/SectionHeader";
 import { CATEGORY_META, type SourceCategory } from "@/data/sources";
 import { getCategoryPage } from "@/lib/data/queries";
+import { NewsletterCTA } from "@/components/NewsletterCTA";
 
 const PAGE_SIZE = 24;
 
@@ -31,6 +32,12 @@ export async function generateMetadata({
   return {
     title: `${meta.label} · Designator`,
     description: `Latest in ${meta.label.toLowerCase()} across Designator's curated sources.`,
+    // ?page=N is the same listing paged; point search engines at page 1.
+    // (Page-level alternates replace the layout's, so RSS discovery is repeated.)
+    alternates: {
+      canonical: `/category/${slug}`,
+      types: { "application/rss+xml": "/api/rss" },
+    },
   };
 }
 
@@ -57,6 +64,7 @@ export default async function CategoryPage({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
+    <>
     <div className="site-container py-10 sm:py-14">
       <SectionHeader
         kicker="Category"
@@ -87,6 +95,9 @@ export default async function CategoryPage({
         </>
       )}
     </div>
+    {/* Search visitors land here too: give them the subscribe ask. */}
+    <NewsletterCTA />
+    </>
   );
 }
 
