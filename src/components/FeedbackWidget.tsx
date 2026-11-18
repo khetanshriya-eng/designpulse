@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useModalA11y } from "@/lib/use-modal-a11y";
 
 /**
@@ -18,6 +18,21 @@ export function FeedbackWidget() {
   const [status, setStatus] = useState<Status>("idle");
   const [honeypot, setHoneypot] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
+  // On phones the floating button sat on top of article text while reading.
+  // Tuck it away while scrolling down; bring it back on scroll up or near
+  // the top. Desktop keeps it visible (it sits in the empty left margin).
+  const [tucked, setTucked] = useState(false);
+  useEffect(() => {
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (window.innerWidth >= 640 || y < 120) setTucked(false);
+      else if (Math.abs(y - last) > 8) setTucked(y > last);
+      last = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   function close() {
     setOpen(false);
@@ -56,7 +71,9 @@ export function FeedbackWidget() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Share feedback"
-        className="surface-card fixed bottom-5 left-5 z-40 inline-flex items-center gap-2 px-3 py-2 font-pixel text-[12px] uppercase tracking-[0.06em] text-ink"
+        className={`surface-card fixed bottom-5 left-5 z-40 inline-flex items-center gap-2 px-3 py-2 font-pixel text-[12px] uppercase tracking-[0.06em] text-ink transition-transform duration-200 motion-reduce:transition-none ${
+          tucked ? "translate-y-[calc(100%+2rem)]" : ""
+        }`}
       >
         <PixelFace mood={3} />
         <span className="hidden sm:inline">Feedback</span>

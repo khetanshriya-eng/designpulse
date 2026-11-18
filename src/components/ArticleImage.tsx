@@ -87,6 +87,12 @@ export function ArticleImage({
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : undefined}
           onError={() => setFailed(true)}
+          // The image can fail before React hydrates (fast 403/404 from a
+          // hotlink-blocking CDN), and then onError never reaches us and the
+          // browser's broken-image icon stays. Check once on mount.
+          ref={(img) => {
+            if (img && img.complete && img.naturalWidth === 0) setFailed(true);
+          }}
           onLoad={(e) => {
             // Some sources (HN-linked sites, hotlink-blocked CDNs) return a 1x1
             // tracking pixel or a tiny "no image" graphic with HTTP 200 — so
