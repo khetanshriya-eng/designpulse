@@ -27,6 +27,13 @@ type Params = { date: string };
 // ISR so the CDN can cache edition pages (theme is client-resolved).
 export const revalidate = 600;
 
+// Empty list = render each edition on first visit, then serve it from the
+// ISR cache. Without generateStaticParams, Next 16 rendered every edition
+// visit from scratch (x-vercel-cache: MISS on every request).
+export function generateStaticParams(): { date: string }[] {
+  return [];
+}
+
 export async function generateMetadata({
   params,
 }: {

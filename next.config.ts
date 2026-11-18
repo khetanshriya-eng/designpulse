@@ -47,6 +47,18 @@ const CSP = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // Category paging moved from ?page=N to /page/N (path-based pages can be
+  // ISR-cached; searchParams forced every visit to render dynamically).
+  async redirects() {
+    return [
+      {
+        source: "/category/:slug",
+        has: [{ type: "query", key: "page", value: "(?<page>[1-9]\\d*)" }],
+        destination: "/category/:slug/page/:page",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

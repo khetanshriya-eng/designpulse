@@ -171,6 +171,11 @@ async function handle(req: NextRequest) {
       revalidateTag("content", { expire: 0 });
       revalidatePath("/");
       revalidatePath("/archive");
+      // Category and edition pages are now ISR-cached too: refresh them with
+      // the new content instead of waiting out the 10-minute window.
+      revalidatePath("/category/[slug]", "page");
+      revalidatePath("/category/[slug]/page/[n]", "page");
+      revalidatePath("/edition/[date]", "page");
       log.info("caches revalidated after curate");
     } catch (err) {
       log.error("revalidation failed", { error: (err as Error).message });
