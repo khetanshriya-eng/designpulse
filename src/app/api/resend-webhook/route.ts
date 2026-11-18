@@ -11,8 +11,13 @@
  * is created in Resend → Webhooks). Unset secret → 503, so an unconfigured
  * endpoint can never be used to unsubscribe people.
  *
- * Only permanent bounces count; transient ones (full inbox, greylisting)
- * are ignored so a temporary problem never drops a real reader.
+ * Permanent bounces and complaints unsubscribe at once. Transient bounces
+ * (server unreachable, mailbox full) are counted in subscribers.soft_bounces
+ * and reset by a delivered email (email.delivered); SOFT_BOUNCE_LIMIT in a
+ * row unsubscribes with reason 'soft-bounced'. Needed because an address
+ * whose server never accepts mail is reported as *transient* every day, and
+ * Resend never suppresses those on its own (seen 2026-11). Requires
+ * migration 0005; without the column, transient bounces are logged only.
  */
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { createServiceClient } from "@/lib/db/client";
@@ -22,6 +27,7 @@ export const dynamic = "force-dynamic";
 
 const log = logger("api.resend-webhook");
 const TOLERANCE_S = 5 * 60; // reject replays older than 5 minutes
+const SOFT_BOUNCE_LIMIT = 3; // consecutive transient bounces before we stop
 
 function verify(secret: string, id: string, ts: string, body: string, header: string): boolean {
   const tsNum = Number(ts);
@@ -41,6 +47,35 @@ type ResendEvent = {
   type?: string;
   data?: { to?: string[] | string; bounce?: { type?: string; subType?: string } };
 };
+
+type Service = ReturnType<typeof createServiceClient>;
+
+/** Increment soft_bounces; unsubscribe addresses that reach the limit. */
+async function countSoftBounce(sb: Service, emails: string[]) {
+  const { data, error } = await sb
+    .from("subscribers")
+    .select("email, soft_bounces")
+    .in("email", emails)
+    .eq("status", "active");
+  if (error) {
+    // Most likely migration 0005 not applied yet: log, don't make Resend retry.
+    log.warn("soft-bounce lookup failed", { error: error.message });
+    return { ok: true, ignored: "soft-bounce tracking unavailable" };
+  }
+  let suppressed = 0;
+  for (const row of data ?? []) {
+    const n = ((row.soft_bounces as number | null) ?? 0) + 1;
+    const patch =
+      n >= SOFT_BOUNCE_LIMIT
+        ? { soft_bounces: n, status: "unsubscribed" as const, unsubscribed_at: new Date().toISOString(), unsub_reason: "soft-bounced" }
+        : { soft_bounces: n };
+    const { error: upErr } = await sb.from("subscribers").update(patch).eq("email", row.email);
+    if (upErr) log.warn("soft-bounce update failed", { error: upErr.message });
+    else if (n >= SOFT_BOUNCE_LIMIT) suppressed++;
+  }
+  log.info("soft bounce counted", { count: data?.length ?? 0, suppressed });
+  return { ok: true, softBounced: data?.length ?? 0, suppressed };
+}
 
 export async function POST(req: Request) {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
@@ -65,14 +100,6 @@ export async function POST(req: Request) {
     return Response.json({ error: "Bad JSON" }, { status: 400 });
   }
 
-  let reason: string | null = null;
-  if (event.type === "email.complained") reason = "complained";
-  if (event.type === "email.bounced") {
-    const bounceType = (event.data?.bounce?.type ?? "").toLowerCase();
-    reason = bounceType === "transient" ? null : "bounced";
-  }
-  if (!reason) return Response.json({ ok: true, ignored: event.type ?? "unknown" });
-
   const to = event.data?.to;
   const emails = (Array.isArray(to) ? to : to ? [to] : [])
     .map((e) => e.trim().toLowerCase())
@@ -80,6 +107,27 @@ export async function POST(req: Request) {
   if (emails.length === 0) return Response.json({ ok: true, ignored: "no recipient" });
 
   const sb = createServiceClient();
+  const bounceType = (event.data?.bounce?.type ?? "").toLowerCase();
+
+  // Delivered: the address works again, so any soft-bounce streak is over.
+  if (event.type === "email.delivered") {
+    const { error } = await sb
+      .from("subscribers")
+      .update({ soft_bounces: 0 })
+      .in("email", emails)
+      .gt("soft_bounces", 0);
+    if (error) log.warn("soft-bounce reset failed", { error: error.message });
+    return Response.json({ ok: true });
+  }
+
+  if (event.type === "email.bounced" && bounceType === "transient") {
+    return Response.json(await countSoftBounce(sb, emails));
+  }
+
+  let reason: string | null = null;
+  if (event.type === "email.complained") reason = "complained";
+  if (event.type === "email.bounced") reason = "bounced";
+  if (!reason) return Response.json({ ok: true, ignored: event.type ?? "unknown" });
   const { data, error } = await sb
     .from("subscribers")
     .update({ status: "unsubscribed", unsubscribed_at: new Date().toISOString(), unsub_reason: reason })

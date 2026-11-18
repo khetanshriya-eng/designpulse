@@ -91,6 +91,8 @@ export type SubscriberRow = {
   unsubscribed_at: string | null;
   resubscribed_at: string | null;
   unsub_reason: string | null;
+  /** Consecutive transient bounces (migration 0005); reset on delivery. */
+  soft_bounces: number;
 };
 
 export type DigestLogRow = {

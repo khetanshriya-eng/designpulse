@@ -11,6 +11,7 @@ import { createServiceClient } from "@/lib/db/client";
 import { renderWelcomeEmail } from "@/lib/newsletter";
 import { logger } from "@/lib/logger";
 import { sendAdminAlert } from "@/lib/notify";
+import { domainAcceptsMail } from "@/lib/email-domain";
 
 export const dynamic = "force-dynamic";
 const log = logger("api.subscribe");
@@ -39,7 +40,8 @@ function rateLimited(ip: string): boolean {
 }
 
 function validEmail(email: string): boolean {
-  // Deliberately loose — a bad address just bounces at Resend.
+  // Format check is deliberately loose; the domain check below catches
+  // addresses that could never be delivered.
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
@@ -107,6 +109,15 @@ export async function POST(req: NextRequest) {
     return Response.json(
       { error: "Too many attempts — try again later." },
       { status: 429 }
+    );
+  }
+
+  // A domain that can't receive mail would bounce every daily send forever
+  // (as a "transient" bounce that never self-suppresses). See lib/email-domain.
+  if (!(await domainAcceptsMail(email.split("@")[1]))) {
+    return Response.json(
+      { error: "That email domain can't receive mail. Check for a typo?" },
+      { status: 400 }
     );
   }
 
