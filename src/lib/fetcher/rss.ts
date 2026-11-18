@@ -40,6 +40,35 @@ const parser: Parser<Record<string, never>, CustomItem> = new Parser({
   },
 });
 
+/**
+ * parseURL, with one repair attempt for a common publisher bug: a bare "&"
+ * in the XML (e.g. a URL query string not escaped as &amp;). Strict XML
+ * parsers reject the whole feed for it ("Invalid character in entity name"),
+ * which silently zeroed sources like Boagworld. On that specific error we
+ * download the feed ourselves, escape bare ampersands, and parse again.
+ */
+async function parseFeed(url: string) {
+  try {
+    return await parser.parseURL(url);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (!/entity|Invalid character/i.test(msg)) throw err;
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Designator/0.1 (+https://designatorapp.com) - friendly RSS reader",
+        Accept: "application/rss+xml, application/atom+xml, application/xml;q=0.9, */*;q=0.8",
+      },
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!res.ok) throw err;
+    const xml = (await res.text()).replace(
+      /&(?!(?:[a-zA-Z][a-zA-Z0-9]*|#\d+|#x[0-9a-fA-F]+);)/g,
+      "&amp;"
+    );
+    return parser.parseString(xml);
+  }
+}
+
 const FRESH_WINDOW_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
 const MAX_ITEMS_PER_SOURCE = 12;
 
@@ -63,7 +92,7 @@ export async function fetchRssSource(source: SourceRow): Promise<FetchResult> {
   }
 
   try {
-    const feed = await parser.parseURL(source.feed_url);
+    const feed = await parseFeed(source.feed_url);
     const now = Date.now();
 
     for (const raw of feed.items.slice(0, MAX_ITEMS_PER_SOURCE * 2)) {

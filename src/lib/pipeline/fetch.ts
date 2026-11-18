@@ -11,7 +11,7 @@ import { createServiceClient } from "@/lib/db/client";
 import { SOURCES, sourcePriority } from "@/data/sources";
 import { fetchSource, enrichBatch } from "@/lib/fetcher";
 import type { SourceRow, ArticleInsert } from "@/lib/db/types";
-import type { EnrichedItem } from "@/lib/fetcher";
+import type { EnrichedItem, FetchedItem } from "@/lib/fetcher";
 import { logger, type Logger } from "@/lib/logger";
 
 export type FetchOptions = {
@@ -160,6 +160,26 @@ function itemToInsert(item: EnrichedItem): ArticleInsert {
   };
 }
 
+/**
+ * Remove feed items already in `articles` (by original_url), except gallery
+ * items, which are cheap (no page enrichment) and feed the thumbnail backfill.
+ * On a lookup error, returns everything: correctness over speed.
+ */
+async function dropKnownItems(items: FetchedItem[], log: Logger): Promise<FetchedItem[]> {
+  const urls = items.filter((i) => i.contentType !== "gallery-item").map((i) => i.originalUrl);
+  if (urls.length === 0) return items;
+  const { data, error } = await createServiceClient()
+    .from("articles")
+    .select("original_url")
+    .in("original_url", urls);
+  if (error) {
+    log.warn("known-item lookup failed; enriching all", { error: error.message });
+    return items;
+  }
+  const known = new Set((data ?? []).map((r) => r.original_url as string));
+  return items.filter((i) => i.contentType === "gallery-item" || !known.has(i.originalUrl));
+}
+
 export async function runFetch(opts: FetchOptions = {}): Promise<FetchResult> {
   const log = opts.log ?? logger("pipeline.fetch");
   // Make sure any sources added in code since the last fetch are in the DB.
@@ -205,11 +225,20 @@ export async function runFetch(opts: FetchOptions = {}): Promise<FetchResult> {
         continue;
       }
 
-      const enriched = await enrichBatch(result.items, 4);
-      totalItems += enriched.length;
+      // Only enrich items we haven't stored. Enrichment opens each article's
+      // page (up to the fetch timeout each); feeds repeat their last ~10–12
+      // items every run, so enriching everything meant ~300 page loads per
+      // run for ~5 new articles and pushed the step past its deadline.
+      // Gallery items skip enrichment anyway and are kept so the thumbnail
+      // backfill below still sees them.
+      const fresh = await dropKnownItems(result.items, log);
+      const enriched = await enrichBatch(fresh, 4);
+      // items/totalItems keep counting what the feed returned (feed health);
+      // only the new ones are enriched and inserted.
+      totalItems += result.items.length;
       perSource.push({
         slug: source.slug,
-        items: enriched.length,
+        items: result.items.length,
         durationMs: result.durationMs,
         errors: result.errors,
       });
