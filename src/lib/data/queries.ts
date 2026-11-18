@@ -521,6 +521,10 @@ export const getCategoryPage = unstable_cache(
       .not("title", "ilike", "www.%")
       .order("published_at", { ascending: false, nullsFirst: false })
       .range(offset, offset + limit - 1);
+    // PostgREST answers a range past the last row with 416 / PGRST103
+    // ("Requested range not satisfiable"). That's an empty page, not a
+    // failure; throwing here turned /page/999 into a 500.
+    if (error && error.code === "PGRST103") return { items: [], total: count ?? 0 };
     if (error) throw error;
 
     return {

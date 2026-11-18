@@ -52,6 +52,11 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/category/:slug/page/1",
+        destination: "/category/:slug",
+        permanent: true,
+      },
+      {
         source: "/category/:slug",
         has: [{ type: "query", key: "page", value: "(?<page>[1-9]\\d*)" }],
         destination: "/category/:slug/page/:page",

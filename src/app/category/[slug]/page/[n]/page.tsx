@@ -1,4 +1,4 @@
-import { notFound, permanentRedirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CATEGORY_META } from "@/data/sources";
 import { CategoryListing, isValidCategory } from "../../CategoryListing";
@@ -40,6 +40,5 @@ export default async function CategoryPageN({ params }: { params: Promise<Params
   const { slug, n } = await params;
   const page = parsePage(n);
   if (!isValidCategory(slug) || !page) notFound();
-  if (page === 1) permanentRedirect(`/category/${slug}`);
   return <CategoryListing slug={slug} page={page} />;
 }
