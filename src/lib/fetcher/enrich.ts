@@ -5,7 +5,9 @@ import { logger } from "@/lib/logger";
 
 const log = logger("fetcher.enrich");
 
-const FETCH_TIMEOUT_MS = 15_000;
+// Article pages are opened only for their preview image and text; one slow
+// publisher must not eat a third of the fetch step's 30 s budget.
+const FETCH_TIMEOUT_MS = 8_000;
 const MAX_RAW_CHARS = 6000;
 
 export type EnrichedItem = FetchedItem & {

@@ -185,7 +185,9 @@ export async function runFetch(opts: FetchOptions = {}): Promise<FetchResult> {
   // Make sure any sources added in code since the last fetch are in the DB.
   if (!opts.dryRun) await syncSourcesFromCode(log);
   const sources = await loadSources(opts);
-  const concurrency = Math.max(1, opts.concurrency ?? 4);
+  // 8 sources at a time: feeds are on different hosts, and since stored
+  // items are no longer re-enriched each source is mostly one small request.
+  const concurrency = Math.max(1, opts.concurrency ?? 8);
   log.info("starting", {
     sources: sources.length,
     dryRun: opts.dryRun ?? false,

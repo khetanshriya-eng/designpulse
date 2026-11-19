@@ -109,7 +109,7 @@ async function handle(req: NextRequest) {
   try {
     // Concurrency 4 fits ~60 RSS sources inside ~15-20s on a Vercel function.
     const fetched = await withStepDeadline(
-      runFetch({ concurrency: 4, log: logger("cron.pipeline.fetch") }),
+      runFetch({ concurrency: 8, log: logger("cron.pipeline.fetch") }),
       Math.max(1_000, t0 + FETCH_BUDGET_AT - Date.now())
     );
     if (fetched.timedOut) {
