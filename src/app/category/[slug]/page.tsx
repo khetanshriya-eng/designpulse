@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { CATEGORY_META } from "@/data/sources";
+import { CATEGORY_INTRO, CATEGORY_META } from "@/data/sources";
 import { CategoryListing, VALID_CATEGORIES, isValidCategory } from "./CategoryListing";
 
 type Params = { slug: string };
@@ -22,8 +22,8 @@ export async function generateMetadata({
   if (!isValidCategory(slug)) return { title: "Not found" };
   const meta = CATEGORY_META[slug];
   return {
-    title: `${meta.label} · Designator`,
-    description: `Latest in ${meta.label.toLowerCase()} across Designator's curated sources.`,
+    title: `${meta.label}: curated daily · Designator`,
+    description: CATEGORY_INTRO[slug],
     // Page-level alternates replace the layout's, so RSS discovery is repeated.
     alternates: {
       canonical: `/category/${slug}`,

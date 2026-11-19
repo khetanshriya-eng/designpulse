@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArticleCard } from "@/components/ArticleCard";
 import { SectionHeader } from "@/components/SectionHeader";
-import { CATEGORY_META, type SourceCategory } from "@/data/sources";
+import { CATEGORY_INTRO, CATEGORY_META, type SourceCategory } from "@/data/sources";
 import { getCategoryPage } from "@/lib/data/queries";
 import { NewsletterCTA } from "@/components/NewsletterCTA";
 
@@ -39,7 +39,11 @@ export async function CategoryListing({ slug, page }: { slug: SourceCategory; pa
       <SectionHeader
         kicker="Category"
         title={meta.label}
-        description={`${total} ${total === 1 ? "story" : "stories"} curated in ${meta.label.toLowerCase()}.`}
+        description={
+          page === 1
+            ? `${CATEGORY_INTRO[slug]} ${total} ${total === 1 ? "story" : "stories"} so far.`
+            : `Page ${page}: older stories in ${meta.label.toLowerCase()}.`
+        }
       />
 
       {items.length === 0 ? (

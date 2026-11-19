@@ -186,6 +186,23 @@ export const CATEGORY_META: Record<
   podcasts: { label: "Podcasts", short: "Podcasts", dotVar: "var(--color-cat-podcasts)", stripeVar: "var(--stripe-podcasts)" },
 };
 
+/**
+ * One-sentence intro per category, shown on page 1 of the category page and
+ * used as its meta description. Name only sources that are actually fetched
+ * (feedUrl or YouTube channel), so the copy stays true.
+ */
+export const CATEGORY_INTRO: Record<SourceCategory, string> = {
+  "design-tools": "New features, plugins and workflows for the tools designers use every day, from Sidebar.io, Prototypr, CSS-Tricks and web.dev.",
+  "ux-thinking": "Research, process and craft: the UX writing worth reading, from NN/g, UX Collective, Smashing Magazine, UX Planet and more.",
+  inspiration: "Standout websites and interfaces to learn from, picked from Awwwards, SiteInspire, One Page Love and Muzli.",
+  youtube: "Design talks, tutorials and teardowns from channels like Figma, Dive Club, The Futur, Flux Academy and NN/g.",
+  product: "Strategy, growth and new launches for people who build products, from Lenny's Newsletter, Stratechery, Product Hunt and Intercom.",
+  "tech-news": "The tech news designers should know about, from The Verge, Hacker News, TechCrunch, Wired and Ars Technica.",
+  "ai-tools": "What's new in AI and how it's changing design work, from One Useful Thing, Import AI, Hugging Face, OpenAI and MIT Technology Review.",
+  newsletters: "Issues from the design newsletters worth subscribing to.",
+  podcasts: "New episodes from design and product podcasts like 99% Invisible, UI Breakfast, Smashing Podcast and Lenny's Podcast.",
+};
+
 export const sourceById = (id: string) =>
   SOURCES.find((s) => s.id === id) ?? SOURCES[0];
 
