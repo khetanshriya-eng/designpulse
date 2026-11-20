@@ -12,7 +12,7 @@ name: Summarize booster
 # Budget: the binding limit is Groq's free tier for openai/gpt-oss-120b,
 # 200K tokens/day (also 8K tokens/min, 1K requests/day). At ~2K tokens per
 # summary that's ~90/day in total; the two pipeline runs use ~30, so this
-# adds 3 x 10 = 30 and leaves headroom. Don't raise it without checking
+# adds 3 runs x 12 = 36 and leaves headroom. Don't raise it without checking
 # Groq's limits page: running out pushes summaries onto Gemini's 20/day.
 # GitHub may start scheduled runs late or skip some; that's fine here.
 
@@ -37,14 +37,21 @@ jobs:
           BASE: https://www.designatorapp.com
         run: |
           set -u
-          code=$(curl -s -o out.json -w "%{http_code}" --max-time 65 \
-            -H "Authorization: Bearer $CRON_SECRET" \
-            "$BASE/api/cron/summarize?limit=10&concurrency=2")
-          echo "HTTP $code $(head -c 300 out.json)"
-          if [ "$code" != "200" ]; then
-            echo "::error::summarize call failed (HTTP $code)"
-            exit 1
-          fi
-          if grep -q '"failed":[1-9]' out.json; then
-            echo "::warning::some summaries failed (provider quota or errors) — see Vercel logs"
-          fi
+          # Paced for Groq's 8K tokens/minute (~4 summaries/min): 3 batches
+          # of 4, one sequential request at a time, ~65 s apart. Bursting
+          # past it sent overflow to Gemini, whose free tier is 20/day.
+          for i in 1 2 3; do
+            code=$(curl -s -o out.json -w "%{http_code}" --max-time 65 \
+              -H "Authorization: Bearer $CRON_SECRET" \
+              "$BASE/api/cron/summarize?limit=4&concurrency=1")
+            echo "batch $i: HTTP $code $(head -c 300 out.json)"
+            if [ "$code" != "200" ]; then
+              echo "::error::summarize call failed (HTTP $code)"
+              exit 1
+            fi
+            if grep -q '"failed":[1-9]' out.json; then
+              echo "::warning::some summaries failed (provider quota or errors) — see Vercel logs"
+            fi
+            if grep -q '"processed":0' out.json; then break; fi
+            if [ "$i" -lt 3 ]; then sleep 65; fi
+          done
