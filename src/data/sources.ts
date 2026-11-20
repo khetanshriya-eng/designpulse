@@ -42,7 +42,7 @@ export type Source = {
 
 export const SOURCES: Source[] = [
   // Design — Tools & Updates
-  { id: "figma-blog", name: "Figma Blog", slug: "figma-blog", url: "https://www.figma.com/blog/", type: "blog", category: "design-tools", initials: "Fi", swatch: "thumb-grad-2" },
+  { id: "figma-blog", name: "Figma Blog", slug: "figma-blog", url: "https://www.figma.com/blog/", feedUrl: "https://www.figma.com/blog/feed/atom.xml", type: "blog", category: "design-tools", initials: "Fi", swatch: "thumb-grad-2" },
   // figma-shortcuts — removed 2026-05-27, covered by figma-blog.
   { id: "toools", name: "TOOOLS.design", slug: "toools", url: "https://www.toools.design/", type: "newsletter", category: "design-tools", initials: "To", swatch: "thumb-grad-10" },
   // preferMosaic: Sidebar.io is a curated-links roundup — each item points to
@@ -51,13 +51,13 @@ export const SOURCES: Source[] = [
   // instead, like HN and Hugging Face.
   { id: "sidebar", name: "Sidebar.io", slug: "sidebar", url: "https://sidebar.io", feedUrl: "https://sidebar.io/feed.xml", type: "newsletter", category: "design-tools", initials: "Sb", swatch: "thumb-grad-3", preferMosaic: true },
   { id: "uxtools", name: "UX Tools", slug: "uxtools", url: "https://www.uxtools.co/", type: "blog", category: "design-tools", initials: "Ux", swatch: "thumb-grad-5" },
-  { id: "prototypr", name: "Prototypr.io", slug: "prototypr", url: "https://prototypr.io", feedUrl: "https://prototypr.io/feed.xml", type: "newsletter", category: "design-tools", initials: "Pr", swatch: "thumb-grad-7" },
   { id: "csstricks", name: "CSS-Tricks", slug: "csstricks", url: "https://css-tricks.com", feedUrl: "https://css-tricks.com/feed/", type: "blog", category: "design-tools", initials: "CT", swatch: "thumb-grad-5" },
   { id: "webdev", name: "web.dev", slug: "webdev", url: "https://web.dev", feedUrl: "https://web.dev/feed.xml", type: "blog", category: "design-tools", initials: "wd", swatch: "thumb-grad-9" },
 
   // Design — Thinking & Craft
   { id: "uxdesigncc", name: "UX Collective", slug: "uxdesigncc", url: "https://uxdesign.cc", feedUrl: "https://uxdesign.cc/feed", type: "publication", category: "ux-thinking", initials: "UX", swatch: "thumb-grad-1" },
-  { id: "designmba", name: "Design MBA", slug: "designmba", url: "https://www.designmba.show/", feedUrl: "https://feeds.simplecast.com/740y1GZg", type: "podcast", category: "ux-thinking", initials: "DM", swatch: "thumb-grad-6" },
+  { id: "bradfrost", name: "Brad Frost", slug: "bradfrost", url: "https://bradfrost.com/blog/", feedUrl: "https://bradfrost.com/feed/", type: "blog", category: "ux-thinking", initials: "BF", swatch: "thumb-grad-3" },
+  { id: "lukew", name: "LukeW", slug: "lukew", url: "https://www.lukew.com/ff/", feedUrl: "https://www.lukew.com/ff/rss.xml", type: "blog", category: "ux-thinking", initials: "Lw", swatch: "thumb-grad-6" },
   { id: "nngroup", name: "NN/g", slug: "nngroup", url: "https://nngroup.com", feedUrl: "https://nngroup.com/feed/rss/", type: "publication", category: "ux-thinking", initials: "NN", swatch: "thumb-grad-2" },
   // uxtigers — RSS dropped; covered by yt-uxtigers (removed 2026-05-25).
   { id: "smashing", name: "Smashing Magazine", slug: "smashing", url: "https://smashingmagazine.com", feedUrl: "https://smashingmagazine.com/feed/", type: "publication", category: "ux-thinking", initials: "SM", swatch: "thumb-grad-2" },
@@ -71,7 +71,6 @@ export const SOURCES: Source[] = [
   { id: "uxplanet", name: "UX Planet", slug: "uxplanet", url: "https://uxplanet.org", feedUrl: "https://uxplanet.org/feed", type: "publication", category: "ux-thinking", initials: "UP", swatch: "thumb-grad-1" },
   { id: "tubik", name: "Tubik Studio", slug: "tubik", url: "https://blog.tubikstudio.com", feedUrl: "https://blog.tubikstudio.com/feed/", type: "blog", category: "ux-thinking", initials: "Tk", swatch: "thumb-grad-6" },
   { id: "juliezhuo", name: "The Looking Glass", slug: "juliezhuo", url: "https://lg.substack.com", feedUrl: "https://lg.substack.com/feed", type: "newsletter", category: "ux-thinking", initials: "JZ", swatch: "thumb-grad-7" },
-  { id: "alistapart", name: "A List Apart", slug: "alistapart", url: "https://alistapart.com", feedUrl: "https://alistapart.com/main/feed/", type: "publication", category: "ux-thinking", initials: "AL", swatch: "thumb-grad-2" },
 
   // Inspiration
   { id: "mobbin", name: "Mobbin", slug: "mobbin", url: "https://mobbin.com", type: "gallery", category: "inspiration", initials: "Mo", swatch: "thumb-grad-1" },
@@ -83,6 +82,8 @@ export const SOURCES: Source[] = [
   { id: "pageflows", name: "Page Flows", slug: "pageflows", url: "https://pageflows.com", type: "gallery", category: "inspiration", initials: "Pf", swatch: "thumb-grad-5" },
   // Inspiration — added 2026-05-27, feeds verified live.
   { id: "siteinspire", name: "SiteInspire", slug: "siteinspire", url: "https://www.siteinspire.com", feedUrl: "https://www.siteinspire.com/websites/feed", type: "gallery", category: "inspiration", initials: "Si", swatch: "thumb-grad-2" },
+  { id: "abduzeedo", name: "Abduzeedo", slug: "abduzeedo", url: "https://abduzeedo.com", feedUrl: "https://abduzeedo.com/rss.xml", type: "gallery", category: "inspiration", initials: "Ab", swatch: "thumb-grad-4" },
+  { id: "webdesign-inspiration", name: "Web Design Inspiration", slug: "webdesign-inspiration", url: "https://www.webdesign-inspiration.com", feedUrl: "https://www.webdesign-inspiration.com/feed", type: "gallery", category: "inspiration", initials: "Wi", swatch: "thumb-grad-5" },
   { id: "onepagelove", name: "One Page Love", slug: "onepagelove", url: "https://onepagelove.com", feedUrl: "https://onepagelove.com/feed", type: "gallery", category: "inspiration", initials: "Op", swatch: "thumb-grad-7" },
   { id: "muzli", name: "Muzli", slug: "muzli", url: "https://medium.com/muzli-design-inspiration", feedUrl: "https://medium.com/feed/muzli-design-inspiration", type: "publication", category: "inspiration", initials: "Mz", swatch: "thumb-grad-4" },
 
@@ -97,13 +98,11 @@ export const SOURCES: Source[] = [
   { id: "yt-ridd", name: "Dive Club by Ridd", slug: "yt-ridd", url: "https://youtube.com/@joindiveclub", type: "youtube", category: "youtube", initials: "Ri", swatch: "thumb-grad-5", youtubeChannelId: "UCkCnraWwlnBw1_i7C9-3p0w" },
   { id: "yt-mizko", name: "Mizko", slug: "yt-mizko", url: "https://youtube.com/@Mizko", type: "youtube", category: "youtube", initials: "Mi", swatch: "thumb-grad-9", youtubeChannelId: "UCZJkZy008cQjqkJeKpJu8tA" },
   { id: "yt-futur", name: "The Futur", slug: "yt-futur", url: "https://youtube.com/@thefutur", type: "youtube", category: "youtube", initials: "TF", swatch: "thumb-grad-1", youtubeChannelId: "UC-b3c7kxa5vU-bnmaROgvog" },
-  { id: "yt-ajsmart", name: "AJ&Smart", slug: "yt-ajsmart", url: "https://youtube.com/@AJSmart", type: "youtube", category: "youtube", initials: "AJ", swatch: "thumb-grad-2", youtubeChannelId: "UCeB_OpLspKJGiKv1CYkWFFw" },
   { id: "yt-satori", name: "Satori Graphics", slug: "yt-satori", url: "https://youtube.com/@SatoriGraphics", type: "youtube", category: "youtube", initials: "Sg", swatch: "thumb-grad-7", youtubeChannelId: "UCoeJKtPJLoIBqWq4o8TDLpA" },
   { id: "yt-uxtigers", name: "UX Tigers (YT)", slug: "yt-uxtigers", url: "https://youtube.com/@UXtigers", type: "youtube", category: "youtube", initials: "UT", swatch: "thumb-grad-4", youtubeChannelId: "UClcHLdKqI-_xUthkLLZZ_xg" },
   { id: "yt-nngroup", name: "NNGroup (YT)", slug: "yt-nngroup", url: "https://youtube.com/@NNgroup", type: "youtube", category: "youtube", initials: "NN", swatch: "thumb-grad-2", youtubeChannelId: "UC2oCugzU6W8-h95W7eBTUEg" },
   { id: "yt-femke", name: "Femke.design (YT)", slug: "yt-femke", url: "https://youtube.com/@femkedesign", type: "youtube", category: "youtube", initials: "Fe", swatch: "thumb-grad-8", youtubeChannelId: "UCWUGGwfTfJ0-2jUS3dZqOJA" },
   { id: "yt-punit", name: "Punit Chawla", slug: "yt-punit", url: "https://youtube.com/@PunitChawla", type: "youtube", category: "youtube", initials: "PC", swatch: "thumb-grad-3", youtubeChannelId: "UCkfdb6tUwVoGXPPzY7H6hUg" },
-  { id: "yt-designerup", name: "DesignerUp", slug: "yt-designerup", url: "https://youtube.com/@designerup", type: "youtube", category: "youtube", initials: "Du", swatch: "thumb-grad-6", youtubeChannelId: "UCw2R8kz3aotYtV9utqf0uaw" },
   { id: "yt-champs", name: "Design Champs", slug: "yt-champs", url: "https://youtube.com/@DesignChamps", type: "youtube", category: "youtube", initials: "EC", swatch: "thumb-grad-5" },
 
   // Product & Startup
@@ -149,15 +148,12 @@ export const SOURCES: Source[] = [
   { id: "designdetails", name: "Design Details", slug: "designdetails", url: "https://designdetails.fm", type: "podcast", category: "podcasts", initials: "DD", swatch: "thumb-grad-1" },
   { id: "99pi", name: "99% Invisible", slug: "99pi", url: "https://99percentinvisible.org", feedUrl: "https://99percentinvisible.org/feed/", type: "podcast", category: "podcasts", initials: "99", swatch: "thumb-grad-9" },
   { id: "designmatters", name: "Design Matters", slug: "designmatters", url: "https://designmattersmedia.com", type: "podcast", category: "podcasts", initials: "DM", swatch: "thumb-grad-4" },
-  { id: "uibreakfast", name: "UI Breakfast", slug: "uibreakfast", url: "https://uibreakfast.com/podcast", feedUrl: "https://feeds.simplecast.com/4MvgQ73R", type: "podcast", category: "podcasts", initials: "UB", swatch: "thumb-grad-4" },
   { id: "honestux", name: "Honest UX Talks", slug: "honestux", url: "https://honestuxtalks.com", type: "podcast", category: "podcasts", initials: "HU", swatch: "thumb-grad-8" },
   { id: "nngpod", name: "NN/g UX Podcast", slug: "nngpod", url: "https://nngroup.com/podcast", type: "podcast", category: "podcasts", initials: "NP", swatch: "thumb-grad-2" },
   // Active podcast feeds added 2026-06-01 (verified live RSS) so the section
   // stays fresh — previously only 99pi + UI Breakfast actually pulled.
-  { id: "uxpodcast", name: "UX Podcast", slug: "uxpodcast", url: "https://uxpodcast.com", feedUrl: "https://uxpodcast.com/feed/podcast/", type: "podcast", category: "podcasts", initials: "UX", swatch: "thumb-grad-3" },
   { id: "boagworld", name: "Boagworld UX Show", slug: "boagworld", url: "https://boagworld.com/show/", feedUrl: "https://boagworld.com/feed/podcast/", type: "podcast", category: "podcasts", initials: "Bw", swatch: "thumb-grad-5" },
   { id: "shoptalk", name: "ShopTalk Show", slug: "shoptalk", url: "https://shoptalkshow.com", feedUrl: "https://shoptalkshow.com/feed/podcast/", type: "podcast", category: "podcasts", initials: "ST", swatch: "thumb-grad-6" },
-  { id: "smashingpod", name: "Smashing Podcast", slug: "smashingpod", url: "https://podcast.smashingmagazine.com", feedUrl: "https://podcast.smashingmagazine.com/rss", type: "podcast", category: "podcasts", initials: "SP", swatch: "thumb-grad-2" },
   { id: "a16zpod", name: "a16z Podcast", slug: "a16zpod", url: "https://a16z.com/podcasts/", feedUrl: "https://feeds.simplecast.com/JGE3yC0V", type: "podcast", category: "podcasts", initials: "A1", swatch: "thumb-grad-7" },
   // Added 2026-06-28 (Phase 3) — validated live + frequent, to keep podcasts in rotation.
   { id: "lennyspod", name: "Lenny's Podcast", slug: "lennyspod", url: "https://www.lennyspodcast.com", feedUrl: "https://api.substack.com/feed/podcast/10845.rss", type: "podcast", category: "podcasts", initials: "LP", swatch: "thumb-grad-5" },
@@ -192,15 +188,15 @@ export const CATEGORY_META: Record<
  * (feedUrl or YouTube channel), so the copy stays true.
  */
 export const CATEGORY_INTRO: Record<SourceCategory, string> = {
-  "design-tools": "New features, plugins and workflows for the tools designers use every day, from Sidebar.io, Prototypr, CSS-Tricks and web.dev.",
-  "ux-thinking": "Research, process and craft: the UX writing worth reading, from NN/g, UX Collective, Smashing Magazine, UX Planet and more.",
-  inspiration: "Standout websites and interfaces to learn from, picked from Awwwards, SiteInspire, One Page Love and Muzli.",
+  "design-tools": "New features, plugins and workflows for the tools designers use every day, from the Figma Blog, Sidebar.io, CSS-Tricks and web.dev.",
+  "ux-thinking": "Research, process and craft: the UX writing worth reading, from NN/g, UX Collective, Smashing Magazine, Brad Frost, LukeW and more.",
+  inspiration: "Standout websites and interfaces to learn from, picked from Awwwards, Abduzeedo, SiteInspire, One Page Love and Web Design Inspiration.",
   youtube: "Design talks, tutorials and teardowns from channels like Figma, Dive Club, The Futur, Flux Academy and NN/g.",
   product: "Strategy, growth and new launches for people who build products, from Lenny's Newsletter, Stratechery, Product Hunt and Intercom.",
   "tech-news": "The tech news designers should know about, from The Verge, Hacker News, TechCrunch, Wired and Ars Technica.",
   "ai-tools": "What's new in AI and how it's changing design work, from One Useful Thing, Import AI, Hugging Face, OpenAI and MIT Technology Review.",
   newsletters: "Issues from the design newsletters worth subscribing to.",
-  podcasts: "New episodes from design and product podcasts like 99% Invisible, UI Breakfast, Smashing Podcast and Lenny's Podcast.",
+  podcasts: "New episodes from design and product podcasts like 99% Invisible, Boagworld, ShopTalk Show and Lenny's Podcast.",
 };
 
 export const sourceById = (id: string) =>
