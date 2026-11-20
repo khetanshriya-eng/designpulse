@@ -150,7 +150,7 @@ export default async function EditionPage({
             secondary={{ href: "/archive", label: "Browse the archive" }}
             noindex
           >
-            <EditionCards>
+            <EditionCards title="Where to start reading">
               <EditionCard date={FIRST_EDITION} label="The first edition" wide={!latest} />
               {latest && <EditionCard date={latest} label="Today's edition" />}
             </EditionCards>
@@ -172,7 +172,7 @@ export default async function EditionPage({
             noindex
           >
             {latest && (
-              <EditionCards>
+              <EditionCards title="Read this while you wait">
                 <EditionCard date={latest} label={isToday ? "The latest edition" : "Today's edition"} wide />
               </EditionCards>
             )}
@@ -189,12 +189,12 @@ export default async function EditionPage({
         mood="blank"
         kicker="No paper that day"
         title={`No edition on ${shortEditionDate(date)}.`}
-        body="Some days the press rests. These are the nearest editions:"
+        body="Some days the press rests. The closest editions are below."
         secondary={{ href: "/archive", label: "Browse the archive" }}
         noindex
       >
         {(before || after) && (
-          <EditionCards>
+          <EditionCards title={before && after ? "The editions either side of it" : "The nearest edition"}>
             {before && <EditionCard date={before} label="The day before" wide={!after} />}
             {after && <EditionCard date={after} label="The day after" wide={!before} />}
           </EditionCards>

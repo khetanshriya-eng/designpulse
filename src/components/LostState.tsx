@@ -26,6 +26,7 @@ export function LostState({
   primary,
   secondary,
   noindex = false,
+  extra,
   children,
 }: {
   mood: PaperMood;
@@ -36,6 +37,8 @@ export function LostState({
   secondary?: Action;
   /** For states rendered inside a 200 page (data-dependent misses). */
   noindex?: boolean;
+  /** Sits right under the body, inside the text column (e.g. section chips). */
+  extra?: ReactNode;
   children?: ReactNode;
 }) {
   return (
@@ -46,19 +49,20 @@ export function LostState({
         <div className="order-2 md:order-1">
           <p className="font-pixel text-[12px] uppercase tracking-[0.16em] text-accent">{kicker}</p>
           <h1
-            className="mt-3 font-heading text-[2.1rem] sm:text-[2.8rem] leading-[1.05] text-ink"
+            className="mt-1.5 font-heading text-[2.1rem] sm:text-[2.8rem] leading-[1.02] text-ink"
             style={{ textWrap: "balance" }}
           >
             {title}
           </h1>
           <div
-            className="mt-3 max-w-[600px] text-[15px] leading-relaxed text-ink-muted"
+            className="mt-1.5 max-w-[600px] text-[15px] leading-normal text-ink-muted"
             style={{ textWrap: "pretty" }}
           >
             {body}
           </div>
+          {extra && <div className="mt-4">{extra}</div>}
           {(primary || secondary) && (
-            <div className="mt-7 flex flex-wrap items-center gap-3">
+            <div className="mt-6 flex flex-wrap items-center gap-3">
               {primary && <LostButton action={primary} variant="primary" />}
               {secondary && <LostButton action={secondary} variant="secondary" />}
             </div>

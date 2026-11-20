@@ -42,6 +42,11 @@ export async function EditionCard({ date, label, wide = false }: { date: string;
 }
 
 /** One or two cards side by side, never stretched across a wide screen. */
-export function EditionCards({ children }: { children: React.ReactNode }) {
-  return <div className="grid gap-6 md:grid-cols-2">{children}</div>;
+export function EditionCards({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h2 className="mb-4 font-heading text-[1.4rem] leading-tight text-ink">{title}</h2>
+      <div className="grid gap-6 md:grid-cols-2">{children}</div>
+    </div>
+  );
 }

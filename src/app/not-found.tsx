@@ -26,20 +26,21 @@ export default function NotFound() {
         kicker="Wrong section"
         title="We don't run that section."
         body="Pick one of the sections Designator covers:"
-      >
-        <ul className="flex flex-wrap gap-3">
-          {Object.entries(CATEGORY_META).map(([slug, meta]) => (
-            <li key={slug}>
-              <Link
-                href={`/category/${slug}`}
-                className="surface-card inline-flex h-11 items-center px-4 font-pixel text-[13px] uppercase tracking-[0.08em] text-ink"
-              >
-                {meta.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </LostState>
+        extra={
+          <ul className="flex max-w-[600px] flex-wrap gap-2.5">
+            {Object.entries(CATEGORY_META).map(([slug, meta]) => (
+              <li key={slug}>
+                <Link
+                  href={`/category/${slug}`}
+                  className="surface-card inline-flex h-10 items-center px-3.5 font-pixel text-[13px] uppercase tracking-[0.08em] text-ink"
+                >
+                  {meta.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        }
+      />
     );
   }
 
@@ -50,8 +51,19 @@ export default function NotFound() {
         mood="blank"
         kicker="Lost the page"
         title="That page doesn't exist."
-        body={meta ? `Start from the top of ${meta.label} instead.` : "Start from today's edition instead."}
-        primary={meta ? { href: `/category/${lost.detail}`, label: `${meta.label}, page 1` } : { href: "/", label: "Today's edition" }}
+        body={
+          meta
+            ? `Start from the top of ${meta.label} instead.`
+            : "Start from today's edition instead."
+        }
+        primary={
+          meta
+            ? {
+                href: `/category/${lost.detail}`,
+                label: `${meta.label}, page 1`,
+              }
+            : { href: "/", label: "Today's edition" }
+        }
         secondary={meta ? { href: "/", label: "Today's edition" } : undefined}
       />
     );
@@ -65,8 +77,9 @@ export default function NotFound() {
         title="We can't read that date."
         body={
           <>
-            Edition links look like <span className="font-pixel text-ink">/edition/2026-11-20</span>. Pick a day
-            from the archive instead.
+            Edition links look like{" "}
+            <span className="font-pixel text-ink">/edition/2026-11-20</span>.
+            Pick a day from the archive instead.
           </>
         }
         primary={{ href: "/", label: "Today's edition" }}
