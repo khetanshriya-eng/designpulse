@@ -14,11 +14,14 @@ import { CategorySections } from "@/components/CategorySections";
 import { InspirationStrip } from "@/components/InspirationStrip";
 import { EditionBar } from "@/components/EditionBar";
 import { formatEditionDate } from "@/lib/format";
-import { getEdition, getArticlesForEdition } from "@/lib/data/queries";
+import { getEdition, getArticlesForEdition, listEditionDates } from "@/lib/data/queries";
 import type { SourceCategory } from "@/data/sources";
 import type { Article } from "@/data/articles";
 import { SITE_URL } from "@/lib/site";
 import { NewsletterCTA } from "@/components/NewsletterCTA";
+import { LostState } from "@/components/LostState";
+import { EditionCard, EditionCards } from "@/components/EditionCard";
+import { FIRST_EDITION, todayIst } from "@/lib/lost";
 
 // Real month/day ranges — 2026-99-99 should 404 at the regex, not hit the DB.
 const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -129,7 +132,76 @@ export default async function EditionPage({
     getArticlesForEdition(date),
   ]);
 
-  if (!edition) notFound();
+  // Dead ends inside a real date: before launch, not out yet, or a day the
+  // press rested. Each explains itself and offers real editions to read,
+  // shown as cards. They render inside a 200 page, so they carry noindex.
+  if (!edition) {
+    const dates = (await listEditionDates(5000).catch(() => [] as string[])).slice().sort();
+    const latest = dates.at(-1);
+
+    if (date < FIRST_EDITION) {
+      return (
+        <>
+          <LostState
+            mood="blank"
+            kicker="Before our time"
+            title="We weren't printing yet."
+            body={`Designator's first edition went out on ${formatEditionDate(FIRST_EDITION)}. Start there, or jump to today's.`}
+            secondary={{ href: "/archive", label: "Browse the archive" }}
+            noindex
+          >
+            <EditionCards title="Where to start reading">
+              <EditionCard date={FIRST_EDITION} label="The first edition" wide={!latest} />
+              {latest && <EditionCard date={latest} label="Today's edition" />}
+            </EditionCards>
+          </LostState>
+        </>
+      );
+    }
+
+    // Today before the 06:00 IST edition is curated, or any future date.
+    if (date >= todayIst()) {
+      const isToday = date === todayIst();
+      return (
+        <>
+          <LostState
+            mood="printing"
+            kicker="Still on the press"
+            title={isToday ? "Today's edition isn't out yet." : `${shortEditionDate(date)} isn't out yet.`}
+            body={isToday ? "It drops at 6 am IST. Read the latest one while you wait, or get the next one in your inbox." : "Every edition drops at 6 am IST. Read today's while you wait, or get the next one in your inbox."}
+            noindex
+          >
+            {latest && (
+              <EditionCards title="Read this while you wait">
+                <EditionCard date={latest} label={isToday ? "The latest edition" : "Today's edition"} wide />
+              </EditionCards>
+            )}
+          </LostState>
+          <NewsletterCTA />
+        </>
+      );
+    }
+
+    const before = dates.filter((d) => d < date).at(-1);
+    const after = dates.find((d) => d > date);
+    return (
+      <LostState
+        mood="blank"
+        kicker="No paper that day"
+        title={`No edition on ${shortEditionDate(date)}.`}
+        body="Some days the press rests. The closest editions are below."
+        secondary={{ href: "/archive", label: "Browse the archive" }}
+        noindex
+      >
+        {(before || after) && (
+          <EditionCards title={before && after ? "The editions either side of it" : "The nearest edition"}>
+            {before && <EditionCard date={before} label="The day before" wide={!after} />}
+            {after && <EditionCard date={after} label="The day after" wide={!before} />}
+          </EditionCards>
+        )}
+      </LostState>
+    );
+  }
 
   // Must-reads come from a GLOBAL is_must_read flag (today's picks), so on a
   // past edition they'd bleed today's stories in — keep only the ones from
