@@ -1,20 +1,27 @@
+"use client";
+
 import Link from "next/link";
-import { headers } from "next/headers";
+import { usePathname } from "next/navigation";
 import { LostState } from "@/components/LostState";
 import { NewsletterCTA } from "@/components/NewsletterCTA";
 import { CATEGORY_META } from "@/data/sources";
 import { formatEditionDate } from "@/lib/format";
+import { classifyLostPath, FIRST_EDITION } from "@/lib/lost";
 
 /**
  * Not-found page (served with a real 404 status). Readers see what happened
- * and what to do next, never a status code. src/proxy.ts passes the reason
- * for URLs it can judge from their shape; anything else gets the general
- * "not in any edition" state.
+ * and what to do next, never a status code.
+ *
+ * Client component on purpose: it reads the address the reader actually
+ * visited (usePathname) and classifies it with the same rules as proxy.ts.
+ * Reading request headers on the server instead made this boundary dynamic,
+ * which broke every ISR-cached edition and category page with "static to
+ * dynamic at runtime" 500s (caught on staging, 2026-11-20).
  */
-export default async function NotFound() {
-  const h = await headers();
-  const reason = h.get("x-lost-reason");
-  const detail = h.get("x-lost-detail") ?? "";
+export default function NotFound() {
+  const lost = classifyLostPath(usePathname() ?? "");
+  const reason = lost?.reason;
+  const detail = lost?.detail ?? "";
 
   if (reason === "future-edition") {
     return (
@@ -36,9 +43,9 @@ export default async function NotFound() {
         art="blank"
         kicker="Before our time"
         title="Designator wasn't printing yet."
-        body={`The first edition went out on ${formatEditionDate("2026-05-18")}.`}
+        body={`The first edition went out on ${formatEditionDate(FIRST_EDITION)}.`}
         actions={[
-          { href: "/edition/2026-05-18", label: "Read the first edition", primary: true },
+          { href: `/edition/${FIRST_EDITION}`, label: "Read the first edition", primary: true },
           { href: "/archive", label: "Browse the archive" },
         ]}
       />
