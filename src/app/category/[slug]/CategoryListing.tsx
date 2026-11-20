@@ -36,15 +36,13 @@ export async function CategoryListing({ slug, page }: { slug: SourceCategory; pa
   if (page > totalPages) {
     return (
       <LostState
-        art="end"
+        mood="end"
         kicker="End of the section"
-        title={`You've reached the end of ${meta.label}.`}
-        body={`${meta.label} has ${totalPages} ${totalPages === 1 ? "page" : "pages"} of stories right now.`}
+        title={`That's the end of ${meta.label}.`}
+        body={`You've gone past every story we keep here: ${meta.label} has ${totalPages} ${totalPages === 1 ? "page" : "pages"} right now.`}
         noindex
-        actions={[
-          { href: `/category/${slug}`, label: "Back to page 1", primary: true },
-          ...(totalPages > 1 ? [{ href: `/category/${slug}/page/${totalPages}`, label: `Last page (${totalPages})` }] : []),
-        ]}
+        primary={{ href: `/category/${slug}`, label: "Back to page 1" }}
+        secondary={totalPages > 1 ? { href: `/category/${slug}/page/${totalPages}`, label: `Last page (${totalPages})` } : { href: "/", label: "Today's edition" }}
       />
     );
   }
