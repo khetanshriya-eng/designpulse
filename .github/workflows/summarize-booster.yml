@@ -1,0 +1,50 @@
+name: Summarize booster
+
+# Extra AI-summary runs between the two Vercel crons.
+#
+# Vercel Hobby allows only two cron jobs, and each pipeline run has ~15 s of
+# its budget left for summaries (about 10-15 stories), while 40-180 new
+# articles arrive a day. Summaries are what curate needs to feature a story,
+# so thin coverage meant thin editions. This calls the standalone summarize
+# route three times a day. It picks the 48h window first (featurable stories
+# ahead of the rest), so it feeds the next 20:00 / 06:00 IST editions.
+#
+# Budget: the binding limit is Groq's free tier for openai/gpt-oss-120b,
+# 200K tokens/day (also 8K tokens/min, 1K requests/day). At ~2K tokens per
+# summary that's ~90/day in total; the two pipeline runs use ~30, so this
+# adds 3 x 10 = 30 and leaves headroom. Don't raise it without checking
+# Groq's limits page: running out pushes summaries onto Gemini's 20/day.
+# GitHub may start scheduled runs late or skip some; that's fine here.
+
+on:
+  schedule:
+    # 05:00, 10:00, 21:00 UTC = 10:30, 15:30, 02:30 IST
+    - cron: "0 5,10,21 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: summarize-booster
+  cancel-in-progress: false
+
+jobs:
+  summarize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Summarize the newest unsummarized stories
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          BASE: https://www.designatorapp.com
+        run: |
+          set -u
+          code=$(curl -s -o out.json -w "%{http_code}" --max-time 65 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$BASE/api/cron/summarize?limit=10&concurrency=2")
+          echo "HTTP $code $(head -c 300 out.json)"
+          if [ "$code" != "200" ]; then
+            echo "::error::summarize call failed (HTTP $code)"
+            exit 1
+          fi
+          if grep -q '"failed":[1-9]' out.json; then
+            echo "::warning::some summaries failed (provider quota or errors) — see Vercel logs"
+          fi
