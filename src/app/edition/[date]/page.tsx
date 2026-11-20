@@ -151,7 +151,7 @@ export default async function EditionPage({
             noindex
           >
             <EditionCards>
-              <EditionCard date={FIRST_EDITION} label="The first edition" />
+              <EditionCard date={FIRST_EDITION} label="The first edition" wide={!latest} />
               {latest && <EditionCard date={latest} label="Today's edition" />}
             </EditionCards>
           </LostState>
@@ -173,7 +173,7 @@ export default async function EditionPage({
           >
             {latest && (
               <EditionCards>
-                <EditionCard date={latest} label={isToday ? "The latest edition" : "Today's edition"} />
+                <EditionCard date={latest} label={isToday ? "The latest edition" : "Today's edition"} wide />
               </EditionCards>
             )}
           </LostState>
@@ -195,8 +195,8 @@ export default async function EditionPage({
       >
         {(before || after) && (
           <EditionCards>
-            {before && <EditionCard date={before} label="The day before" />}
-            {after && <EditionCard date={after} label="The day after" />}
+            {before && <EditionCard date={before} label="The day before" wide={!after} />}
+            {after && <EditionCard date={after} label="The day after" wide={!before} />}
           </EditionCards>
         )}
       </LostState>
