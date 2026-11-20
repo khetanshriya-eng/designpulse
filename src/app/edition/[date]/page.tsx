@@ -14,11 +14,12 @@ import { CategorySections } from "@/components/CategorySections";
 import { InspirationStrip } from "@/components/InspirationStrip";
 import { EditionBar } from "@/components/EditionBar";
 import { formatEditionDate } from "@/lib/format";
-import { getEdition, getArticlesForEdition } from "@/lib/data/queries";
+import { getEdition, getArticlesForEdition, listEditionDates } from "@/lib/data/queries";
 import type { SourceCategory } from "@/data/sources";
 import type { Article } from "@/data/articles";
 import { SITE_URL } from "@/lib/site";
 import { NewsletterCTA } from "@/components/NewsletterCTA";
+import { LostState } from "@/components/LostState";
 
 // Real month/day ranges — 2026-99-99 should 404 at the regex, not hit the DB.
 const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -129,7 +130,28 @@ export default async function EditionPage({
     getArticlesForEdition(date),
   ]);
 
-  if (!edition) notFound();
+  // A real date with no edition (the press rested that day): point to the
+  // nearest editions instead of a dead end. Renders inside a 200 page, so it
+  // carries noindex.
+  if (!edition) {
+    const dates = await listEditionDates(5000).catch(() => [] as string[]);
+    const before = dates.filter((d) => d < date).sort().at(-1);
+    const after = dates.filter((d) => d > date).sort()[0];
+    return (
+      <LostState
+        art="blank"
+        kicker="No paper that day"
+        title={`No edition went out on ${formatEditionDate(date)}.`}
+        body="Some days the press rests. Here are the closest editions:"
+        noindex
+        actions={[
+          ...(before ? [{ href: `/edition/${before}`, label: `← ${shortEditionDate(before)}`, primary: true }] : []),
+          ...(after ? [{ href: `/edition/${after}`, label: `${shortEditionDate(after)} →`, primary: true }] : []),
+          { href: "/archive", label: "Browse the archive" },
+        ]}
+      />
+    );
+  }
 
   // Must-reads come from a GLOBAL is_must_read flag (today's picks), so on a
   // past edition they'd bleed today's stories in — keep only the ones from

@@ -1,10 +1,10 @@
-import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArticleCard } from "@/components/ArticleCard";
 import { SectionHeader } from "@/components/SectionHeader";
 import { CATEGORY_INTRO, CATEGORY_META, type SourceCategory } from "@/data/sources";
 import { getCategoryPage } from "@/lib/data/queries";
 import { NewsletterCTA } from "@/components/NewsletterCTA";
+import { LostState } from "@/components/LostState";
 
 const PAGE_SIZE = 24;
 
@@ -30,8 +30,24 @@ export async function CategoryListing({ slug, page }: { slug: SourceCategory; pa
   });
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  // A page number past the end (or a stale link) is a 404, not an empty page.
-  if (page > totalPages) notFound();
+  // Past the last page (an old link, or the section shrank): say so and
+  // offer the way back, rather than a bare not-found. Inside a 200 page, so
+  // it carries noindex.
+  if (page > totalPages) {
+    return (
+      <LostState
+        art="end"
+        kicker="End of the section"
+        title={`You've reached the end of ${meta.label}.`}
+        body={`${meta.label} has ${totalPages} ${totalPages === 1 ? "page" : "pages"} of stories right now.`}
+        noindex
+        actions={[
+          { href: `/category/${slug}`, label: "Back to page 1", primary: true },
+          ...(totalPages > 1 ? [{ href: `/category/${slug}/page/${totalPages}`, label: `Last page (${totalPages})` }] : []),
+        ]}
+      />
+    );
+  }
 
   return (
     <>

@@ -18,30 +18,41 @@ const CATEGORIES = new Set(Object.keys(CATEGORY_META));
 const FIRST_EDITION = "2026-05-18";
 const IST_OFFSET_MS = 5.5 * 3_600_000;
 
-function isValidEditionDate(date: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+type Lost = { reason: string; detail?: string };
+
+function editionProblem(date: string): Lost | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { reason: "bad-date" };
   const t = Date.parse(`${date}T00:00:00Z`);
-  if (Number.isNaN(t) || new Date(t).toISOString().slice(0, 10) !== date) return false; // e.g. 2026-02-31
+  if (Number.isNaN(t) || new Date(t).toISOString().slice(0, 10) !== date) return { reason: "bad-date" }; // e.g. 2026-02-31
   const todayIst = new Date(Date.now() + IST_OFFSET_MS).toISOString().slice(0, 10);
-  return date >= FIRST_EDITION && date <= todayIst;
+  if (date < FIRST_EDITION) return { reason: "before-launch", detail: date };
+  if (date > todayIst) return { reason: "future-edition", detail: date };
+  return null;
 }
 
-function isValid(pathname: string): boolean {
+/** null = looks valid; otherwise why not (shown to the reader by not-found.tsx). */
+function problem(pathname: string): Lost | null {
   const parts = pathname.split("/").filter(Boolean);
   if (parts[0] === "category") {
-    if (!parts[1] || !CATEGORIES.has(parts[1])) return false;
-    if (parts.length === 2) return true;
-    return parts.length === 4 && parts[2] === "page" && /^[1-9]\d{0,4}$/.test(parts[3]);
+    if (!parts[1] || !CATEGORIES.has(parts[1])) return { reason: "bad-section" };
+    if (parts.length === 2) return null;
+    if (parts.length === 4 && parts[2] === "page" && /^[1-9]\d{0,4}$/.test(parts[3])) return null;
+    return { reason: "bad-page", detail: parts[1] };
   }
   if (parts[0] === "edition") {
-    return parts.length === 2 && isValidEditionDate(parts[1]);
+    return parts.length === 2 ? editionProblem(parts[1]) : { reason: "bad-date" };
   }
-  return true;
+  return null;
 }
 
 export function proxy(request: NextRequest) {
-  if (isValid(request.nextUrl.pathname)) return NextResponse.next();
-  return NextResponse.rewrite(new URL("/__not-found", request.url));
+  const lost = problem(request.nextUrl.pathname);
+  if (!lost) return NextResponse.next();
+  // Tell not-found.tsx why, so it can say something specific and useful.
+  const headers = new Headers(request.headers);
+  headers.set("x-lost-reason", lost.reason);
+  if (lost.detail) headers.set("x-lost-detail", lost.detail);
+  return NextResponse.rewrite(new URL("/__not-found", request.url), { request: { headers } });
 }
 
 export const config = {
