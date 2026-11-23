@@ -102,6 +102,19 @@ export type DigestLogRow = {
   story_count: number;
 };
 
+export type MetricsDailyRow = {
+  day: string; // date (YYYY-MM-DD), IST day described
+  sessions: number | null;
+  bot_sessions: number | null;
+  users: number | null;
+  subscribers: number | null;
+  clarity: unknown;
+  clarity_source: unknown;
+  fetched_at: string;
+};
+
+export type WeeklyReportLogRow = { week_end: string; sent_at: string };
+
 export type Database = {
   public: {
     Tables: {
@@ -130,6 +143,18 @@ export type Database = {
           Pick<SubscriberRow, "status" | "source" | "created_at" | "unsubscribed_at" | "resubscribed_at" | "unsub_reason">
         > & { email: string };
         Update: Partial<SubscriberRow>;
+        Relationships: [];
+      };
+      metrics_daily: {
+        Row: MetricsDailyRow;
+        Insert: Partial<MetricsDailyRow> & { day: string };
+        Update: Partial<MetricsDailyRow>;
+        Relationships: [];
+      };
+      weekly_report_log: {
+        Row: WeeklyReportLogRow;
+        Insert: Partial<WeeklyReportLogRow> & { week_end: string };
+        Update: Partial<WeeklyReportLogRow>;
         Relationships: [];
       };
       digest_log: {

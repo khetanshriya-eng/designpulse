@@ -29,6 +29,7 @@ import { runSendDigest } from "@/lib/newsletter";
 import { logger } from "@/lib/logger";
 import { sendAdminAlert } from "@/lib/notify";
 import { checkCronAuth } from "@/lib/cron-auth";
+import { captureDailyMetrics, sendWeeklyReport } from "@/lib/metrics";
 
 export const dynamic = "force-dynamic";
 // Hobby plan caps at 60s.
@@ -103,6 +104,23 @@ async function handle(req: NextRequest) {
       failures.push({ step: "digest", error });
     }
   }
+
+  // ── Metrics (morning run only): save yesterday's Clarity + subscriber
+  // numbers, and on Mondays email the weekly report. Started now and awaited
+  // at the end, so it runs alongside fetch instead of eating its budget.
+  // Capped at 10s and never alerted on: it must not cost the pipeline or the
+  // digest anything.
+  const metricsLog = logger("cron.pipeline.metrics");
+  const metricsRun = new URL(req.url).searchParams.get("digest")
+    ? withStepDeadline(
+        (async () => {
+          const captured = await captureDailyMetrics(metricsLog);
+          const weekly = await sendWeeklyReport(metricsLog);
+          return { captured, weekly };
+        })().catch((err: Error) => ({ error: err.message })),
+        10_000
+      )
+    : null;
 
   // Each step is independent re: errors. If one throws we still return
   // partial progress for the others — the next run will retry.
@@ -179,6 +197,14 @@ async function handle(req: NextRequest) {
       log.info("caches revalidated after curate");
     } catch (err) {
       log.error("revalidation failed", { error: (err as Error).message });
+    }
+  }
+
+  if (metricsRun) {
+    const metrics = await metricsRun;
+    out.metrics = metrics.timedOut ? { timedOut: true } : metrics.result;
+    if (metrics.timedOut || (metrics.result && "error" in metrics.result)) {
+      metricsLog.warn("metrics step did not finish", { result: out.metrics });
     }
   }
 
