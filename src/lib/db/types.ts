@@ -122,6 +122,15 @@ export type OutboundClickRow = {
   host: string | null;
 };
 
+export type ReaderVisitRow = {
+  id: number;
+  seen_at: string;
+  day: string;
+  visit_id: string;
+  path: string;
+  host: string | null;
+};
+
 export type WeeklyReportLogRow = { week_end: string; sent_at: string };
 
 export type Database = {
@@ -164,6 +173,12 @@ export type Database = {
         Row: OutboundClickRow;
         Insert: Omit<OutboundClickRow, "id" | "clicked_at"> & { clicked_at?: string };
         Update: Partial<OutboundClickRow>;
+        Relationships: [];
+      };
+      reader_visits: {
+        Row: ReaderVisitRow;
+        Insert: Omit<ReaderVisitRow, "id" | "seen_at"> & { seen_at?: string };
+        Update: Partial<ReaderVisitRow>;
         Relationships: [];
       };
       weekly_report_log: {

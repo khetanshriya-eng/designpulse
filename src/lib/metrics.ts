@@ -193,6 +193,21 @@ export async function sendWeeklyReport(log: Logger, opts: { now?: number; force?
     for (const a of arts ?? []) if (a.title) titles.set(a.original_url, a.title);
   }
 
+  // Real readers (migration 0008): pages where someone stayed 5 s or
+  // interacted. Bots and instant bounces never record one.
+  const { data: visitRows } = await svc
+    .from("reader_visits")
+    .select("day, visit_id, path")
+    .gte("day", prevStart)
+    .lte("day", weekEnd)
+    .in("host", PROD);
+  const visitsNow = (visitRows ?? []).filter((v) => v.day >= weekStart);
+  const visitsPrev = (visitRows ?? []).filter((v) => v.day < weekStart);
+  const readersNow = new Set(visitsNow.map((v) => v.visit_id)).size;
+  const readersPrev = new Set(visitsPrev.map((v) => v.visit_id)).size;
+  const readPages = new Map<string, number>();
+  for (const v of visitsNow) readPages.set(v.path, (readPages.get(v.path) ?? 0) + 1);
+
   const all = (rows ?? []) as MetricsDailyRow[];
   const cur = summarize(all.filter((r) => r.day >= weekStart));
   const prev = summarize(all.filter((r) => r.day < weekStart));
@@ -209,22 +224,25 @@ export async function sendWeeklyReport(log: Logger, opts: { now?: number; force?
   if (cur.days < 7) attention.push(`Traffic covers ${cur.days} of 7 days (capture started recently or Clarity failed on some days).`);
   if (digestDays < 7) attention.push(`The digest went out on ${digestDays} of 7 days.`);
   if (bounced > 0) attention.push(`${bounced} address${bounced === 1 ? "" : "es"} removed for bouncing or complaints.`);
-  if (hasPrev && prev.sessions >= 10 && cur.sessions < prev.sessions * 0.6) attention.push("Traffic dropped by more than 40%.");
+  if (readersPrev >= 5 && readersNow < readersPrev * 0.6) attention.push("Real readers dropped by more than 40%.");
 
   const body = [
     `Designator, week of ${fmt(weekStart)} to ${fmt(weekEnd)} (IST)`,
     "",
-    "TRAFFIC (Clarity)",
-    `  Sessions: ${cur.sessions}${delta(cur.sessions, prev.sessions, hasPrev)}${cur.bots ? `, ${cur.bots} flagged as bots` : ""}`,
-    `  Daily visitors, summed: ${cur.users}${delta(cur.users, prev.users, hasPrev)}`,
-    `  Mobile: ${cur.sessions ? Math.round((cur.mobile / cur.sessions) * 100) : 0}% of sessions`,
-    `  Top sources: ${top(cur.sources, 4)}`,
-    `  Top pages: ${top(cur.pages, 4)}`,
-    `  Rage clicks: ${cur.rageSessions} session${cur.rageSessions === 1 ? "" : "s"}; dead clicks: ${cur.deadSessions}`,
+    "REAL READERS (stayed 5 s+ or interacted; no bots)",
+    `  Reader visits: ${readersNow}${delta(readersNow, readersPrev, readersPrev > 0)}`,
+    `  Pages read: ${visitsNow.length}`,
+    `  Most read pages: ${top(readPages, 4)}`,
     "",
-    "READING (clicks out to stories)",
+    "CLICKS OUT TO STORIES",
     `  Clicks: ${clicksNow.length}${delta(clicksNow.length, clicksPrev, clicksPrev > 0)}`,
     ...topUrls.map(([u, n]) => `  ${n}× ${(titles.get(u) ?? u).slice(0, 90)}`),
+    "",
+    "ALL TRAFFIC (Clarity, includes bots and instant bounces)",
+    `  Sessions: ${cur.sessions}${delta(cur.sessions, prev.sessions, hasPrev)}${cur.bots ? `, ${cur.bots} flagged as bots` : ""}`,
+    `  Mobile: ${cur.sessions ? Math.round((cur.mobile / cur.sessions) * 100) : 0}% of sessions`,
+    `  Top sources: ${top(cur.sources, 4)}`,
+    `  Rage clicks: ${cur.rageSessions} session${cur.rageSessions === 1 ? "" : "s"}; dead clicks: ${cur.deadSessions}`,
     "",
     "NEWSLETTER",
     `  Active subscribers: ${subsNow ?? "unknown"}${subsNow != null && subsWeekAgo != null ? delta(subsNow, subsWeekAgo, true) : ""}`,
@@ -235,7 +253,7 @@ export async function sendWeeklyReport(log: Logger, opts: { now?: number; force?
     ...attention.map((a) => `  - ${a}`),
   ].join("\n");
 
-  const ok = await sendAdminAlert({ subject: `Weekly numbers: ${cur.sessions} sessions, ${subsNow ?? "?"} subscribers`, body });
+  const ok = await sendAdminAlert({ subject: `Weekly numbers: ${readersNow} reader visits, ${clicksNow.length} clicks, ${subsNow ?? "?"} subscribers`, body });
   if (!ok) return { sent: false, reason: "email failed" };
   if (!opts.force) await svc.from("weekly_report_log").insert({ week_end: weekEnd });
   log.info("weekly report sent", { weekStart, weekEnd });

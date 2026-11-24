@@ -9,6 +9,7 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { Analytics } from "@/components/Analytics";
 import { OutboundTracker } from "@/components/OutboundTracker";
+import { EngagementBeacon } from "@/components/EngagementBeacon";
 import { SITE_URL } from "@/lib/site";
 
 // Pixel face — chrome accents (logo, badges, kickers, nav).
@@ -149,6 +150,7 @@ export default function RootLayout({
         {/* GA4 — production host only, App Router pageviews (see component). */}
         <Analytics />
         <OutboundTracker />
+        <EngagementBeacon />
       </body>
     </html>
   );

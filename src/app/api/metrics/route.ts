@@ -1,7 +1,7 @@
 /**
  * GET /api/metrics — run the metrics steps by hand.
  *   ?capture=1  save yesterday's numbers (same as the 06:00 IST run)
- *   ?clicks=1   count today's recorded clicks out, by host (checks tracking)
+ *   ?clicks=1   count today's recorded clicks out and reader pages, by host
  *   ?report=1   email the weekly report now (test send; doesn't count as
  *               this week's, so Monday's real report still goes out)
  *
@@ -38,6 +38,13 @@ export async function GET(req: NextRequest) {
       const byHost: Record<string, number> = {};
       for (const r of data ?? []) byHost[r.host ?? "unknown"] = (byHost[r.host ?? "unknown"] ?? 0) + 1;
       out.clicksToday = byHost;
+      const { data: visits } = await createServiceClient()
+        .from("reader_visits")
+        .select("host, visit_id")
+        .eq("day", istToday());
+      const visitsByHost: Record<string, number> = {};
+      for (const r of visits ?? []) visitsByHost[r.host ?? "unknown"] = (visitsByHost[r.host ?? "unknown"] ?? 0) + 1;
+      out.readerPagesToday = visitsByHost;
     }
     if (q.get("report")) out.report = await sendWeeklyReport(log, { force: true });
   } catch (err) {
