@@ -26,7 +26,7 @@ export function SiteIntro({ sourceCount }: { sourceCount: number }) {
   const showForm = !alreadySubscribed || status === "success";
 
   return (
-    <section className="site-container pt-6 pb-6 sm:pt-8 sm:pb-10">
+    <section className="site-container pt-6 pb-4 sm:pt-8 sm:pb-6">
       <div className="surface-card grid gap-5 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-10">
         <div>
           <h1 className="font-heading text-[1.35rem] sm:text-[1.6rem] leading-tight text-ink" style={{ textWrap: "balance" }}>
