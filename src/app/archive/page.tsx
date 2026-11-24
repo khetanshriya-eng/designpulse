@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getArchiveEditions } from "@/lib/data/queries";
 import { ArchiveList } from "@/components/ArchiveList";
+import { istToday } from "@/lib/ist";
 
 export const metadata: Metadata = {
   title: "Archive · Designator",
@@ -14,7 +15,7 @@ export const revalidate = 600;
 export default async function ArchivePage() {
   const { editions, total } = await getArchiveEditions(20, 0);
   const hasMore = editions.length < total;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = istToday(); // editions are IST days
 
   return (
     <article className="site-container pt-14 pb-24">
@@ -25,7 +26,7 @@ export default async function ArchivePage() {
         Archive
       </h1>
       <p className="mt-3 text-[15px] text-ink-muted">
-        Every daily edition, newest first.
+        Every daily edition, newest first, by month.
       </p>
 
       <div className="mt-10">

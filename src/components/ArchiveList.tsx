@@ -5,16 +5,39 @@ import Link from "next/link";
 import { CopyLink } from "./CopyLink";
 import type { ArchiveEdition } from "@/lib/data/queries";
 import { SITE_URL } from "@/lib/site";
+import { getEditionName } from "@/lib/editionName";
 
 const SITE = SITE_URL;
 
 function dateLabel(date: string): string {
-  return new Date(`${date}T00:00:00`).toLocaleDateString("en-US", {
+  return new Date(`${date}T00:00:00Z`).toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
     month: "long",
-    year: "numeric",
+    timeZone: "UTC",
   });
+}
+
+function monthLabel(ym: string): string {
+  return new Date(`${ym}-01T00:00:00Z`).toLocaleDateString("en-GB", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+/** Editions grouped by month (YYYY-MM), keeping newest-first order. */
+function byMonth(
+  editions: ArchiveEdition[],
+): { month: string; items: ArchiveEdition[] }[] {
+  const groups: { month: string; items: ArchiveEdition[] }[] = [];
+  for (const ed of editions) {
+    const month = ed.date.slice(0, 7);
+    const last = groups.at(-1);
+    if (last?.month === month) last.items.push(ed);
+    else groups.push({ month, items: [ed] });
+  }
+  return groups;
 }
 
 /**
@@ -59,58 +82,82 @@ export function ArchiveList({
 
   return (
     <>
-      <div className="flex flex-col">
-        {editions.map((ed) => {
-          const isToday = ed.date === today;
-          return (
-            <div
-              key={ed.date}
-              className="relative surface-card flex items-stretch -mb-[3px] hover:z-10"
+      <div className="flex flex-col gap-12">
+        {byMonth(editions).map(({ month, items }) => (
+          <section key={month} aria-labelledby={`m-${month}`}>
+            <h2
+              id={`m-${month}`}
+              className="mb-4 flex items-baseline gap-3 font-heading text-[1.4rem] leading-tight text-ink"
             >
-              <Link
-                href={`/edition/${ed.date}`}
-                className="flex-1 flex items-center justify-between gap-4 p-5 min-w-0"
-              >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-3">
-                    {isToday && (
-                      <span
-                        className="font-pixel text-[10px] uppercase tracking-[0.1em] px-2 py-0.5 text-[#1a1340]"
-                        style={{ background: "var(--color-lime)" }}
-                      >
-                        Today
-                      </span>
-                    )}
-                    <span className="font-pixel text-[13px] text-ink">
-                      {dateLabel(ed.date)}
-                    </span>
+              {monthLabel(month)}
+              <span className="font-pixel text-[11px] uppercase tracking-[0.12em] text-ink-subtle">
+                {items.length} {items.length === 1 ? "edition" : "editions"}
+                {hasMore && month === editions.at(-1)?.date.slice(0, 7)
+                  ? " so far"
+                  : ""}
+              </span>
+            </h2>
+            <div className="flex flex-col">
+              {items.map((ed) => {
+                const isToday = ed.date === today;
+                return (
+                  <div
+                    key={ed.date}
+                    className="relative surface-card flex items-stretch -mb-[3px] hover:z-10"
+                  >
+                    <Link
+                      href={`/edition/${ed.date}`}
+                      className="flex-1 flex items-center justify-between gap-4 p-5 min-w-0"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-3">
+                          {isToday && (
+                            <span
+                              className="font-pixel text-[10px] uppercase tracking-[0.1em] px-2 py-0.5 text-[#1a1340]"
+                              style={{ background: "var(--color-lime)" }}
+                            >
+                              Today
+                            </span>
+                          )}
+                          <span className="font-pixel text-[14px] text-ink">
+                            {getEditionName(ed.date)}
+                          </span>
+                          <span className="text-[12px] text-ink-subtle whitespace-nowrap">
+                            {dateLabel(ed.date)}
+                          </span>
+                        </div>
+                        {ed.heroTitle && (
+                          <p className="text-[12px] text-ink-subtle truncate mt-1">
+                            Top story: {ed.heroTitle}
+                            {ed.heroSource ? ` · ${ed.heroSource}` : ""}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-[12px] text-ink-subtle whitespace-nowrap">
+                          {ed.count} {ed.count === 1 ? "story" : "stories"}
+                        </span>
+                        <span
+                          aria-hidden
+                          className="font-pixel text-[14px] text-accent"
+                        >
+                          →
+                        </span>
+                      </div>
+                    </Link>
+                    <div className="shrink-0 flex items-center px-4 border-l-[3px] border-[color:var(--card-border)]">
+                      <CopyLink
+                        url={`${SITE}/edition/${ed.date}`}
+                        compact
+                        label="Copy edition link"
+                      />
+                    </div>
                   </div>
-                  {ed.heroTitle && (
-                    <p className="text-[12px] text-ink-subtle truncate mt-1">
-                      Top story: {ed.heroTitle}
-                      {ed.heroSource ? ` · ${ed.heroSource}` : ""}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-[12px] text-ink-subtle whitespace-nowrap">
-                    {ed.count} {ed.count === 1 ? "story" : "stories"}
-                  </span>
-                  <span aria-hidden className="font-pixel text-[14px] text-accent">
-                    →
-                  </span>
-                </div>
-              </Link>
-              <div className="shrink-0 flex items-center px-4 border-l-[3px] border-[color:var(--card-border)]">
-                <CopyLink
-                  url={`${SITE}/edition/${ed.date}`}
-                  compact
-                  label="Copy edition link"
-                />
-              </div>
+                );
+              })}
             </div>
-          );
-        })}
+          </section>
+        ))}
       </div>
 
       {hasMore && (
