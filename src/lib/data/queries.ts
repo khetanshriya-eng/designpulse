@@ -254,7 +254,7 @@ export const getLatest = unstable_cache(
     const pool = await fetchLatestPool(limit * 6, excludeIds, 30);
     return rowsToArticles(balanceByCategory(pool, limit));
   },
-  ["latest-articles"],
+  ["latest-articles-v2"],
   { revalidate: 600, tags: ["content"] }
 );
 
