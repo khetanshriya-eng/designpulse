@@ -22,7 +22,10 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const articles = await searchArticles(q, 20);
+    const timing: Record<string, number | string> = {};
+    const started = Date.now();
+    const articles = await searchArticles(q, 20, timing);
+    timing.total = Date.now() - started;
     const results = articles.map((a) => {
       const src = sourceById(a.sourceId);
       return {
@@ -40,7 +43,18 @@ export async function GET(req: NextRequest) {
     // Popular queries repeat; a short edge cache makes them instant.
     return Response.json(
       { results },
-      { headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600" } }
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600",
+          // Where search time goes (visible in browser dev tools).
+          "Server-Timing": Object.entries(timing)
+            .filter(([, v]) => typeof v === "number")
+            .map(([k, v]) => `${k};dur=${v}`)
+            .join(", "),
+          ...(timing.ftsError ? { "X-Search-Fallback": String(timing.ftsError) } : {}),
+          "X-Region": process.env.VERCEL_REGION ?? "unknown",
+        },
+      }
     );
   } catch (err) {
     return Response.json(

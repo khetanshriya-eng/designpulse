@@ -533,7 +533,8 @@ function rankSearch(items: Article[], terms: string[], limit: number): Article[]
 
 export async function searchArticles(
   query: string,
-  limit = 20
+  limit = 20,
+  timing?: Record<string, number | string>
 ): Promise<Article[]> {
   // Unicode word tokens only — strips every tsquery/ILIKE metacharacter so
   // user input can never break the query (data is public, so this is about
@@ -546,6 +547,7 @@ export async function searchArticles(
   // 1) Full-text search. Prefix-match each term ("desig" → "design") and AND
   //    them together, so "design system" needs both words.
   const tsquery = terms.map((t) => `${t}:*`).join(" & ");
+  const t0 = Date.now();
   const fts = await sb
     .from("articles")
     .select(SELECT)
@@ -558,6 +560,10 @@ export async function searchArticles(
     .order("published_at", { ascending: false, nullsFirst: false })
     .limit(limit * 3);
 
+  if (timing) {
+    timing.fts = Date.now() - t0;
+    if (fts.error) timing.ftsError = fts.error.message.slice(0, 80);
+  }
   if (!fts.error) {
     return rankSearch(rowsToArticles((fts.data ?? []) as ArticleWithSource[]), terms, limit);
   }
