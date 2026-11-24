@@ -243,7 +243,7 @@ export const getLatest = unstable_cache(
   async (limit = 6, excludeIds: string[] = []): Promise<Article[]> => {
     const windows = [7, 14, 30]; // days, in order of preference
     for (const days of windows) {
-      const pool = await fetchLatestPool(limit * 6, excludeIds, days);
+      const pool = await fetchLatestPool(limit * 10, excludeIds, days);
       const picked = balanceByCategory(pool, limit);
       if (picked.length >= limit) {
         return rowsToArticles(picked);
@@ -254,7 +254,7 @@ export const getLatest = unstable_cache(
     const pool = await fetchLatestPool(limit * 6, excludeIds, 30);
     return rowsToArticles(balanceByCategory(pool, limit));
   },
-  ["latest-articles-v2"],
+  ["latest-articles-v3"],
   { revalidate: 600, tags: ["content"] }
 );
 
@@ -331,24 +331,30 @@ function balanceByCategory(
   }
   const freshness = (r: ArticleWithSource) =>
     new Date(r.published_at ?? 0).getTime();
+  // Design categories lead; AI & Tools next; tech-news (the only tier-3
+  // category) always last. A first visit read as a general tech feed when
+  // AI/tech filled the opening cards (2026-11-24 review).
+  const rank = (c: string) => (c === "tech-news" ? 2 : c === "ai-tools" ? 1 : 0);
   const cats = [...byCat.keys()].sort((a, b) => {
-    // Design categories lead; AI & Tools next; tech-news (the only tier-3
-    // category) always last. A first visit read as a general tech feed when
-    // AI/tech filled the opening cards (2026-11-24 review).
-    const rank = (c: string) => (c === "tech-news" ? 2 : c === "ai-tools" ? 1 : 0);
     const at = rank(a);
     const bt = rank(b);
     if (at !== bt) return at - bt;
     return freshness(byCat.get(b)![0]) - freshness(byCat.get(a)![0]);
   });
 
+  // Fill tier by tier: every design category (up to maxPerCategory each)
+  // before AI & Tools, and AI before tech-news, so tech only appears when
+  // design can't fill the grid.
   const picked: ArticleWithSource[] = [];
-  for (let round = 0; round < maxPerCategory && picked.length < limit; round++) {
-    for (const cat of cats) {
-      const item = byCat.get(cat)![round];
-      if (item) {
-        picked.push(item);
-        if (picked.length >= limit) break;
+  for (const tier of [0, 1, 2]) {
+    const tierCats = cats.filter((c) => rank(c) === tier);
+    for (let round = 0; round < maxPerCategory && picked.length < limit; round++) {
+      for (const cat of tierCats) {
+        const item = byCat.get(cat)![round];
+        if (item) {
+          picked.push(item);
+          if (picked.length >= limit) break;
+        }
       }
     }
   }
