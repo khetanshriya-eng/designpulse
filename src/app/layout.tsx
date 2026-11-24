@@ -143,8 +143,15 @@ export default function RootLayout({
           normally (keyboard scroll preserved).
         */}
         <div id="app-scroll" className="app-scroll min-h-screen flex flex-col">
+          {/* Keyboard users can jump past the header and category nav. */}
+          <a
+            href="#main"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:bg-[color:var(--color-lime)] focus:px-4 focus:py-2 focus:font-pixel focus:text-[13px] focus:uppercase focus:tracking-[0.06em] focus:text-[#1a1340] focus:border-[3px] focus:border-[#1a1340]"
+          >
+            Skip to stories
+          </a>
           <Navigation />
-          <main className="flex-1">{children}</main>
+          <main id="main" tabIndex={-1} className="flex-1 outline-none">{children}</main>
           <Footer />
         </div>
         {/* GA4 — production host only, App Router pageviews (see component). */}

@@ -225,21 +225,28 @@ export default async function EditionPage({
   );
   const pool = dayPool.filter((a) => !shownIds.has(a.id));
 
-  // Headline grid: the day's freshest stories.
-  const dayStories = pool.slice(0, 6);
+  // Headline grid: the day's freshest DESIGN stories first; AI next, tech
+  // news last (homepage parity, 2026-11-24 audit). Every story then appears
+  // once: sections below draw only from what's left.
+  const tier = (a: Article) => (a.category === "tech-news" ? 2 : a.category === "ai-tools" ? 1 : 0);
+  const dayStories = [...pool]
+    .sort((a, b) => tier(a) - tier(b))
+    .slice(0, 6)
+    .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
+  const used = new Set(dayStories.map((a) => a.id));
+  const rest = pool.filter((a) => !used.has(a.id));
 
   // Category previews from the SAME era's pool — the sections the homepage
   // has (UX & Thinking, Video, …), pinned to this edition. A category with
   // <2 stories in the window is dropped; whichever categories ARE covered
   // fill the grid (up to 4 blocks, homepage parity).
-  const byCategory = (cat: SourceCategory) =>
-    pool.filter((a) => a.category === cat).slice(0, 2);
+  const byCategory = (cat: SourceCategory, n = 2) =>
+    rest.filter((a) => a.category === cat).slice(0, n);
   const gridBlocks = (
     [
       { category: "design-tools", articles: byCategory("design-tools") },
       { category: "ux-thinking", articles: byCategory("ux-thinking") },
       { category: "youtube", articles: byCategory("youtube") },
-      { category: "ai-tools", articles: byCategory("ai-tools") },
       { category: "newsletters", articles: byCategory("newsletters") },
       { category: "product", articles: byCategory("product") },
     ] as { category: SourceCategory; articles: Article[] }[]
@@ -247,9 +254,9 @@ export default async function EditionPage({
     .filter((b) => b.articles.length >= 2)
     .slice(0, 4);
 
-  const inspiration = pool
-    .filter((a) => a.category === "inspiration")
-    .slice(0, 4);
+  const inspiration = byCategory("inspiration", 4);
+  // AI & Tools sits below Inspiration, as on the homepage.
+  const aiStories = byCategory("ai-tools", 3);
 
   const listed = [edition.hero, edition.editorsPick, ...mustReads, ...dayStories]
     .filter((a): a is Article => !!a)
@@ -302,6 +309,17 @@ export default async function EditionPage({
       {inspiration.length >= 2 && (
         <section className="site-container pb-16">
           <InspirationStrip articles={inspiration} />
+        </section>
+      )}
+
+      {aiStories.length >= 2 && (
+        <section className="site-container pb-16">
+          <SectionHeader kicker="Moving fast" title="AI & Tools" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-7 gap-y-10">
+            {aiStories.map((a) => (
+              <ArticleCard key={a.id} article={a} variant="default" />
+            ))}
+          </div>
         </section>
       )}
 

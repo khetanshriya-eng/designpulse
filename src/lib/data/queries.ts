@@ -505,6 +505,28 @@ export const getCategoryPage = unstable_cache(
  * upgrade deploy-safe: search works the same before and after the migration,
  * just better once `fts` is present.
  */
+/**
+ * Order search hits by relevance, not just date: headline matches first,
+ * design stories ahead of AI and tech, off-brand items (deals, lawsuits
+ * flagged by isOffBrand) last; recency breaks ties. "figma" used to open on a
+ * TechCrunch lawsuit story ahead of Figma's own posts (2026-11-24 audit).
+ */
+function rankSearch(items: Article[], terms: string[], limit: number): Article[] {
+  const score = (a: Article) => {
+    const title = a.title.toLowerCase();
+    const inTitle = terms.filter((t) => title.includes(t)).length;
+    let s = inTitle === terms.length ? 4 : inTitle > 0 ? 2 : 0;
+    s += a.category === "tech-news" ? 0 : a.category === "ai-tools" ? 1 : 2;
+    if (isOffBrand(a.title, a.url)) s -= 3;
+    return s;
+  };
+  return items
+    .map((a) => ({ a, s: score(a), t: Date.parse(a.publishedAt) || 0 }))
+    .sort((x, y) => y.s - x.s || y.t - x.t)
+    .slice(0, limit)
+    .map((x) => x.a);
+}
+
 export async function searchArticles(
   query: string,
   limit = 20
@@ -530,10 +552,10 @@ export async function searchArticles(
     .not("title", "ilike", "http%")
     .textSearch("fts", tsquery, { config: "english" })
     .order("published_at", { ascending: false, nullsFirst: false })
-    .limit(limit);
+    .limit(limit * 3);
 
   if (!fts.error) {
-    return rowsToArticles((fts.data ?? []) as ArticleWithSource[]);
+    return rankSearch(rowsToArticles((fts.data ?? []) as ArticleWithSource[]), terms, limit);
   }
 
   // 2) ILIKE fallback (no fts column yet). Match the joined phrase as a
@@ -549,9 +571,9 @@ export async function searchArticles(
     .not("title", "ilike", "http%")
     .or(`title.ilike.${pattern},summary.ilike.${pattern}`)
     .order("published_at", { ascending: false, nullsFirst: false })
-    .limit(limit);
+    .limit(limit * 3);
   if (error) throw error;
-  return rowsToArticles((data ?? []) as ArticleWithSource[]);
+  return rankSearch(rowsToArticles((data ?? []) as ArticleWithSource[]), terms, limit);
 }
 
 /**
@@ -635,9 +657,14 @@ export const getArchiveEditions = unstable_cache(
       }
     }
 
-    // Per-edition story count (parallel, cheap head:count queries).
+    // Per-edition story count: stories that came in during the 24 h before
+    // that edition went out (06:00 IST = 00:30 UTC). Counting the calendar
+    // day instead showed "2 stories" for today's edition at lunchtime.
     const counts = await Promise.all(
       rows.map(async (r) => {
+        const endMs = Date.parse(`${r.edition_date}T00:30:00.000Z`);
+        const from = new Date(endMs - 24 * 3600 * 1000).toISOString();
+        const to = new Date(endMs).toISOString();
         const { count: c } = await sb
           .from("articles")
           .select("*", { count: "exact", head: true })
@@ -645,8 +672,8 @@ export const getArchiveEditions = unstable_cache(
           .neq("summary", "")
           .not("title", "is", null)
           .not("title", "ilike", "http%")
-          .gte("published_at", `${r.edition_date}T00:00:00.000Z`)
-          .lte("published_at", `${r.edition_date}T23:59:59.999Z`);
+          .gte("published_at", from)
+          .lt("published_at", to);
         return c ?? 0;
       })
     );
@@ -662,7 +689,7 @@ export const getArchiveEditions = unstable_cache(
     });
     return { editions, total: count ?? 0 };
   },
-  ["archive-editions"],
+  ["archive-editions-v2"],
   { revalidate: 600, tags: ["content"] }
 );
 

@@ -18,17 +18,15 @@ export function FeedbackWidget() {
   const [status, setStatus] = useState<Status>("idle");
   const [honeypot, setHoneypot] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
-  // On phones the floating button sat on top of article text while reading.
-  // Tuck it away while scrolling down; bring it back on scroll up or near
-  // the top. Desktop keeps it visible (it sits in the empty left margin).
+  // The floating button sat on top of card text while reading (phones first,
+  // then desktop, 2026-11-24 audit). Tuck it away while scrolling down; bring
+  // it back on scroll up or near the top.
   const [tucked, setTucked] = useState(false);
   useEffect(() => {
-    // On touch devices the scroller is #app-scroll, not the document (same
-    // rule as ScrollTop).
-    const coarse = window.matchMedia("(pointer: coarse)").matches;
-    const sc = coarse ? document.getElementById("app-scroll") : null;
-    const src: HTMLElement | Window = sc ?? window;
-    const top = () => (sc ? sc.scrollTop : window.scrollY);
+    // Touch devices scroll #app-scroll; desktop may scroll either it or the
+    // window, so listen to both and read whichever moved.
+    const sc = document.getElementById("app-scroll");
+    const top = () => Math.max(sc?.scrollTop ?? 0, window.scrollY);
     // Hysteresis: tuck only after a deliberate 60px scroll down, reveal after
     // 24px up. Lazy images shift layout by tens of pixels, which with a
     // per-event check re-tucked the button right after the reader scrolled up.
@@ -41,7 +39,7 @@ export function FeedbackWidget() {
     };
     const onScroll = () => {
       const y = top();
-      if (window.innerWidth >= 640 || y < 120) {
+      if (y < 120) {
         if (isTucked) set(false, y);
         else anchor = y;
         return;
@@ -54,8 +52,12 @@ export function FeedbackWidget() {
         else if (anchor - y > 24) set(false, y);
       }
     };
-    src.addEventListener("scroll", onScroll as EventListener, { passive: true });
-    return () => src.removeEventListener("scroll", onScroll as EventListener);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    sc?.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      sc?.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   function close() {

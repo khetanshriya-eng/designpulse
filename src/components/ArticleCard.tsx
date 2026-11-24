@@ -63,8 +63,12 @@ function ListCard({ article }: { article: Article }) {
 function TextLedTop({ article }: { article: Article }) {
   const meta = CATEGORY_META[article.category];
   return (
-    <div className="flex items-center gap-2.5 px-4 pt-4" aria-hidden>
-      <PixelMosaic seed={article.id || article.url} category={article.category} className="w-7" />
+    <div
+      className="flex items-center gap-3 px-4 py-4 border-b-[3px] border-[color:var(--card-border)]"
+      style={{ background: `color-mix(in srgb, ${meta?.dotVar ?? "var(--color-accent)"} 12%, transparent)` }}
+      aria-hidden
+    >
+      <PixelMosaic seed={article.id || article.url} category={article.category} className="w-9" />
       <span
         className="font-pixel text-[10px] font-bold uppercase tracking-[0.18em] leading-none"
         style={{ color: meta?.dotVar }}
@@ -117,9 +121,9 @@ function TextLedCard({ article, readTime, compactSummary = false }: { article: A
   return (
     <PixelCard href={article.url} category={article.category}>
       <TextLedTop article={article} />
-      <div className="p-4 pt-5 flex flex-col gap-2 flex-1">
+      <div className="p-4 pt-4 flex flex-col gap-2.5 flex-1">
         <SourceBadge sourceId={article.sourceId} />
-        <h3 className="font-heading text-[1.35rem] leading-[1.35] text-ink group-hover:text-accent transition-colors line-clamp-3">
+        <h3 className="font-heading text-[1.45rem] leading-[1.3] text-ink group-hover:text-accent transition-colors line-clamp-3">
           {article.title}
         </h3>
         {article.summary && (

@@ -120,9 +120,15 @@ export type CurationResult = {
 
 export function pickCuration(
   rows: Candidate[],
-  opts?: { mustReadCount?: number }
+  opts?: {
+    mustReadCount?: number;
+    /** Recent editions' top stories and editor's picks: never lead with them
+     *  again (the same story led two days running, 2026-11-23/24). */
+    avoidFeatured?: Set<string>;
+  }
 ): CurationResult {
   const mustReadCount = opts?.mustReadCount ?? 5;
+  const avoid = opts?.avoidFeatured ?? new Set<string>();
 
   // Filter out items we'd never feature.
   const eligible = rows.filter((r) => {
@@ -150,7 +156,9 @@ export function pickCuration(
   const now = Date.now();
   const ageHours = (r: Candidate) =>
     r.published_at ? (now - new Date(r.published_at).getTime()) / 36e5 : Infinity;
-  const withImg = featurable.filter((s) => showsImage(s.row));
+  const unseen = featurable.filter((s) => !avoid.has(s.row.id));
+  const leadPool = unseen.length ? unseen : featurable;
+  const withImg = leadPool.filter((s) => showsImage(s.row));
   const t1 = (maxH: number) =>
     withImg.find(
       (s) => sourcePriority(s.row.source.slug) === 1 && ageHours(s.row) <= maxH
@@ -161,7 +169,7 @@ export function pickCuration(
     t1(48) ??
     withImg.find((s) => ageHours(s.row) <= 48) ??
     withImg[0] ??
-    featurable[0] ??
+    leadPool[0] ??
     null;
   const hero = heroScore?.row ?? null;
 
@@ -189,7 +197,7 @@ export function pickCuration(
   // Editor's pick: the next-best featurable item with a thumbnail, distinct
   // from the hero (a human curator's companion to the lead story).
   const editorsPick =
-    featurable.find((s) => s.row.id !== hero?.id && showsImage(s.row))?.row ??
+    leadPool.find((s) => s.row.id !== hero?.id && showsImage(s.row))?.row ??
     null;
 
   return { hero, mustReads, editorsPick, ranked };
