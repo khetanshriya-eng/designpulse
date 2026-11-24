@@ -37,7 +37,11 @@ export async function GET(req: NextRequest) {
         publishedAt: a.publishedAt,
       };
     });
-    return Response.json({ results });
+    // Popular queries repeat; a short edge cache makes them instant.
+    return Response.json(
+      { results },
+      { headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600" } }
+    );
   } catch (err) {
     return Response.json(
       { results: [], error: (err as Error).message },
