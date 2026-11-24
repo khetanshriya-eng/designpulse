@@ -123,7 +123,7 @@ function TextLedCard({ article, readTime, compactSummary = false }: { article: A
           {article.title}
         </h3>
         {article.summary && (
-          <p className={`text-[13px] leading-relaxed text-ink-muted ${compactSummary ? "line-clamp-3" : "line-clamp-5"}`}>
+          <p className={`text-[13px] leading-relaxed text-ink-muted ${compactSummary ? "line-clamp-3" : "line-clamp-6 lg:line-clamp-7"}`}>
             {article.summary}
           </p>
         )}
