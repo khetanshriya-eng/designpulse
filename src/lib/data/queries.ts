@@ -332,9 +332,12 @@ function balanceByCategory(
   const freshness = (r: ArticleWithSource) =>
     new Date(r.published_at ?? 0).getTime();
   const cats = [...byCat.keys()].sort((a, b) => {
-    // tech-news (the only tier-3 category) always sorts last.
-    const at = a === "tech-news" ? 1 : 0;
-    const bt = b === "tech-news" ? 1 : 0;
+    // Design categories lead; AI & Tools next; tech-news (the only tier-3
+    // category) always last. A first visit read as a general tech feed when
+    // AI/tech filled the opening cards (2026-11-24 review).
+    const rank = (c: string) => (c === "tech-news" ? 2 : c === "ai-tools" ? 1 : 0);
+    const at = rank(a);
+    const bt = rank(b);
     if (at !== bt) return at - bt;
     return freshness(byCat.get(b)![0]) - freshness(byCat.get(a)![0]);
   });

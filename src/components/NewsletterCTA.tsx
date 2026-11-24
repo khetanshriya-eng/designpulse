@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useSubscribe } from "./useSubscribe";
 
 /**
  * Homepage email-capture CTA. Posts to /api/subscribe (Supabase list + Resend welcome).
@@ -12,8 +12,6 @@ import { useState } from "react";
  * States: idle → loading → success / error. The hidden "website" field is a
  * honeypot.
  */
-type Status = "idle" | "loading" | "success" | "error";
-
 const NAVY = "#1a1340";
 const CREAM = "#fffaf0";
 const LIME = "#d4ff3f";
@@ -21,35 +19,7 @@ const CYAN = "#00e5ff";
 const HOT = "#ff4fd8";
 
 export function NewsletterCTA() {
-  const [email, setEmail] = useState("");
-  const [website, setWebsite] = useState(""); // honeypot
-  const [status, setStatus] = useState<Status>("idle");
-  const [message, setMessage] = useState("");
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (status === "loading") return;
-    setStatus("loading");
-    setMessage("");
-    try {
-      const res = await fetch("/api/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, website }),
-      });
-      const data = (await res.json()) as { message?: string; error?: string };
-      if (res.ok && data.message) {
-        setMessage(data.message);
-        setStatus("success");
-      } else {
-        setMessage(data.error ?? "Something went wrong. Try again.");
-        setStatus("error");
-      }
-    } catch {
-      setMessage("Couldn't subscribe right now. Try again.");
-      setStatus("error");
-    }
-  }
+  const { email, setEmail, website, setWebsite, status, message, submit } = useSubscribe();
 
   return (
     <section

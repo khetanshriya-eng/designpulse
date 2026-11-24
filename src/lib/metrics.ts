@@ -173,6 +173,26 @@ export async function sendWeeklyReport(log: Logger, opts: { now?: number; force?
   ]);
   if (error) throw new Error(`metrics_daily read failed: ${error.message}`);
 
+  // Clicks out to stories (migration 0007). Production hosts only: previews
+  // share the database. Fails soft if the table isn't there yet.
+  const PROD = ["www.designatorapp.com", "designatorapp.com"];
+  const { data: clickRows } = await svc
+    .from("outbound_clicks")
+    .select("day, url")
+    .gte("day", prevStart)
+    .lte("day", weekEnd)
+    .in("host", PROD);
+  const clicksNow = (clickRows ?? []).filter((c) => c.day >= weekStart);
+  const clicksPrev = (clickRows ?? []).filter((c) => c.day < weekStart).length;
+  const byUrl = new Map<string, number>();
+  for (const c of clicksNow) byUrl.set(c.url, (byUrl.get(c.url) ?? 0) + 1);
+  const topUrls = [...byUrl.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+  const titles = new Map<string, string>();
+  if (topUrls.length) {
+    const { data: arts } = await svc.from("articles").select("original_url, title").in("original_url", topUrls.map(([u]) => u));
+    for (const a of arts ?? []) if (a.title) titles.set(a.original_url, a.title);
+  }
+
   const all = (rows ?? []) as MetricsDailyRow[];
   const cur = summarize(all.filter((r) => r.day >= weekStart));
   const prev = summarize(all.filter((r) => r.day < weekStart));
@@ -201,6 +221,10 @@ export async function sendWeeklyReport(log: Logger, opts: { now?: number; force?
     `  Top sources: ${top(cur.sources, 4)}`,
     `  Top pages: ${top(cur.pages, 4)}`,
     `  Rage clicks: ${cur.rageSessions} session${cur.rageSessions === 1 ? "" : "s"}; dead clicks: ${cur.deadSessions}`,
+    "",
+    "READING (clicks out to stories)",
+    `  Clicks: ${clicksNow.length}${delta(clicksNow.length, clicksPrev, clicksPrev > 0)}`,
+    ...topUrls.map(([u, n]) => `  ${n}× ${(titles.get(u) ?? u).slice(0, 90)}`),
     "",
     "NEWSLETTER",
     `  Active subscribers: ${subsNow ?? "unknown"}${subsNow != null && subsWeekAgo != null ? delta(subsNow, subsWeekAgo, true) : ""}`,

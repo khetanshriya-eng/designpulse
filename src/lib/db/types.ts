@@ -113,6 +113,15 @@ export type MetricsDailyRow = {
   fetched_at: string;
 };
 
+export type OutboundClickRow = {
+  id: number;
+  clicked_at: string;
+  day: string;
+  url: string;
+  from_path: string | null;
+  host: string | null;
+};
+
 export type WeeklyReportLogRow = { week_end: string; sent_at: string };
 
 export type Database = {
@@ -149,6 +158,12 @@ export type Database = {
         Row: MetricsDailyRow;
         Insert: Partial<MetricsDailyRow> & { day: string };
         Update: Partial<MetricsDailyRow>;
+        Relationships: [];
+      };
+      outbound_clicks: {
+        Row: OutboundClickRow;
+        Insert: Omit<OutboundClickRow, "id" | "clicked_at"> & { clicked_at?: string };
+        Update: Partial<OutboundClickRow>;
         Relationships: [];
       };
       weekly_report_log: {
