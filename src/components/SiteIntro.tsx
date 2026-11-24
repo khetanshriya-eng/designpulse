@@ -26,14 +26,17 @@ export function SiteIntro({ sourceCount }: { sourceCount: number }) {
   const showForm = !alreadySubscribed || status === "success";
 
   return (
-    <section className="site-container pt-6 sm:pt-8">
+    <section className="site-container pt-6 pb-6 sm:pt-8 sm:pb-10">
       <div className="surface-card grid gap-5 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-10">
         <div>
           <h1 className="font-heading text-[1.35rem] sm:text-[1.6rem] leading-tight text-ink" style={{ textWrap: "balance" }}>
             The daily briefing for product designers.
           </h1>
-          <p className="mt-1 text-[14px] leading-normal text-ink-muted" style={{ textWrap: "pretty" }}>
-            The best of {sourceCount} design, UX and product sources, summarised in one tab. New edition every morning at 6 am IST.
+          <p className="mt-1 text-[14px] leading-normal text-ink-muted">
+            <span className="block" style={{ textWrap: "pretty" }}>
+              The best of {sourceCount} design, UX and product sources, summarised in one tab.
+            </span>
+            <span className="block sm:whitespace-nowrap">New edition every morning at 6 am IST.</span>
           </p>
         </div>
 
