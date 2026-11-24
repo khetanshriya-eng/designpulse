@@ -81,7 +81,12 @@ export async function captureDailyMetrics(log: Logger, now: number = Date.now())
   const svc = createServiceClient();
   const { error } = await svc.from("metrics_daily").upsert(row, { onConflict: "day" });
   if (error) throw new Error(`metrics_daily write failed (run migration 0006?): ${error.message}`);
-  return { day, sessions: row.sessions ?? null, subscribers: row.subscribers ?? null, clarity: totals.status };
+  return {
+    day,
+    sessions: row.sessions ?? null,
+    subscribers: row.subscribers ?? null,
+    clarity: totals.status === "fulfilled" ? "ok" : (totals.reason as Error).message,
+  };
 }
 
 type WeekSummary = {
