@@ -16,7 +16,7 @@
  * and easy to test/seed.
  */
 import type { ArticleRow, SourceRow } from "../db/types";
-import { sourcePriority } from "@/data/sources";
+import { MOSAIC_SOURCE_SLUGS, sourcePriority } from "@/data/sources";
 import { isOffBrand } from "@/lib/content/filter";
 
 export type Candidate = ArticleRow & { source: SourceRow };
@@ -51,11 +51,20 @@ const FEATURABLE_TIER = 2;
 
 const FORBIDDEN_TYPES = new Set(["forum", "gallery"]);
 
+/**
+ * Will this story actually show a picture? Sources flagged preferMosaic always
+ * render the pixel placeholder, even when the feed gave a thumbnail, so they
+ * must not win the image-led spots (a Sidebar.io top story showed a
+ * placeholder on 2026-11-24).
+ */
+const showsImage = (row: Candidate) =>
+  !!row.thumbnail_url && !MOSAIC_SOURCE_SLUGS.has(row.source.slug);
+
 function scoreOne(row: Candidate): Score {
   let s = 0;
   const reasons: string[] = [];
 
-  if (row.thumbnail_url) {
+  if (showsImage(row)) {
     s += 6;
     reasons.push("+6 thumbnail");
   }
@@ -141,7 +150,7 @@ export function pickCuration(
   const now = Date.now();
   const ageHours = (r: Candidate) =>
     r.published_at ? (now - new Date(r.published_at).getTime()) / 36e5 : Infinity;
-  const withImg = featurable.filter((s) => s.row.thumbnail_url);
+  const withImg = featurable.filter((s) => showsImage(s.row));
   const t1 = (maxH: number) =>
     withImg.find(
       (s) => sourcePriority(s.row.source.slug) === 1 && ageHours(s.row) <= maxH
@@ -180,7 +189,7 @@ export function pickCuration(
   // Editor's pick: the next-best featurable item with a thumbnail, distinct
   // from the hero (a human curator's companion to the lead story).
   const editorsPick =
-    featurable.find((s) => s.row.id !== hero?.id && s.row.thumbnail_url)?.row ??
+    featurable.find((s) => s.row.id !== hero?.id && showsImage(s.row))?.row ??
     null;
 
   return { hero, mustReads, editorsPick, ranked };
