@@ -4,11 +4,9 @@ import { formatEditionDate } from "@/lib/format";
 import {
   listEditionDates,
   getArticleCount,
-  getRecentHeadlines,
 } from "@/lib/data/queries";
 import { SearchTrigger } from "./SearchTrigger";
 import { CategoryNav } from "./CategoryNav";
-import { Marquee } from "./Marquee";
 import { ThemeToggle } from "./ThemeToggle";
 
 const NAV_CATEGORIES: SourceCategory[] = [
@@ -26,16 +24,10 @@ export async function Navigation() {
   // header still renders something sensible before the first edition exists.
   let editionDate: string;
   let storyCount = 0;
-  let headlines: { title: string; url: string }[] = [];
   try {
-    const [dates, count, ticker] = await Promise.all([
-      listEditionDates(1),
-      getArticleCount(),
-      getRecentHeadlines(15),
-    ]);
+    const [dates, count] = await Promise.all([listEditionDates(1), getArticleCount()]);
     editionDate = dates[0] ?? new Date().toISOString().slice(0, 10);
     storyCount = count;
-    headlines = ticker;
   } catch {
     editionDate = new Date().toISOString().slice(0, 10);
   }
@@ -95,9 +87,6 @@ export async function Navigation() {
           </div>
         </div>
       </div>
-
-      {/* Scrolling headline ticker under the bar. */}
-      <Marquee items={headlines} />
 
       {/* Category nav row — links on the left, story-count meter on the right.
           Client component so it can highlight the active path. */}

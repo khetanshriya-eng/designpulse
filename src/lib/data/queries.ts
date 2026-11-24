@@ -18,7 +18,6 @@ import {
   type ArticleWithSource,
 } from "./adapter";
 import { isOffBrand } from "@/lib/content/filter";
-import { sourcePriority } from "@/data/sources";
 import type { Article } from "@/data/articles";
 
 const SELECT = "*, sources(*)";
@@ -103,7 +102,7 @@ export const getEdition = unstable_cache(
 /**
  * Edition dates available in the DB, newest first.
  *
- * Cached (10 min): this + getArticleCount + getRecentHeadlines run on EVERY
+ * Cached (10 min): this + getArticleCount run on EVERY
  * navigation via the root-layout <Navigation>, so caching them is the biggest
  * tab-to-tab / page-to-page speedup — each navigation then only pays for the
  * page's own query. Data changes twice daily, so 10-min staleness is fine.
@@ -458,53 +457,6 @@ export const getByCategory = unstable_cache(
     return rowsToArticles(diversifyBySource(visualPool, limit, 1));
   },
   ["by-category"],
-  { revalidate: 600, tags: ["content"] }
-);
-
-/**
- * Lightweight recent headlines (title + url only) for the nav marquee ticker.
- * Dated, summarized articles, newest first.
- */
-export const getRecentHeadlines = unstable_cache(
-  async (limit = 15): Promise<{ title: string; url: string }[]> => {
-    const sb = createPublicClient();
-    const { data, error } = await sb
-      .from("articles")
-      .select("title, original_url, sources(slug)")
-      .not("summary", "is", null)
-      .neq("summary", "")
-      .not("title", "is", null)
-      .neq("title", "")
-      .not("title", "ilike", "http%")
-      .not("title", "ilike", "www.%")
-      .not("published_at", "is", null)
-      .order("published_at", { ascending: false, nullsFirst: false })
-      // Fetch a deep recent pool so the design-only filter has plenty to pick.
-      .limit(150);
-    if (error) throw error;
-
-    type Row = {
-      title: string;
-      original_url: string;
-      sources: { slug: string } | { slug: string }[] | null;
-    };
-    const rows = (data ?? []) as Row[];
-    const slugOf = (r: Row) =>
-      Array.isArray(r.sources) ? r.sources[0]?.slug : r.sources?.slug;
-
-    // The ticker is the first thing on every page — make it a pure DESIGN
-    // signal: tier-1 (design) sources ONLY. No tech-news/business/AI, even if
-    // that means a shorter ticker (it loops). Off-brand deal items excluded.
-    const picked = rows.filter((r) => {
-      if (isOffBrand(r.title, r.original_url)) return false;
-      const s = slugOf(r);
-      return s ? sourcePriority(s) === 1 : false;
-    });
-    return picked
-      .slice(0, limit)
-      .map((r) => ({ title: r.title, url: r.original_url }));
-  },
-  ["recent-headlines-design"],
   { revalidate: 600, tags: ["content"] }
 );
 

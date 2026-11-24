@@ -81,7 +81,6 @@
   --shadow-offset: 4px;
   --nav-bg: #5b3df5;           /* purple bar in morning */
   --nav-ink: #f5f0e8;          /* light text on the bar */
-  --marquee-bg: #4a2fd0;       /* slightly darker than the nav bar */
 
   /* Bright category stripe colors (for the 4px card top-edge accent). These
      are the vivid spec values; the deeper --color-cat-* above are for small
@@ -174,11 +173,6 @@ html[data-theme="dark"] {
   --shadow-offset: 5px;
   --nav-bg: #1a1340;             /* dark bar at night */
   --nav-ink: #f5f0e8;
-  /* Muted indigo so the ticker reads as its own band without shouting —
-     mirroring the light theme, where the marquee is a RECESSIVE sibling of
-     the nav. #14102e was indistinguishable from nav+canvas (one slab);
-     #3a2b96 overshot into neon and grabbed the whole header. Lime 12:1. */
-  --marquee-bg: #2a1f6e;
 
   /* Category markers brighten at night: the deepened light-theme values fall
      to ~2.8:1 on the night card, so dots/mosaics reuse the vivid stripe
@@ -375,18 +369,6 @@ html[data-theme="dark"] .surface-card {
 /* Hard top rule (kept from prior design, used by the sources page). */
 .rule-strong-top {
   border-top: 2px solid var(--color-rule-strong);
-}
-
-/* Marquee headline ticker. Content is duplicated, so -50% loops seamlessly. */
-.marquee-track {
-  animation: marquee-scroll 70s linear infinite;
-}
-.marquee-strip:hover .marquee-track {
-  animation-play-state: paused;
-}
-@keyframes marquee-scroll {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
 }
 
 /* Blinking pixel cursor after the active nav tab — terminal-prompt feel. */
