@@ -117,7 +117,7 @@ function TextLedCard({ article, readTime, compactSummary = false }: { article: A
   return (
     <PixelCard href={article.url} category={article.category}>
       <TextLedTop article={article} />
-      <div className="p-4 pt-3 flex flex-col gap-2 flex-1">
+      <div className="p-4 pt-5 flex flex-col gap-2 flex-1">
         <SourceBadge sourceId={article.sourceId} />
         <h3 className="font-heading text-[1.35rem] leading-[1.35] text-ink group-hover:text-accent transition-colors line-clamp-3">
           {article.title}
