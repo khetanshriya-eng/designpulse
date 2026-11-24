@@ -4,7 +4,10 @@ import { SourceBadge } from "./SourceBadge";
 import { CategoryDot } from "./CategoryDot";
 import { ArticleImage } from "./ArticleImage";
 import { PixelCard } from "./PixelCard";
+import { PixelMosaic } from "./PixelMosaic";
 import { formatRelativeTime, formatReadTime } from "@/lib/format";
+import { hasRealImage } from "@/lib/article-image";
+import { CATEGORY_META } from "@/data/sources";
 
 type Variant = "default" | "horizontal" | "compact" | "medium" | "list";
 
@@ -52,8 +55,29 @@ function ListCard({ article }: { article: Article }) {
   );
 }
 
+/**
+ * Small label row that replaces the big image block on cards with no real
+ * picture: a mini mosaic in the category colour plus the category name.
+ * Leaves the space to the headline instead of a large placeholder.
+ */
+function TextLedTop({ article }: { article: Article }) {
+  const meta = CATEGORY_META[article.category];
+  return (
+    <div className="flex items-center gap-2.5 px-4 pt-4" aria-hidden>
+      <PixelMosaic seed={article.id || article.url} category={article.category} className="w-7" />
+      <span
+        className="font-pixel text-[10px] font-bold uppercase tracking-[0.18em] leading-none"
+        style={{ color: meta?.dotVar }}
+      >
+        {meta?.label ?? article.category}
+      </span>
+    </div>
+  );
+}
+
 function DefaultCard({ article }: { article: Article }) {
   const readTime = formatReadTime(article);
+  if (!hasRealImage(article)) return <TextLedCard article={article} readTime={readTime} />;
   return (
     <PixelCard href={article.url} category={article.category}>
       <ArticleImage article={article} aspect="video" size="md" />
@@ -84,8 +108,42 @@ function DefaultCard({ article }: { article: Article }) {
   );
 }
 
+/**
+ * Card for stories without a usable picture: the headline and summary get
+ * the room a placeholder image used to take. Grid rows stretch, so it still
+ * lines up with picture cards beside it.
+ */
+function TextLedCard({ article, readTime, compactSummary = false }: { article: Article; readTime: string | null; compactSummary?: boolean }) {
+  return (
+    <PixelCard href={article.url} category={article.category}>
+      <TextLedTop article={article} />
+      <div className="p-4 pt-3 flex flex-col gap-2 flex-1">
+        <SourceBadge sourceId={article.sourceId} />
+        <h3 className="font-heading text-[1.35rem] leading-[1.35] text-ink group-hover:text-accent transition-colors line-clamp-3">
+          {article.title}
+        </h3>
+        {article.summary && (
+          <p className={`text-[13px] leading-relaxed text-ink-muted ${compactSummary ? "line-clamp-3" : "line-clamp-5"}`}>
+            {article.summary}
+          </p>
+        )}
+        <div className="flex items-center gap-2 text-[11px] text-ink-subtle pt-1 mt-auto">
+          <span>{formatRelativeTime(article.publishedAt)}</span>
+          {readTime && (
+            <>
+              <span aria-hidden>·</span>
+              <span>{readTime}</span>
+            </>
+          )}
+        </div>
+      </div>
+    </PixelCard>
+  );
+}
+
 function MediumCard({ article }: { article: Article }) {
   const readTime = formatReadTime(article);
+  if (!hasRealImage(article)) return <TextLedCard article={article} readTime={readTime} compactSummary />;
   return (
     <PixelCard href={article.url} category={article.category}>
       <ArticleImage article={article} aspect="video" size="sm" />
