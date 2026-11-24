@@ -90,12 +90,13 @@ export function ArchiveList({
               className="mb-4 flex items-baseline gap-3 font-heading text-[1.4rem] leading-tight text-ink"
             >
               {monthLabel(month)}
-              <span className="font-pixel text-[11px] uppercase tracking-[0.12em] text-ink-subtle">
-                {items.length} {items.length === 1 ? "edition" : "editions"}
-                {hasMore && month === editions.at(-1)?.date.slice(0, 7)
-                  ? " so far"
-                  : ""}
-              </span>
+              {/* Count only months that are fully loaded; the last month on screen
+                  may continue past "Load more". */}
+              {!(hasMore && month === editions.at(-1)?.date.slice(0, 7)) && (
+                <span className="font-pixel text-[11px] uppercase tracking-[0.12em] text-ink-subtle">
+                  {items.length} {items.length === 1 ? "edition" : "editions"}
+                </span>
+              )}
             </h2>
             <div className="flex flex-col">
               {items.map((ed) => {
