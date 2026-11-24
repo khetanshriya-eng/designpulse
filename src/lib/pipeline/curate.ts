@@ -69,7 +69,21 @@ export async function runCurate(opts: CurateOptions = {}): Promise<CurateResult>
     };
   }
 
-  const { hero, mustReads, editorsPick } = pickCuration(candidates, { mustReadCount });
+  // Last two editions' lead stories, so a story never tops the paper twice.
+  const today = istToday(); // IST editorial day, not UTC (see lib/ist.ts)
+  const { data: recent } = await supabase
+    .from("editions")
+    .select("hero_article_id, editors_pick_id")
+    .lt("edition_date", today)
+    .order("edition_date", { ascending: false })
+    .limit(2);
+  const avoidFeatured = new Set<string>();
+  for (const e of recent ?? []) {
+    if (e.hero_article_id) avoidFeatured.add(e.hero_article_id);
+    if (e.editors_pick_id) avoidFeatured.add(e.editors_pick_id);
+  }
+
+  const { hero, mustReads, editorsPick } = pickCuration(candidates, { mustReadCount, avoidFeatured });
 
   const summary: CurateResult = {
     candidates: candidates.length,
@@ -117,7 +131,6 @@ export async function runCurate(opts: CurateOptions = {}): Promise<CurateResult>
   }
 
   // 4. Upsert today's edition.
-  const today = istToday(); // IST editorial day, not UTC (see lib/ist.ts)
   const { error: edErr } = await supabase.from("editions").upsert(
     {
       edition_date: today,

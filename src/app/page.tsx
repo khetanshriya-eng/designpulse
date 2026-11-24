@@ -6,6 +6,7 @@ import { CategorySections } from "@/components/CategorySections";
 import { InspirationStrip } from "@/components/InspirationStrip";
 import { NewsletterCTA } from "@/components/NewsletterCTA";
 import { EditionBar } from "@/components/EditionBar";
+import { SiteIntro } from "@/components/SiteIntro";
 import { SectionHeader } from "@/components/SectionHeader";
 import { getByCategory, getEdition, getLatest } from "@/lib/data/queries";
 import { SOURCES, type SourceCategory } from "@/data/sources";
@@ -27,28 +28,53 @@ export default async function Home() {
     (x): x is string => !!x
   );
 
-  // Latest + per-category lists pulled in parallel — each independent.
+  // Pools are fetched larger than what's shown, then handed out in page
+  // order through `take`, so no story appears twice on the page (a first
+  // visit showed the same story in three sections).
   const [
-    latestArticles,
-    aiArticles,
-    designTools,
-    uxThinking,
-    videoItems,
-    newsletterItems,
-    inspirationItems,
-    productItems,
-    podcastItems,
+    latestPool,
+    aiPool,
+    designToolsPool,
+    uxThinkingPool,
+    videoPool,
+    newsletterPool,
+    inspirationPool,
+    productPool,
+    podcastPool,
   ] = await Promise.all([
     getLatest(6, excludeFromLatest),
-    getByCategory("ai-tools", 6, excludeFromLatest),
-    getByCategory("design-tools", 2, excludeFromLatest),
-    getByCategory("ux-thinking", 2, excludeFromLatest),
-    getByCategory("youtube", 2, excludeFromLatest),
-    getByCategory("newsletters", 2, excludeFromLatest),
-    getByCategory("inspiration", 4),
-    getByCategory("product", 2, [pickId].filter((x): x is string => !!x)),
-    getByCategory("podcasts", 2),
+    getByCategory("ai-tools", 12, excludeFromLatest),
+    getByCategory("design-tools", 6, excludeFromLatest),
+    getByCategory("ux-thinking", 6, excludeFromLatest),
+    getByCategory("youtube", 6, excludeFromLatest),
+    getByCategory("newsletters", 6, excludeFromLatest),
+    getByCategory("inspiration", 8),
+    getByCategory("product", 6, excludeFromLatest),
+    getByCategory("podcasts", 6, excludeFromLatest),
   ]);
+
+  const seen = new Set<string>(excludeFromLatest);
+  const take = (items: Article[], n: number): Article[] => {
+    const out: Article[] = [];
+    for (const a of items) {
+      if (out.length >= n) break;
+      if (seen.has(a.id)) continue;
+      seen.add(a.id);
+      out.push(a);
+    }
+    return out;
+  };
+
+  // Hand-out order = render order (design first, then AI, then the rest).
+  const latestArticles = take(latestPool, 6);
+  const designTools = take(designToolsPool, 2);
+  const uxThinking = take(uxThinkingPool, 2);
+  const videoItems = take(videoPool, 2);
+  const newsletterItems = take(newsletterPool, 2);
+  const inspirationItems = take(inspirationPool, 4);
+  const aiArticles = take(aiPool, 6);
+  const productItems = take(productPool, 2);
+  const podcastItems = take(podcastPool, 2);
 
   // Freshness gating (3A): a homepage section only renders if it has enough
   // recent items, so the page never shows a month-old "Design Tools" block.
@@ -76,6 +102,7 @@ export default async function Home() {
       {/* Named edition + date picker + share. `live`: on the homepage the bar
           rolls the date to "today" at IST midnight and shows a countdown to the
           morning drop, since the day's edition isn't curated until ~06:00 IST. */}
+      <SiteIntro sourceCount={SOURCES.length} />
       <EditionBar date={edition.date} live />
 
       {/* Hero — starts promptly after the edition bar. */}
@@ -120,6 +147,20 @@ export default async function Home() {
         </section>
       )}
 
+      {/* Category previews — design-led, freshness-gated + dynamic: only
+          categories with ≥2 items from the last week show, so a starved
+          category (e.g. month-old Design Tools) is dropped and the grid fills
+          with whichever design-leaning categories ARE fresh. Tech-news is never
+          featured here (stays in the feed + its own /category page). */}
+      <CategorySections blocks={gridBlocks} />
+
+      {/* Inspiration */}
+      {showInspiration && (
+        <section className="site-container pb-16">
+          <InspirationStrip articles={inspirationItems} />
+        </section>
+      )}
+
       {/* AI & Tools — featured card + a compact list, so the fast-moving
           category shows ~6 recent items instead of two big static cards. */}
       {showAi && (
@@ -140,20 +181,6 @@ export default async function Home() {
               ))}
             </div>
           </div>
-        </section>
-      )}
-
-      {/* Category previews — design-led, freshness-gated + dynamic: only
-          categories with ≥2 items from the last week show, so a starved
-          category (e.g. month-old Design Tools) is dropped and the grid fills
-          with whichever design-leaning categories ARE fresh. Tech-news is never
-          featured here (stays in the feed + its own /category page). */}
-      <CategorySections blocks={gridBlocks} />
-
-      {/* Inspiration */}
-      {showInspiration && (
-        <section className="site-container pb-16">
-          <InspirationStrip articles={inspirationItems} />
         </section>
       )}
 

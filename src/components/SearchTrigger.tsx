@@ -171,7 +171,7 @@ export function SearchTrigger() {
       } finally {
         setLoading(false);
       }
-    }, 250);
+    }, 180);
     return () => {
       clearTimeout(t);
       ctrl.abort();

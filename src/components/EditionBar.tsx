@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getEditionName } from "@/lib/editionName";
 import { formatEditionDate } from "@/lib/format";
-import { EditionPicker } from "./EditionPicker";
+import { EditionPicker, loadEditionDates } from "./EditionPicker";
 import { ShareEditionButton } from "./ShareEditionButton";
 import { SITE_URL } from "@/lib/site";
 
@@ -81,6 +81,15 @@ export function EditionBar({
     const id = window.setInterval(tick, 1000);
     return () => window.clearInterval(id);
   }, [live, date]);
+
+  // Warm the edition list while the browser is idle so the picker opens
+  // instantly (it used to fetch on first click and could take seconds).
+  useEffect(() => {
+    const w = window as Window & { requestIdleCallback?: (cb: () => void) => number };
+    const warm = () => void loadEditionDates();
+    if (w.requestIdleCallback) w.requestIdleCallback(warm);
+    else setTimeout(warm, 1500);
+  }, []);
 
   const awaiting = liveState !== null;
   const shownDate = awaiting ? liveState.rolledDate : date;

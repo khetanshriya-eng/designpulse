@@ -7,7 +7,21 @@ import { formatEditionDate } from "@/lib/format";
 import { BottomSheet } from "./BottomSheet";
 import { PixelLoader } from "./PixelLoader";
 
-type Edition = { date: string; count: number };
+type Edition = { date: string };
+
+// One fetch per page load, shared by every caller: EditionBar warms it while
+// the browser is idle, so opening the picker is instant.
+let datesPromise: Promise<Edition[]> | null = null;
+export function loadEditionDates(): Promise<Edition[]> {
+  datesPromise ??= fetch("/api/archive?dates=1")
+    .then((r) => r.json())
+    .then((d: { dates?: string[] }) => (d.dates ?? []).map((date) => ({ date })))
+    .catch(() => {
+      datesPromise = null; // let a later open retry
+      return [];
+    });
+  return datesPromise;
+}
 
 /**
  * Browse/jump to any edition. Desktop: a dropdown anchored under the edition
@@ -37,14 +51,9 @@ export function EditionPicker({
   useEffect(() => {
     if (!open || editions !== null) return;
     let cancelled = false;
-    fetch("/api/archive?all=true")
-      .then((r) => r.json())
-      .then((d) => {
-        if (!cancelled) setEditions(d.editions ?? []);
-      })
-      .catch(() => {
-        if (!cancelled) setEditions([]);
-      });
+    loadEditionDates().then((list) => {
+      if (!cancelled) setEditions(list);
+    });
     return () => {
       cancelled = true;
     };
@@ -119,9 +128,6 @@ export function EditionPicker({
                   {r.label}
                 </div>
               </div>
-              <span className="font-mono text-[11px] text-ink-subtle shrink-0">
-                {r.count}
-              </span>
             </Link>
           ))}
         {!loading && filtered.length === 0 && (

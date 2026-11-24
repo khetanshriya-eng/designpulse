@@ -50,17 +50,25 @@ export function TypewriterText({
       i += 1;
       setCount(i);
       if (i >= text.length) clearInterval(id);
-    }, 42);
+    }, Math.max(18, Math.min(42, 500 / text.length)));
     return () => clearInterval(id);
   }, [typing, text]);
 
   const complete = count >= text.length;
+  // The untyped rest stays in the layout, invisible, so the heading never
+  // reflows and never reads as a cut-off word ("AI & T") mid-animation.
   return (
     <span ref={ref} className={className}>
-      {text.slice(0, count)}
+      <span className="sr-only">{text}</span>
+      <span aria-hidden>{text.slice(0, count)}</span>
       {typing && !complete && (
         <span className="nav-cursor" aria-hidden>
           ▮
+        </span>
+      )}
+      {!complete && (
+        <span aria-hidden className="invisible">
+          {text.slice(count)}
         </span>
       )}
     </span>

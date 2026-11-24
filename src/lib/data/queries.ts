@@ -18,10 +18,13 @@ import {
   type ArticleWithSource,
 } from "./adapter";
 import { isOffBrand } from "@/lib/content/filter";
-import { sourcePriority } from "@/data/sources";
 import type { Article } from "@/data/articles";
 
-const SELECT = "*, sources(*)";
+// Explicit columns, NOT "*": "*" also pulled raw_content (each article's full
+// fetched text, only the summarizer needs it) and the fts vector, so a
+// 60-row search moved megabytes and took ~1.2 s (2026-11-24).
+const SELECT =
+  "id, source_id, title, original_url, summary, thumbnail_url, author, published_at, fetched_at, read_minutes, duration_minutes, category, content_type, is_featured, is_must_read, content_hash, created_at, sources(*)";
 
 /**
  * Get the daily edition: hero, editor's pick, must-reads, plus a fallback
@@ -103,7 +106,7 @@ export const getEdition = unstable_cache(
 /**
  * Edition dates available in the DB, newest first.
  *
- * Cached (10 min): this + getArticleCount + getRecentHeadlines run on EVERY
+ * Cached (10 min): this + getArticleCount run on EVERY
  * navigation via the root-layout <Navigation>, so caching them is the biggest
  * tab-to-tab / page-to-page speedup — each navigation then only pays for the
  * page's own query. Data changes twice daily, so 10-min staleness is fine.
@@ -243,7 +246,7 @@ export const getLatest = unstable_cache(
   async (limit = 6, excludeIds: string[] = []): Promise<Article[]> => {
     const windows = [7, 14, 30]; // days, in order of preference
     for (const days of windows) {
-      const pool = await fetchLatestPool(limit * 6, excludeIds, days);
+      const pool = await fetchLatestPool(limit * 10, excludeIds, days);
       const picked = balanceByCategory(pool, limit);
       if (picked.length >= limit) {
         return rowsToArticles(picked);
@@ -254,7 +257,7 @@ export const getLatest = unstable_cache(
     const pool = await fetchLatestPool(limit * 6, excludeIds, 30);
     return rowsToArticles(balanceByCategory(pool, limit));
   },
-  ["latest-articles"],
+  ["latest-articles-v3"],
   { revalidate: 600, tags: ["content"] }
 );
 
@@ -331,21 +334,30 @@ function balanceByCategory(
   }
   const freshness = (r: ArticleWithSource) =>
     new Date(r.published_at ?? 0).getTime();
+  // Design categories lead; AI & Tools next; tech-news (the only tier-3
+  // category) always last. A first visit read as a general tech feed when
+  // AI/tech filled the opening cards (2026-11-24 review).
+  const rank = (c: string) => (c === "tech-news" ? 2 : c === "ai-tools" ? 1 : 0);
   const cats = [...byCat.keys()].sort((a, b) => {
-    // tech-news (the only tier-3 category) always sorts last.
-    const at = a === "tech-news" ? 1 : 0;
-    const bt = b === "tech-news" ? 1 : 0;
+    const at = rank(a);
+    const bt = rank(b);
     if (at !== bt) return at - bt;
     return freshness(byCat.get(b)![0]) - freshness(byCat.get(a)![0]);
   });
 
+  // Fill tier by tier: every design category (up to maxPerCategory each)
+  // before AI & Tools, and AI before tech-news, so tech only appears when
+  // design can't fill the grid.
   const picked: ArticleWithSource[] = [];
-  for (let round = 0; round < maxPerCategory && picked.length < limit; round++) {
-    for (const cat of cats) {
-      const item = byCat.get(cat)![round];
-      if (item) {
-        picked.push(item);
-        if (picked.length >= limit) break;
+  for (const tier of [0, 1, 2]) {
+    const tierCats = cats.filter((c) => rank(c) === tier);
+    for (let round = 0; round < maxPerCategory && picked.length < limit; round++) {
+      for (const cat of tierCats) {
+        const item = byCat.get(cat)![round];
+        if (item) {
+          picked.push(item);
+          if (picked.length >= limit) break;
+        }
       }
     }
   }
@@ -452,53 +464,6 @@ export const getByCategory = unstable_cache(
   { revalidate: 600, tags: ["content"] }
 );
 
-/**
- * Lightweight recent headlines (title + url only) for the nav marquee ticker.
- * Dated, summarized articles, newest first.
- */
-export const getRecentHeadlines = unstable_cache(
-  async (limit = 15): Promise<{ title: string; url: string }[]> => {
-    const sb = createPublicClient();
-    const { data, error } = await sb
-      .from("articles")
-      .select("title, original_url, sources(slug)")
-      .not("summary", "is", null)
-      .neq("summary", "")
-      .not("title", "is", null)
-      .neq("title", "")
-      .not("title", "ilike", "http%")
-      .not("title", "ilike", "www.%")
-      .not("published_at", "is", null)
-      .order("published_at", { ascending: false, nullsFirst: false })
-      // Fetch a deep recent pool so the design-only filter has plenty to pick.
-      .limit(150);
-    if (error) throw error;
-
-    type Row = {
-      title: string;
-      original_url: string;
-      sources: { slug: string } | { slug: string }[] | null;
-    };
-    const rows = (data ?? []) as Row[];
-    const slugOf = (r: Row) =>
-      Array.isArray(r.sources) ? r.sources[0]?.slug : r.sources?.slug;
-
-    // The ticker is the first thing on every page — make it a pure DESIGN
-    // signal: tier-1 (design) sources ONLY. No tech-news/business/AI, even if
-    // that means a shorter ticker (it loops). Off-brand deal items excluded.
-    const picked = rows.filter((r) => {
-      if (isOffBrand(r.title, r.original_url)) return false;
-      const s = slugOf(r);
-      return s ? sourcePriority(s) === 1 : false;
-    });
-    return picked
-      .slice(0, limit)
-      .map((r) => ({ title: r.title, url: r.original_url }));
-  },
-  ["recent-headlines-design"],
-  { revalidate: 600, tags: ["content"] }
-);
-
 /** Full category page — bigger N, paginated by offset. Cached per page. */
 export const getCategoryPage = unstable_cache(
   async (
@@ -544,9 +509,32 @@ export const getCategoryPage = unstable_cache(
  * upgrade deploy-safe: search works the same before and after the migration,
  * just better once `fts` is present.
  */
+/**
+ * Order search hits by relevance, not just date: headline matches first,
+ * design stories ahead of AI and tech, off-brand items (deals, lawsuits
+ * flagged by isOffBrand) last; recency breaks ties. "figma" used to open on a
+ * TechCrunch lawsuit story ahead of Figma's own posts (2026-11-24 audit).
+ */
+function rankSearch(items: Article[], terms: string[], limit: number): Article[] {
+  const score = (a: Article) => {
+    const title = a.title.toLowerCase();
+    const inTitle = terms.filter((t) => title.includes(t)).length;
+    let s = inTitle === terms.length ? 4 : inTitle > 0 ? 2 : 0;
+    s += a.category === "tech-news" ? 0 : a.category === "ai-tools" ? 1 : 2;
+    if (isOffBrand(a.title, a.url)) s -= 3;
+    return s;
+  };
+  return items
+    .map((a) => ({ a, s: score(a), t: Date.parse(a.publishedAt) || 0 }))
+    .sort((x, y) => y.s - x.s || y.t - x.t)
+    .slice(0, limit)
+    .map((x) => x.a);
+}
+
 export async function searchArticles(
   query: string,
-  limit = 20
+  limit = 20,
+  timing?: Record<string, number | string>
 ): Promise<Article[]> {
   // Unicode word tokens only — strips every tsquery/ILIKE metacharacter so
   // user input can never break the query (data is public, so this is about
@@ -559,6 +547,7 @@ export async function searchArticles(
   // 1) Full-text search. Prefix-match each term ("desig" → "design") and AND
   //    them together, so "design system" needs both words.
   const tsquery = terms.map((t) => `${t}:*`).join(" & ");
+  const t0 = Date.now();
   const fts = await sb
     .from("articles")
     .select(SELECT)
@@ -569,10 +558,14 @@ export async function searchArticles(
     .not("title", "ilike", "http%")
     .textSearch("fts", tsquery, { config: "english" })
     .order("published_at", { ascending: false, nullsFirst: false })
-    .limit(limit);
+    .limit(limit * 3);
 
+  if (timing) {
+    timing.fts = Date.now() - t0;
+    if (fts.error) timing.ftsError = fts.error.message.slice(0, 80);
+  }
   if (!fts.error) {
-    return rowsToArticles((fts.data ?? []) as ArticleWithSource[]);
+    return rankSearch(rowsToArticles((fts.data ?? []) as ArticleWithSource[]), terms, limit);
   }
 
   // 2) ILIKE fallback (no fts column yet). Match the joined phrase as a
@@ -588,9 +581,9 @@ export async function searchArticles(
     .not("title", "ilike", "http%")
     .or(`title.ilike.${pattern},summary.ilike.${pattern}`)
     .order("published_at", { ascending: false, nullsFirst: false })
-    .limit(limit);
+    .limit(limit * 3);
   if (error) throw error;
-  return rowsToArticles((data ?? []) as ArticleWithSource[]);
+  return rankSearch(rowsToArticles((data ?? []) as ArticleWithSource[]), terms, limit);
 }
 
 /**
@@ -674,9 +667,14 @@ export const getArchiveEditions = unstable_cache(
       }
     }
 
-    // Per-edition story count (parallel, cheap head:count queries).
+    // Per-edition story count: stories that came in during the 24 h before
+    // that edition went out (06:00 IST = 00:30 UTC). Counting the calendar
+    // day instead showed "2 stories" for today's edition at lunchtime.
     const counts = await Promise.all(
       rows.map(async (r) => {
+        const endMs = Date.parse(`${r.edition_date}T00:30:00.000Z`);
+        const from = new Date(endMs - 24 * 3600 * 1000).toISOString();
+        const to = new Date(endMs).toISOString();
         const { count: c } = await sb
           .from("articles")
           .select("*", { count: "exact", head: true })
@@ -684,8 +682,8 @@ export const getArchiveEditions = unstable_cache(
           .neq("summary", "")
           .not("title", "is", null)
           .not("title", "ilike", "http%")
-          .gte("published_at", `${r.edition_date}T00:00:00.000Z`)
-          .lte("published_at", `${r.edition_date}T23:59:59.999Z`);
+          .gte("published_at", from)
+          .lt("published_at", to);
         return c ?? 0;
       })
     );
@@ -701,7 +699,7 @@ export const getArchiveEditions = unstable_cache(
     });
     return { editions, total: count ?? 0 };
   },
-  ["archive-editions"],
+  ["archive-editions-v2"],
   { revalidate: 600, tags: ["content"] }
 );
 
