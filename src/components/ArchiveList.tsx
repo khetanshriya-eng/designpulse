@@ -114,7 +114,7 @@ export function ArchiveList({
                         <div className="flex items-center gap-3">
                           {isToday && (
                             <span
-                              className="font-pixel text-[11px] uppercase tracking-[0.1em] px-2 py-0.5 text-[#1a1340]"
+                              className="font-pixel text-[12px] uppercase tracking-[0.1em] px-2 py-0.5 text-[#1a1340]"
                               style={{ background: "var(--color-lime)" }}
                             >
                               Today

@@ -59,7 +59,7 @@ export function CategoryNav({ categories, storyCount }: Props) {
           })}
         </ul>
         {storyCount > 0 && (
-          <span className="hidden md:inline-block text-[10px] uppercase tracking-[0.16em] text-ink-subtle whitespace-nowrap font-mono">
+          <span className="hidden md:inline-block text-[11px] uppercase tracking-[0.16em] text-ink-subtle whitespace-nowrap font-mono">
             {storyCount} stories curated
           </span>
         )}

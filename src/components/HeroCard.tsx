@@ -37,7 +37,7 @@ export function HeroCard({ article }: { article: Article }) {
             <div className="flex items-center gap-3 flex-wrap mb-3">
               {/* Fixed navy on lime: text-ink would re-scope light at night
                   and vanish on the lime chip. */}
-              <span className="inline-flex items-center bg-lime text-[#1a1340] px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] font-pixel font-bold">
+              <span className="inline-flex items-center bg-lime text-[#1a1340] px-2.5 py-1 text-[12px] uppercase tracking-[0.12em] font-pixel">
                 Top story
               </span>
               <CategoryDot category={article.category} />

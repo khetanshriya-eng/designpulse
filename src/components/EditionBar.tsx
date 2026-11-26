@@ -166,7 +166,7 @@ function NextDropChip({ ms }: { ms: number | null }) {
         aria-hidden
       />
       <span className="flex flex-col leading-none gap-0.5">
-        <span className="font-label text-[8px] sm:text-[9px] uppercase tracking-[0.14em] text-ink-subtle">
+        <span className="font-label text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-ink-subtle">
           {ms === null ? "Fresh pixels cooking" : "Next drop in"}
         </span>
         <span className="font-mono text-[13px] sm:text-[15px] font-bold text-ink tabular-nums">

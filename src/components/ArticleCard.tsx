@@ -70,7 +70,7 @@ function TextLedTop({ article }: { article: Article }) {
     >
       <PixelMosaic seed={article.id || article.url} category={article.category} className="w-9" />
       <span
-        className="font-label text-[10px] uppercase tracking-[0.14em] leading-none"
+        className="font-label text-[11px] uppercase tracking-[0.14em] leading-none"
         style={{ color: meta?.dotVar }}
       >
         {meta?.label ?? article.category}

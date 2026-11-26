@@ -266,7 +266,7 @@ export function SearchTrigger() {
                 <p className="font-title text-[14px] leading-[1.4] text-ink line-clamp-3">
                   {r.title}
                 </p>
-                <div className="mt-1 flex items-center gap-2 font-mono text-[10px] text-ink-subtle">
+                <div className="mt-1 flex items-center gap-2 font-mono text-[11px] text-ink-subtle">
                   <span className="font-label uppercase tracking-[0.1em] text-accent">
                     {r.categoryLabel}
                   </span>
@@ -367,7 +367,7 @@ export function SearchTrigger() {
                           <p className="font-title text-[14px] text-ink leading-[1.4] line-clamp-3">
                             {r.title}
                           </p>
-                          <span className="shrink-0 text-[10px] uppercase tracking-[0.14em] text-ink-subtle">
+                          <span className="shrink-0 text-[11px] uppercase tracking-[0.14em] text-ink-subtle">
                             {r.sourceName}
                           </span>
                         </div>
@@ -376,7 +376,7 @@ export function SearchTrigger() {
                             {r.summary}
                           </p>
                         )}
-                        <div className="mt-1.5 flex items-center gap-2 text-[10px] text-ink-subtle">
+                        <div className="mt-1.5 flex items-center gap-2 text-[11px] text-ink-subtle">
                           <span className="font-label uppercase tracking-[0.1em] text-accent">
                             {r.categoryLabel}
                           </span>
