@@ -46,7 +46,7 @@ export function Footer() {
               href="https://www.producthunt.com/products/designator-2?utm_source=designator-footer&utm_medium=referral"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-5 inline-flex items-center gap-2 font-pixel text-[12px] uppercase tracking-[0.08em] text-white/70 hover:text-[color:var(--color-lime)] transition-colors"
+              className="mt-5 inline-flex items-center gap-2 font-pixel font-pixel-sm text-[12px] uppercase tracking-[0.08em] text-white/70 hover:text-[color:var(--color-lime)] transition-colors"
             >
               <span
                 aria-hidden
@@ -59,7 +59,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-heading text-[11px] uppercase tracking-[0.14em] text-white/50">
+            <h4 className="font-heading font-heading-sm text-[11px] uppercase tracking-[0.14em] text-white/50">
               Categories
             </h4>
             <ul className="mt-3 space-y-1.5 text-[13px]">
@@ -77,7 +77,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-heading text-[11px] uppercase tracking-[0.14em] text-white/50">
+            <h4 className="font-heading font-heading-sm text-[11px] uppercase tracking-[0.14em] text-white/50">
               More
             </h4>
             <ul className="mt-3 space-y-1.5 text-[13px]">
@@ -95,7 +95,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-heading text-[11px] uppercase tracking-[0.14em] text-white/50">
+            <h4 className="font-heading font-heading-sm text-[11px] uppercase tracking-[0.14em] text-white/50">
               About
             </h4>
             <ul className="mt-3 space-y-1.5 text-[13px]">

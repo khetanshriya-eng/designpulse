@@ -40,7 +40,7 @@ function ListCard({ article }: { article: Article }) {
         <ArticleImage article={article} fill size="sm" compact />
       </div>
       <div className="flex-1 min-w-0">
-        <h3 className="font-heading text-[1.05rem] leading-[1.3] text-ink group-hover:text-accent transition-colors line-clamp-2">
+        <h3 className="font-heading font-heading-sm text-[1.05rem] leading-[1.3] text-ink group-hover:text-accent transition-colors line-clamp-2">
           {article.title}
         </h3>
         <div className="mt-1 flex items-center gap-2 text-[11px] text-ink-subtle">
@@ -70,7 +70,7 @@ function TextLedTop({ article }: { article: Article }) {
     >
       <PixelMosaic seed={article.id || article.url} category={article.category} className="w-9" />
       <span
-        className="font-pixel text-[10px] font-bold uppercase tracking-[0.18em] leading-none"
+        className="font-pixel font-pixel-sm text-[10px] font-bold uppercase tracking-[0.18em] leading-none"
         style={{ color: meta?.dotVar }}
       >
         {meta?.label ?? article.category}
@@ -90,7 +90,7 @@ function DefaultCard({ article }: { article: Article }) {
           <SourceBadge sourceId={article.sourceId} />
           <CategoryDot category={article.category} />
         </div>
-        <h3 className="font-heading text-[1.2rem] leading-[1.45] text-ink group-hover:text-accent transition-colors line-clamp-2">
+        <h3 className="font-heading font-heading-sm text-[1.2rem] leading-[1.45] text-ink group-hover:text-accent transition-colors line-clamp-2">
           {article.title}
         </h3>
         {article.summary && (
@@ -160,7 +160,7 @@ function MediumCard({ article }: { article: Article }) {
             makes this card shorter than its neighbour (e.g. Design Tools vs
             UX & Thinking), so paired category cards are always equal height.
             2 lines x leading-1.45 = 2.9em. */}
-        <h3 className="font-heading text-[1.15rem] leading-[1.45] text-ink group-hover:text-accent transition-colors line-clamp-2 min-h-[2.9em]">
+        <h3 className="font-heading font-heading-sm text-[1.15rem] leading-[1.45] text-ink group-hover:text-accent transition-colors line-clamp-2 min-h-[2.9em]">
           {article.title}
         </h3>
         <div className="flex items-center gap-2 text-[11px] text-ink-subtle pt-0.5 mt-auto">
@@ -197,7 +197,7 @@ function HorizontalCard({ article }: { article: Article }) {
             <SourceBadge sourceId={article.sourceId} />
             <CategoryDot category={article.category} />
           </div>
-          <h3 className="font-heading text-[1.1rem] sm:text-[1.2rem] leading-[1.45] text-ink group-hover:text-accent transition-colors line-clamp-2">
+          <h3 className="font-heading font-heading-sm text-[1.1rem] sm:text-[1.2rem] leading-[1.45] text-ink group-hover:text-accent transition-colors line-clamp-2">
             {article.title}
           </h3>
           {article.summary && (
@@ -235,7 +235,7 @@ function CompactCard({ article }: { article: Article }) {
         <div className="flex items-center gap-2 mb-1">
           <SourceBadge sourceId={article.sourceId} />
         </div>
-        <h4 className="font-heading text-[13px] font-semibold leading-snug text-ink group-hover:text-accent transition-colors line-clamp-2">
+        <h4 className="font-heading font-heading-sm text-[13px] font-semibold leading-snug text-ink group-hover:text-accent transition-colors line-clamp-2">
           {article.title}
         </h4>
       </div>

@@ -32,7 +32,7 @@ export function EditorsPick({ article }: { article: Article }) {
         <div className="bg-[#1a1340] p-5 sm:p-6 md:bg-transparent md:absolute md:inset-x-0 md:bottom-0 md:p-10 md:max-w-[820px]">
           <p
             id="editors-pick-heading"
-            className="font-pixel text-[11px] uppercase tracking-[0.18em] font-bold text-accent-soft mb-3"
+            className="font-pixel font-pixel-sm text-[11px] uppercase tracking-[0.18em] font-bold text-accent-soft mb-3"
           >
             Editor&apos;s pick
           </p>

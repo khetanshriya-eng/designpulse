@@ -14,7 +14,7 @@ export default function PrivacyPage() {
   return (
     <div className="site-container pt-14 pb-24">
       <article className="max-w-[760px]">
-        <p className="font-pixel text-[12px] uppercase tracking-[0.16em] text-accent mb-3">
+        <p className="font-pixel font-pixel-sm text-[12px] uppercase tracking-[0.16em] text-accent mb-3">
           Privacy
         </p>
         <h1 className="font-heading text-[2.4rem] sm:text-[3rem] leading-[1.02] text-ink">
@@ -149,7 +149,7 @@ function Section({
         }}
         aria-hidden
       />
-      <h2 className="font-pixel text-[13px] uppercase tracking-[0.16em] text-ink mb-5">
+      <h2 className="font-pixel font-pixel-sm text-[13px] uppercase tracking-[0.16em] text-ink mb-5">
         {title}
       </h2>
       {children}

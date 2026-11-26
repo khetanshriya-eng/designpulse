@@ -32,7 +32,7 @@ export default function NotFound() {
               <li key={slug}>
                 <Link
                   href={`/category/${slug}`}
-                  className="surface-card inline-flex h-10 items-center px-3.5 font-pixel text-[13px] uppercase tracking-[0.08em] text-ink"
+                  className="surface-card inline-flex h-10 items-center px-3.5 font-pixel font-pixel-sm text-[13px] uppercase tracking-[0.08em] text-ink"
                 >
                   {meta.label}
                 </Link>

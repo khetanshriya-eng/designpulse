@@ -130,7 +130,7 @@ export function ArticleImage({
         className={MOSAIC_SIZE[size]}
       />
       <span
-        className="font-pixel text-[10px] font-bold uppercase tracking-[0.18em] text-center leading-none max-w-full px-1"
+        className="font-pixel font-pixel-sm text-[10px] font-bold uppercase tracking-[0.18em] text-center leading-none max-w-full px-1"
         style={{ color: CATEGORY_META[article.category].dotVar }}
       >
         {categoryLabel}

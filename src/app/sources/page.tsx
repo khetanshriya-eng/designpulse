@@ -52,7 +52,7 @@ export default function SourcesPage() {
     <div className="site-container pt-10 sm:pt-12 pb-12">
       {/* Page header */}
       <header className="mb-12">
-        <p className="font-heading text-[11px] uppercase tracking-[0.14em] font-bold text-accent mb-2">
+        <p className="font-heading font-heading-sm text-[11px] uppercase tracking-[0.14em] font-bold text-accent mb-2">
           The library
         </p>
         <h1 className="font-heading text-[2.25rem] sm:text-[2.75rem] leading-[1.05] font-extrabold tracking-tight text-ink">
@@ -111,7 +111,7 @@ export default function SourcesPage() {
                     >
                       <SourceLogo source={s} />
                       <span className="flex-1 min-w-0">
-                        <span className="block font-heading font-semibold text-[14px] text-ink truncate group-hover:text-accent transition-colors">
+                        <span className="block font-heading font-heading-sm font-semibold text-[14px] text-ink truncate group-hover:text-accent transition-colors">
                           {s.name}
                         </span>
                         <span className="block text-[11px] text-ink-subtle uppercase tracking-wider mt-0.5">

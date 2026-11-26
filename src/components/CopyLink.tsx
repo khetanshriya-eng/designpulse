@@ -71,7 +71,7 @@ export function CopyLink({ url, label = "Copy link", compact = false, chip = fal
       onClick={copy}
       aria-label={copied ? "Link copied" : label}
       title={copied ? "Copied!" : label}
-      className={`inline-flex items-center gap-1.5 font-pixel text-[11px] uppercase tracking-[0.06em] transition-colors ${colorClass} ${className}`}
+      className={`inline-flex items-center gap-1.5 font-pixel font-pixel-sm text-[11px] uppercase tracking-[0.06em] transition-colors ${colorClass} ${className}`}
     >
       {copied ? (
         <span aria-hidden className="text-[13px] leading-none">

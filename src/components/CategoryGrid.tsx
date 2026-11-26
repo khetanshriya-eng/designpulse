@@ -25,14 +25,14 @@ export function CategoryGrid({ category, articles }: Props) {
           />
           <h2
             id={`cat-${category}-heading`}
-            className="font-heading text-[1.2rem] sm:text-[1.35rem] tracking-tight text-ink leading-none"
+            className="font-heading font-heading-sm text-[1.2rem] sm:text-[1.35rem] tracking-tight text-ink leading-none"
           >
             {meta.label}
           </h2>
         </div>
         <Link
           href={`/category/${category}`}
-          className="font-pixel text-[12px] text-ink-muted hover:text-accent transition-colors"
+          className="font-pixel font-pixel-sm text-[12px] text-ink-muted hover:text-accent transition-colors"
         >
           See all →
         </Link>

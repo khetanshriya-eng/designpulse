@@ -263,7 +263,7 @@ export function SearchTrigger() {
                 }}
                 className="block px-4 py-3 border-b border-[color:var(--card-border)]/20"
               >
-                <p className="font-heading text-[15px] leading-[1.35] text-ink line-clamp-2">
+                <p className="font-heading font-heading-sm text-[15px] leading-[1.35] text-ink line-clamp-2">
                   {r.title}
                 </p>
                 <div className="mt-1 flex items-center gap-2 font-mono text-[10px] text-ink-subtle">
@@ -364,7 +364,7 @@ export function SearchTrigger() {
                         className="block px-4 py-3.5 hover:bg-paper-tint transition-colors"
                       >
                         <div className="flex items-baseline justify-between gap-3">
-                          <p className="font-heading text-[15px] text-ink leading-[1.4] line-clamp-2">
+                          <p className="font-heading font-heading-sm text-[15px] text-ink leading-[1.4] line-clamp-2">
                             {r.title}
                           </p>
                           <span className="shrink-0 text-[10px] uppercase tracking-[0.14em] text-ink-subtle">
@@ -425,7 +425,7 @@ function ChipGroup({
   return (
     <div>
       <div className="flex items-center justify-between mb-2.5">
-        <p className="font-pixel text-[11px] uppercase tracking-[0.14em] text-ink-subtle">
+        <p className="font-pixel font-pixel-sm text-[11px] uppercase tracking-[0.14em] text-ink-subtle">
           {label}
         </p>
         {onClear && (

@@ -37,7 +37,7 @@ export function SiteIntro({ sourceCount }: { sourceCount: number }) {
 
         {status === "success" ? (
           <p
-            className="font-pixel text-[13px] uppercase tracking-[0.06em] text-accent"
+            className="font-pixel font-pixel-sm text-[13px] uppercase tracking-[0.06em] text-accent"
             role="status"
           >
             ✦ {message} Check Spam or Promotions if it doesn&apos;t show up.
@@ -69,13 +69,13 @@ export function SiteIntro({ sourceCount }: { sourceCount: number }) {
             <button
               type="submit"
               disabled={status === "loading"}
-              className="h-11 shrink-0 px-5 font-pixel text-[13px] uppercase tracking-[0.06em] text-[#1a1340] bg-[color:var(--color-lime)] border-[3px] border-[color:var(--card-border)] shadow-[3px_3px_0_var(--card-shadow)] transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+              className="h-11 shrink-0 px-5 font-pixel font-pixel-sm text-[13px] uppercase tracking-[0.06em] text-[#1a1340] bg-[color:var(--color-lime)] border-[3px] border-[color:var(--card-border)] shadow-[3px_3px_0_var(--card-shadow)] transition-transform hover:-translate-y-0.5 disabled:opacity-60"
             >
               {status === "loading" ? "…" : "Get it daily"}
             </button>
             {status === "error" && (
               <p
-                className="font-pixel text-[12px] uppercase tracking-[0.04em] text-accent sm:hidden"
+                className="font-pixel font-pixel-sm text-[12px] uppercase tracking-[0.04em] text-accent sm:hidden"
                 role="alert"
               >
                 {message}
@@ -86,7 +86,7 @@ export function SiteIntro({ sourceCount }: { sourceCount: number }) {
       </div>
       {status === "error" && (
         <p
-          className="mt-2 hidden font-pixel text-[12px] uppercase tracking-[0.04em] text-accent sm:block"
+          className="mt-2 hidden font-pixel font-pixel-sm text-[12px] uppercase tracking-[0.04em] text-accent sm:block"
           role="alert"
         >
           {message}

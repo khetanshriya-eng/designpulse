@@ -40,7 +40,7 @@ export default function AboutPage() {
         matches the homepage container (consistent margins across pages). */}
     <article className="max-w-[760px]">
       {/* Intro */}
-      <p className="font-pixel text-[12px] uppercase tracking-[0.16em] text-accent mb-3">
+      <p className="font-pixel font-pixel-sm text-[12px] uppercase tracking-[0.16em] text-accent mb-3">
         About
       </p>
       <h1 className="font-heading text-[2.4rem] sm:text-[3rem] leading-[1.02] text-ink">
@@ -80,7 +80,7 @@ export default function AboutPage() {
           {STEPS.map((s) => (
             <div key={s.n} className="surface-card p-5 flex flex-col gap-3">
               <span
-                className="font-pixel text-[13px] w-8 h-8 grid place-items-center text-[color:var(--color-paper)]"
+                className="font-pixel font-pixel-sm text-[13px] w-8 h-8 grid place-items-center text-[color:var(--color-paper)]"
                 style={{ background: "var(--color-accent)" }}
                 aria-hidden
               >
@@ -109,7 +109,7 @@ export default function AboutPage() {
           <h3 className="font-heading text-[1.7rem] leading-none text-ink">
             Aditya
           </h3>
-          <p className="font-pixel text-[12px] uppercase tracking-[0.12em] text-accent mt-1.5">
+          <p className="font-pixel font-pixel-sm text-[12px] uppercase tracking-[0.12em] text-accent mt-1.5">
             Confused Designer
           </p>
           <p className="mt-4 text-[15px] leading-relaxed text-ink-muted max-w-[48ch]">
@@ -124,7 +124,7 @@ export default function AboutPage() {
                 href={s.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-pixel text-[12px] uppercase tracking-[0.06em] px-3 py-2 border-2 border-[color:var(--card-border)] text-ink hover:bg-accent hover:text-[color:var(--color-paper)] transition-colors"
+                className="font-pixel font-pixel-sm text-[12px] uppercase tracking-[0.06em] px-3 py-2 border-2 border-[color:var(--card-border)] text-ink hover:bg-accent hover:text-[color:var(--color-paper)] transition-colors"
               >
                 {s.label}
               </a>
@@ -142,7 +142,7 @@ export default function AboutPage() {
         </p>
         <Link
           href="/sources"
-          className="inline-block mt-4 font-pixel text-[13px] uppercase tracking-[0.06em] text-accent hover:underline"
+          className="inline-block mt-4 font-pixel font-pixel-sm text-[13px] uppercase tracking-[0.06em] text-accent hover:underline"
         >
           → See all sources
         </Link>
@@ -159,7 +159,7 @@ export default function AboutPage() {
           href="/api/rss"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block mt-4 font-pixel text-[13px] uppercase tracking-[0.06em] text-accent hover:underline"
+          className="inline-block mt-4 font-pixel font-pixel-sm text-[13px] uppercase tracking-[0.06em] text-accent hover:underline"
         >
           → Subscribe via RSS
         </a>
@@ -167,7 +167,7 @@ export default function AboutPage() {
           href="https://github.com/khetanshriya-eng/designpulse"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block mt-4 ml-6 font-pixel text-[13px] uppercase tracking-[0.06em] text-accent hover:underline"
+          className="inline-block mt-4 ml-6 font-pixel font-pixel-sm text-[13px] uppercase tracking-[0.06em] text-accent hover:underline"
         >
           → View source on GitHub
         </a>
@@ -205,7 +205,7 @@ function Section({
         }}
         aria-hidden
       />
-      <h2 className="font-pixel text-[13px] uppercase tracking-[0.16em] text-ink mb-6">
+      <h2 className="font-pixel font-pixel-sm text-[13px] uppercase tracking-[0.16em] text-ink mb-6">
         {title}
       </h2>
       {children}

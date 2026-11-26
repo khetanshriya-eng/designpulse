@@ -16,7 +16,7 @@ export function SectionHeader({ kicker, title, description, href, hrefLabel }: P
     <header className="flex items-end justify-between gap-4 mb-5">
       <div>
         {kicker && (
-          <p className="font-pixel flex items-center gap-1.5 text-[12px] uppercase tracking-[0.12em] font-bold text-accent mb-1.5">
+          <p className="font-pixel font-pixel-sm flex items-center gap-1.5 text-[12px] uppercase tracking-[0.12em] font-bold text-accent mb-1.5">
             <span className="inline-flex gap-[2px]" aria-hidden>
               <span className="w-[5px] h-[5px]" style={{ background: "var(--color-lime)" }} />
               <span className="w-[5px] h-[5px]" style={{ background: "var(--color-accent)" }} />
@@ -36,7 +36,7 @@ export function SectionHeader({ kicker, title, description, href, hrefLabel }: P
       {href && (
         <Link
           href={href}
-          className="font-pixel hidden sm:inline-block text-[12px] text-ink-muted hover:text-accent transition-colors whitespace-nowrap"
+          className="font-pixel font-pixel-sm hidden sm:inline-block text-[12px] text-ink-muted hover:text-accent transition-colors whitespace-nowrap"
         >
           {hrefLabel ?? "See all"} →
         </Link>

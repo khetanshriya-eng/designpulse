@@ -97,7 +97,7 @@ export function FeedbackWidget() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Share feedback"
-        className={`surface-card fixed bottom-5 left-5 z-40 inline-flex items-center gap-2 px-3 py-2 font-pixel text-[12px] uppercase tracking-[0.06em] text-ink transition-transform duration-200 motion-reduce:transition-none ${
+        className={`surface-card fixed bottom-5 left-5 z-40 inline-flex items-center gap-2 px-3 py-2 font-pixel font-pixel-sm text-[12px] uppercase tracking-[0.06em] text-ink transition-transform duration-200 motion-reduce:transition-none ${
           tucked ? "translate-y-[calc(100%+2rem)]" : ""
         }`}
       >
@@ -129,7 +129,7 @@ export function FeedbackWidget() {
               </div>
             ) : (
               <>
-                <p className="font-pixel text-[12px] uppercase tracking-[0.12em] text-accent">
+                <p className="font-pixel font-pixel-sm text-[12px] uppercase tracking-[0.12em] text-accent">
                   Feedback
                 </p>
                 <h2 className="font-heading text-[1.35rem] text-ink leading-tight mt-1 mb-4">
@@ -203,7 +203,7 @@ export function FeedbackWidget() {
                     type="button"
                     onClick={submit}
                     disabled={status === "sending" || (!rating && !comment.trim())}
-                    className="font-pixel text-[13px] uppercase tracking-[0.08em] bg-accent text-[color:var(--color-paper)] px-4 py-2 rounded-md disabled:opacity-50 transition-opacity"
+                    className="font-pixel font-pixel-sm text-[13px] uppercase tracking-[0.08em] bg-accent text-[color:var(--color-paper)] px-4 py-2 rounded-md disabled:opacity-50 transition-opacity"
                   >
                     {status === "sending" ? "Sending…" : "Send"}
                   </button>

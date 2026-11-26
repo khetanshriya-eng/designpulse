@@ -45,7 +45,7 @@ export function ShareEditionButton({ editionUrl }: { editionUrl: string }) {
           <rect x="5" y="5" width="9" height="9" stroke="currentColor" strokeWidth="2" />
           <path d="M3 11V3H11" stroke="currentColor" strokeWidth="2" />
         </svg>
-        <span className="font-pixel text-[11px] uppercase tracking-[0.06em] hidden sm:inline">
+        <span className="font-pixel font-pixel-sm text-[11px] uppercase tracking-[0.06em] hidden sm:inline">
           Share
         </span>
       </button>
