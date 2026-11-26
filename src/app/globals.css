@@ -610,21 +610,18 @@ html[data-subscribed] .site-intro {
   display: none;
 }
 
-/* Small pixel type on standard-resolution screens.
+/* Small pixel type, everywhere.
    Jersey 10 (headings) and Pixelify Sans (labels) are bitmap-style faces:
-   large, or on high-density laptop screens, they stay crisp; drawn small on a
-   1x monitor their strokes can't land on whole pixels and letters merge
-   (owner report, 2026-11-26). Below ~20px, and only on those screens, small
-   headings switch to the system sans and small labels to Space Mono. Big
-   headings keep the pixel face everywhere. */
-@media (max-resolution: 1.49dppx), (-webkit-max-device-pixel-ratio: 1.49) {
-  .font-heading-sm {
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    font-weight: 600;
-    letter-spacing: -0.005em;
-  }
-  .font-pixel-sm {
-    font-family: var(--font-sans);
-    font-weight: 700;
-  }
+   crisp large, but drawn small their strokes merge, badly on standard
+   monitors (owner report, 2026-11-26; owner chose one fix for all screens).
+   Below ~20px, headings use the system sans (semibold) and labels Space
+   Mono. Big headings keep the pixel face. */
+.font-heading-sm {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.font-pixel-sm {
+  font-family: var(--font-sans);
+  font-weight: 700;
 }
