@@ -47,7 +47,7 @@ export function LostState({
       {noindex && <meta name="robots" content="noindex" />}
       <div className="grid items-center gap-10 md:grid-cols-[minmax(0,1fr)_300px] lg:gap-16">
         <div className="order-2 md:order-1">
-          <p className="font-pixel text-[12px] uppercase tracking-[0.16em] text-accent">{kicker}</p>
+          <p className="font-label text-[12px] uppercase tracking-[0.16em] text-accent">{kicker}</p>
           <h1
             className="mt-1.5 font-heading text-[2.1rem] sm:text-[2.8rem] leading-[1.02] text-ink"
             style={{ textWrap: "balance" }}

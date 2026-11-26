@@ -56,7 +56,7 @@ export function NewsletterCTA() {
           <div className="grid md:grid-cols-[minmax(0,1fr)_260px] items-stretch">
             {/* Copy + form */}
             <div className="flex flex-col justify-center p-7 sm:p-10">
-              <p className="font-pixel text-[12px] uppercase tracking-[0.16em] text-accent">
+              <p className="font-label text-[12px] uppercase tracking-[0.16em] text-accent">
                 Daily briefing
               </p>
               <h2
@@ -108,13 +108,13 @@ export function NewsletterCTA() {
 
               {status === "error" ? (
                 <p
-                  className="mt-3 font-pixel text-[12px] uppercase tracking-[0.04em] text-accent"
+                  className="mt-3 font-label text-[12px] uppercase tracking-[0.04em] text-accent"
                   role="alert"
                 >
                   {message}
                 </p>
               ) : (
-                <p className="mt-3 font-pixel text-[11px] uppercase tracking-[0.08em] text-ink-subtle">
+                <p className="mt-3 font-label text-[11px] uppercase tracking-[0.08em] text-ink-subtle">
                   Free · One email a day · Unsubscribe in one click
                 </p>
               )}

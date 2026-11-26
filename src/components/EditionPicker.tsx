@@ -121,7 +121,7 @@ export function EditionPicker({
               }`}
             >
               <div className="min-w-0">
-                <div className="font-pixel text-[13px] text-ink truncate">
+                <div className="font-label text-[13px] leading-[1.35] text-ink truncate">
                   {r.name}
                 </div>
                 <div className="font-mono text-[11px] text-ink-subtle">

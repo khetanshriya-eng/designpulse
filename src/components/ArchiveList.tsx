@@ -93,7 +93,7 @@ export function ArchiveList({
               {/* Count only months that are fully loaded; the last month on screen
                   may continue past "Load more". */}
               {!(hasMore && month === editions.at(-1)?.date.slice(0, 7)) && (
-                <span className="font-pixel text-[11px] uppercase tracking-[0.12em] text-ink-subtle">
+                <span className="font-label text-[11px] uppercase tracking-[0.12em] text-ink-subtle">
                   {items.length} {items.length === 1 ? "edition" : "editions"}
                 </span>
               )}
@@ -114,13 +114,13 @@ export function ArchiveList({
                         <div className="flex items-center gap-3">
                           {isToday && (
                             <span
-                              className="font-pixel text-[10px] uppercase tracking-[0.1em] px-2 py-0.5 text-[#1a1340]"
+                              className="font-pixel text-[11px] uppercase tracking-[0.1em] px-2 py-0.5 text-[#1a1340]"
                               style={{ background: "var(--color-lime)" }}
                             >
                               Today
                             </span>
                           )}
-                          <span className="font-pixel text-[14px] text-ink">
+                          <span className="font-label text-[14px] text-ink">
                             {getEditionName(ed.date)}
                           </span>
                           <span className="text-[12px] text-ink-subtle whitespace-nowrap">
@@ -140,7 +140,7 @@ export function ArchiveList({
                         </span>
                         <span
                           aria-hidden
-                          className="font-pixel text-[14px] text-accent"
+                          className="font-label text-[14px] text-accent"
                         >
                           →
                         </span>

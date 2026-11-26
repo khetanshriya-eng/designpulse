@@ -41,7 +41,7 @@ export function SourceLogo({
   if (failed || !src) {
     return (
       <span
-        className={`shrink-0 inline-flex items-center justify-center rounded-full font-heading font-bold text-paper ${fallbackTextClass} ${source.swatch} ${className}`}
+        className={`shrink-0 inline-flex items-center justify-center rounded-full font-label text-paper ${fallbackTextClass} ${source.swatch} ${className}`}
         aria-hidden
       >
         {source.initials}

@@ -32,7 +32,7 @@ export default function NotFound() {
               <li key={slug}>
                 <Link
                   href={`/category/${slug}`}
-                  className="surface-card inline-flex h-10 items-center px-3.5 font-pixel text-[13px] uppercase tracking-[0.08em] text-ink"
+                  className="surface-card inline-flex h-10 items-center px-3.5 font-label text-[13px] uppercase tracking-[0.08em] text-ink"
                 >
                   {meta.label}
                 </Link>
@@ -78,7 +78,7 @@ export default function NotFound() {
         body={
           <>
             Edition links look like{" "}
-            <span className="font-pixel text-ink">/edition/2026-11-20</span>.
+            <span className="font-label text-ink">/edition/2026-11-20</span>.
             Pick a day from the archive instead.
           </>
         }

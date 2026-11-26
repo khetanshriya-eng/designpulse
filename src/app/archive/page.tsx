@@ -19,7 +19,7 @@ export default async function ArchivePage() {
 
   return (
     <article className="site-container pt-14 pb-24">
-      <p className="font-pixel text-[12px] uppercase tracking-[0.16em] text-accent mb-3">
+      <p className="font-label text-[12px] uppercase tracking-[0.16em] text-accent mb-3">
         Past editions
       </p>
       <h1 className="font-heading text-[2.4rem] sm:text-[3rem] leading-[1.02] text-ink">

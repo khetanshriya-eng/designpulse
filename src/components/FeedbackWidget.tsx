@@ -129,10 +129,10 @@ export function FeedbackWidget() {
               </div>
             ) : (
               <>
-                <p className="font-pixel text-[12px] uppercase tracking-[0.12em] text-accent">
+                <p className="font-label text-[12px] uppercase tracking-[0.12em] text-accent">
                   Feedback
                 </p>
-                <h2 className="font-heading text-[1.35rem] text-ink leading-tight mt-1 mb-4">
+                <h2 className="font-heading text-[1.5rem] text-ink leading-tight mt-1 mb-4">
                   How&apos;s Designator?
                 </h2>
 
@@ -247,7 +247,7 @@ function ThankYou() {
           />
         ))}
       </div>
-      <p className="font-heading text-[1.3rem] text-ink fb-rise">
+      <p className="font-heading text-[1.5rem] text-ink fb-rise">
         Thanks for the feedback!
       </p>
     </div>

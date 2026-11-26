@@ -609,3 +609,23 @@ html[data-theme="dark"] [data-image="real"]:hover img {
 html[data-subscribed] .site-intro {
   display: none;
 }
+
+/* ── Type roles (2026-11-26) ─────────────────────────────────────────────
+   One rule: pixel faces for display and brand, Space Mono for reading.
+   - font-heading (Jersey 10): big headlines only (top story, editor's pick,
+     must-read lead, section/page titles, edition name), never below ~22px.
+   - font-pixel (Pixelify Sans): logo, buttons, filled badges/chips.
+   - font-title: story headlines in cards, lists, search, Space Mono bold.
+   - font-label: kickers, category tags, nav, metadata labels, Space Mono
+     bold (uppercase/tracking set per use).
+   Pixel faces merge into blur when small on standard monitors; this keeps
+   every line you read in one legible family, so mixing stays intentional. */
+.font-title {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.font-label {
+  font-family: var(--font-sans);
+  font-weight: 700;
+}
