@@ -288,13 +288,18 @@ body {
 /* Headings use the Jersey 10 display face. It's a single-weight (400) pixel
    font, so we pin font-weight: any bold utility would trigger ugly synthetic
    faux-bold (the "inflated/fat" look). Hierarchy comes from size, not weight. */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading);
-  font-weight: 400;
-  letter-spacing: 0.01em;
-  /* Jersey 10 glyphs nearly fill the em; a too-tight line-height makes a
-     clamped line poke past the clip box. 1.2 gives clean truncation. */
-  line-height: 1.2;
+/* In @layer base so per-element utilities (leading-*, font-title, …) win.
+   Unlayered, this rule silently overrode every heading's leading utility;
+   with line-clamp that clipped the bottom of letters (2026-11-26). */
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    /* Jersey 10 glyphs nearly fill the em; a too-tight line-height makes a
+       clamped line poke past the clip box. 1.2 gives clean truncation. */
+    line-height: 1.2;
+  }
 }
 
 /* ─────────────────────────────────────────────
