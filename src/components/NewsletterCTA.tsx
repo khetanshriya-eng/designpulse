@@ -191,10 +191,7 @@ export function NewsletterCTA() {
                     <rect x="4" y="30" width="42" height="2" fill={NAVY} />
                   </svg>
                 </div>
-                <p
-                  className="font-pixel text-[13px] uppercase tracking-[0.14em]"
-                  style={{ color: LIME }}
-                >
+                <p className="cta-lands font-pixel text-[13px] uppercase tracking-[0.14em]">
                   Lands 06:00 IST
                 </p>
               </div>

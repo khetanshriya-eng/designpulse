@@ -6,7 +6,14 @@ import { CategoryDot } from "./CategoryDot";
 import { ArticleImage } from "./ArticleImage";
 import { formatRelativeTime, formatReadTime } from "@/lib/format";
 
-export function HeroCard({ article }: { article: Article }) {
+export function HeroCard({
+  article,
+  headingAs: Heading = "h1",
+}: {
+  article: Article;
+  /** The homepage already has an h1 (SiteIntro); the edition page doesn't. */
+  headingAs?: "h1" | "h2";
+}) {
   const readTime = formatReadTime(article);
   return (
     <Link
@@ -46,9 +53,9 @@ export function HeroCard({ article }: { article: Article }) {
                 {formatRelativeTime(article.publishedAt)}
               </span>
             </div>
-            <h1 className="font-heading text-[1.7rem] sm:text-[2rem] md:text-[2.2rem] leading-[1.04] text-ink tracking-tight group-hover:text-accent transition-colors">
+            <Heading className="font-heading text-[1.7rem] sm:text-[2rem] md:text-[2.2rem] leading-[1.04] text-ink tracking-tight group-hover:text-accent transition-colors">
               {article.title}
-            </h1>
+            </Heading>
             {article.summary && (
               <p className="mt-4 text-[15px] leading-relaxed text-ink-muted max-w-prose">
                 {article.summary}

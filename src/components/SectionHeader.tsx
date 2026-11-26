@@ -7,9 +7,11 @@ type Props = {
   description?: string;
   href?: string;
   hrefLabel?: string;
+  /** h1 when the section header is the page title (category pages). */
+  as?: "h1" | "h2";
 };
 
-export function SectionHeader({ kicker, title, description, href, hrefLabel }: Props) {
+export function SectionHeader({ kicker, title, description, href, hrefLabel, as: Heading = "h2" }: Props) {
   return (
     // No full-width rule — bordered cards + spacing carry the separation. The
     // section is marked by a small pixel-block glyph on the kicker instead.
@@ -24,9 +26,9 @@ export function SectionHeader({ kicker, title, description, href, hrefLabel }: P
             {kicker}
           </p>
         )}
-        <h2 className="font-heading text-[1.6rem] sm:text-[1.85rem] tracking-tight text-ink leading-tight">
+        <Heading className="font-heading text-[1.6rem] sm:text-[1.85rem] tracking-tight text-ink leading-tight">
           <TypewriterText text={title} />
-        </h2>
+        </Heading>
         {description && (
           <p className="mt-1.5 text-[13px] text-ink-muted max-w-prose">
             {description}
