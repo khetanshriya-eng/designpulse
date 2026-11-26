@@ -109,7 +109,7 @@ export function EditionBar({
             <span className="text-ink-subtle"> · {formatEditionDate(shownDate)}</span>
           </p>
           <h2
-            className="mt-1.5 font-heading text-[1.3rem] sm:text-[1.6rem] leading-none text-ink truncate"
+            className="mt-0.5 font-heading text-[1.3rem] sm:text-[1.6rem] leading-none text-ink truncate"
             title="Every daily edition gets its own name"
           >
             {name}
