@@ -59,7 +59,7 @@ export function CategoryNav({ categories, storyCount }: Props) {
           })}
         </ul>
         {storyCount > 0 && (
-          <span className="hidden md:inline-block text-[10px] uppercase tracking-[0.16em] text-ink-subtle whitespace-nowrap font-mono">
+          <span className="hidden md:inline-block text-[11px] uppercase tracking-[0.16em] text-ink-subtle whitespace-nowrap font-mono">
             {storyCount} stories curated
           </span>
         )}
@@ -90,7 +90,7 @@ function NavLink({
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className={`font-pixel inline-flex items-center h-10 transition-colors ${activeClasses}`}
+      className={`font-label inline-flex items-center h-10 transition-colors ${activeClasses}`}
     >
       {label}
       {active && (

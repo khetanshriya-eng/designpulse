@@ -40,7 +40,7 @@ export default function AboutPage() {
         matches the homepage container (consistent margins across pages). */}
     <article className="max-w-[760px]">
       {/* Intro */}
-      <p className="font-pixel text-[12px] uppercase tracking-[0.16em] text-accent mb-3">
+      <p className="font-label text-[12px] uppercase tracking-[0.16em] text-accent mb-3">
         About
       </p>
       <h1 className="font-heading text-[2.4rem] sm:text-[3rem] leading-[1.02] text-ink">
@@ -109,7 +109,7 @@ export default function AboutPage() {
           <h3 className="font-heading text-[1.7rem] leading-none text-ink">
             Aditya
           </h3>
-          <p className="font-pixel text-[12px] uppercase tracking-[0.12em] text-accent mt-1.5">
+          <p className="font-label text-[12px] uppercase tracking-[0.12em] text-accent mt-1.5">
             Confused Designer
           </p>
           <p className="mt-4 text-[15px] leading-relaxed text-ink-muted max-w-[48ch]">
@@ -142,7 +142,7 @@ export default function AboutPage() {
         </p>
         <Link
           href="/sources"
-          className="inline-block mt-4 font-pixel text-[13px] uppercase tracking-[0.06em] text-accent hover:underline"
+          className="inline-block mt-4 font-label text-[13px] uppercase tracking-[0.06em] text-accent hover:underline"
         >
           → See all sources
         </Link>
@@ -159,7 +159,7 @@ export default function AboutPage() {
           href="/api/rss"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block mt-4 font-pixel text-[13px] uppercase tracking-[0.06em] text-accent hover:underline"
+          className="inline-block mt-4 font-label text-[13px] uppercase tracking-[0.06em] text-accent hover:underline"
         >
           → Subscribe via RSS
         </a>
@@ -167,7 +167,7 @@ export default function AboutPage() {
           href="https://github.com/khetanshriya-eng/designpulse"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block mt-4 ml-6 font-pixel text-[13px] uppercase tracking-[0.06em] text-accent hover:underline"
+          className="inline-block mt-4 ml-6 font-label text-[13px] uppercase tracking-[0.06em] text-accent hover:underline"
         >
           → View source on GitHub
         </a>
@@ -205,7 +205,7 @@ function Section({
         }}
         aria-hidden
       />
-      <h2 className="font-pixel text-[13px] uppercase tracking-[0.16em] text-ink mb-6">
+      <h2 className="font-label text-[13px] uppercase tracking-[0.16em] text-ink mb-6">
         {title}
       </h2>
       {children}

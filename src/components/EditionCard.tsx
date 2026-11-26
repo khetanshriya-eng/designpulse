@@ -23,9 +23,9 @@ export async function EditionCard({ date, label, wide = false }: { date: string;
         </div>
       )}
       <div className={`flex flex-1 flex-col gap-2 p-5 ${wide ? "md:justify-center md:p-8" : ""}`}>
-        <p className="font-pixel text-[11px] uppercase tracking-[0.14em] text-accent">{label}</p>
-        <p className="font-heading text-[1.35rem] leading-tight text-ink">{getEditionName(date)}</p>
-        <p className="font-pixel text-[12px] uppercase tracking-[0.08em] text-ink-subtle">
+        <p className="font-label text-[11px] uppercase tracking-[0.14em] text-accent">{label}</p>
+        <p className="font-heading text-[1.5rem] leading-tight text-ink">{getEditionName(date)}</p>
+        <p className="font-label text-[12px] uppercase tracking-[0.08em] text-ink-subtle">
           {formatEditionDate(date)}
         </p>
         {hero && (
@@ -33,7 +33,7 @@ export async function EditionCard({ date, label, wide = false }: { date: string;
             Top story: {hero.title}
           </p>
         )}
-        <span className="mt-auto pt-3 font-pixel text-[12px] uppercase tracking-[0.08em] text-ink group-hover:text-accent">
+        <span className="mt-auto pt-3 font-label text-[12px] uppercase tracking-[0.08em] text-ink group-hover:text-accent">
           Read this edition →
         </span>
       </div>

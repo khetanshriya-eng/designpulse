@@ -104,12 +104,12 @@ export function EditionBar({
             edition's own name. A bare name read as a mystery heading to
             first-time visitors (2026-11-26). */}
         <div className="min-w-0">
-          <p className="font-pixel text-[11px] uppercase tracking-[0.14em] text-accent">
+          <p className="font-label text-[11px] uppercase tracking-[0.14em] text-accent">
             {isToday ? "Today's edition" : "Edition"}
             <span className="text-ink-subtle"> · {formatEditionDate(shownDate)}</span>
           </p>
           <h2
-            className="mt-0.5 font-heading text-[1.3rem] sm:text-[1.6rem] leading-none text-ink truncate"
+            className="mt-0.5 font-heading text-[1.5rem] sm:text-[1.7rem] leading-[1.1] text-ink truncate"
             title="Every daily edition gets its own name"
           >
             {name}
@@ -122,7 +122,7 @@ export function EditionBar({
             onClick={() => setOpen((v) => !v)}
             aria-haspopup="dialog"
             aria-expanded={open}
-            className="group inline-flex self-start items-center gap-2 p-2 sm:px-3 sm:py-2 font-pixel text-[11px] uppercase tracking-[0.06em] text-ink bg-[color:var(--color-card)] border-[3px] border-[color:var(--card-border)] shadow-[3px_3px_0_var(--card-shadow)] transition-transform hover:-translate-y-0.5"
+            className="group inline-flex self-start items-center gap-2 p-2 sm:px-3 sm:py-2 font-pixel text-[12px] uppercase tracking-[0.06em] text-ink bg-[color:var(--color-card)] border-[3px] border-[color:var(--card-border)] shadow-[3px_3px_0_var(--card-shadow)] transition-transform hover:-translate-y-0.5"
           >
             Past editions
             <span
@@ -166,7 +166,7 @@ function NextDropChip({ ms }: { ms: number | null }) {
         aria-hidden
       />
       <span className="flex flex-col leading-none gap-0.5">
-        <span className="font-pixel text-[8px] sm:text-[9px] uppercase tracking-[0.14em] text-ink-subtle">
+        <span className="font-label text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-ink-subtle">
           {ms === null ? "Fresh pixels cooking" : "Next drop in"}
         </span>
         <span className="font-mono text-[13px] sm:text-[15px] font-bold text-ink tabular-nums">

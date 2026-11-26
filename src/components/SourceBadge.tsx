@@ -33,7 +33,7 @@ export function SourceBadge({ sourceId, size = "sm", showType = false }: Props) 
         />
       ) : failed || !src ? (
         <span
-          className={`shrink-0 inline-flex items-center justify-center rounded-full font-heading font-bold text-paper ${dim} ${s.swatch}`}
+          className={`shrink-0 inline-flex items-center justify-center rounded-full font-label text-paper ${dim} ${s.swatch}`}
           aria-hidden
         >
           {s.initials}

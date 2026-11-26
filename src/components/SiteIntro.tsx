@@ -19,7 +19,7 @@ export function SiteIntro({ sourceCount }: { sourceCount: number }) {
       <div className="surface-card grid gap-5 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-10">
         <div>
           <h1
-            className="font-heading text-[1.35rem] sm:text-[1.6rem] leading-tight text-ink"
+            className="font-heading text-[1.5rem] sm:text-[1.7rem] leading-tight text-ink"
             style={{ textWrap: "balance" }}
           >
             The daily briefing for product designers.
@@ -37,7 +37,7 @@ export function SiteIntro({ sourceCount }: { sourceCount: number }) {
 
         {status === "success" ? (
           <p
-            className="font-pixel text-[13px] uppercase tracking-[0.06em] text-accent"
+            className="font-label text-[13px] uppercase tracking-[0.06em] text-accent"
             role="status"
           >
             ✦ {message} Check Spam or Promotions if it doesn&apos;t show up.
@@ -75,7 +75,7 @@ export function SiteIntro({ sourceCount }: { sourceCount: number }) {
             </button>
             {status === "error" && (
               <p
-                className="font-pixel text-[12px] uppercase tracking-[0.04em] text-accent sm:hidden"
+                className="font-label text-[12px] uppercase tracking-[0.04em] text-accent sm:hidden"
                 role="alert"
               >
                 {message}
@@ -86,7 +86,7 @@ export function SiteIntro({ sourceCount }: { sourceCount: number }) {
       </div>
       {status === "error" && (
         <p
-          className="mt-2 hidden font-pixel text-[12px] uppercase tracking-[0.04em] text-accent sm:block"
+          className="mt-2 hidden font-label text-[12px] uppercase tracking-[0.04em] text-accent sm:block"
           role="alert"
         >
           {message}
