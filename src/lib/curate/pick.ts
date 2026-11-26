@@ -17,6 +17,7 @@
  */
 import type { ArticleRow, SourceRow } from "../db/types";
 import { MOSAIC_SOURCE_SLUGS, sourcePriority } from "@/data/sources";
+import { isAiThemed, isShortClip } from "@/lib/ai-themed";
 import { isOffBrand } from "@/lib/content/filter";
 
 export type Candidate = ArticleRow & { source: SourceRow };
@@ -156,8 +157,15 @@ export function pickCuration(
   const now = Date.now();
   const ageHours = (r: Candidate) =>
     r.published_at ? (now - new Date(r.published_at).getTime()) / 36e5 : Infinity;
+  // Lead spots (top story, editor's pick) must read as design: no repeat of
+  // recent leads, no Shorts/clips, nothing AI-themed or from AI/tech
+  // categories. Each rule relaxes only if it would leave nothing.
   const unseen = featurable.filter((s) => !avoid.has(s.row.id));
-  const leadPool = unseen.length ? unseen : featurable;
+  const notClip = (unseen.length ? unseen : featurable).filter((s) => !isShortClip(s.row.original_url));
+  const designLead = notClip.filter(
+    (s) => !isAiThemed(s.row.title) && s.row.category !== "ai-tools" && s.row.category !== "tech-news"
+  );
+  const leadPool = designLead.length ? designLead : notClip.length ? notClip : unseen.length ? unseen : featurable;
   const withImg = leadPool.filter((s) => showsImage(s.row));
   const t1 = (maxH: number) =>
     withImg.find(
@@ -174,12 +182,16 @@ export function pickCuration(
   const hero = heroScore?.row ?? null;
 
   // Must-reads: walk featurable, prefer category diversity, skip the hero.
+  // At most two AI-themed must-reads, so the section stays a design list.
+  const MAX_AI_MUST_READS = 2;
   const mustReads: Candidate[] = [];
+  const aiCount = () => mustReads.filter((m) => isAiThemed(m.title)).length;
   const usedCats = new Set<string>();
   for (const s of featurable) {
     if (mustReads.length >= mustReadCount) break;
     if (hero && s.row.id === hero.id) continue;
     if (usedCats.has(s.row.category)) continue;
+    if (isAiThemed(s.row.title) && aiCount() >= MAX_AI_MUST_READS) continue;
     mustReads.push(s.row);
     usedCats.add(s.row.category);
   }
@@ -190,6 +202,7 @@ export function pickCuration(
       if (mustReads.length >= mustReadCount) break;
       if (hero && s.row.id === hero.id) continue;
       if (mustReads.find((m) => m.id === s.row.id)) continue;
+      if (isAiThemed(s.row.title) && aiCount() >= MAX_AI_MUST_READS) continue;
       mustReads.push(s.row);
     }
   }

@@ -22,6 +22,7 @@ import { NewsletterCTA } from "@/components/NewsletterCTA";
 import { LostState } from "@/components/LostState";
 import { EditionCard, EditionCards } from "@/components/EditionCard";
 import { FIRST_EDITION, todayIst } from "@/lib/lost";
+import { isAiThemed } from "@/lib/ai-themed";
 
 // Real month/day ranges — 2026-99-99 should 404 at the regex, not hit the DB.
 const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -229,10 +230,18 @@ export default async function EditionPage({
   // news last (homepage parity, 2026-11-24 audit). Every story then appears
   // once: sections below draw only from what's left.
   const tier = (a: Article) => (a.category === "tech-news" ? 2 : a.category === "ai-tools" ? 1 : 0);
-  const dayStories = [...pool]
-    .sort((a, b) => tier(a) - tier(b))
-    .slice(0, 6)
-    .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
+  // At most two AI-themed headlines in the opening grid (homepage parity).
+  const dayStories: Article[] = [];
+  let aiInGrid = 0;
+  for (const a of [...pool].sort((x, y) => tier(x) - tier(y))) {
+    if (dayStories.length >= 6) break;
+    if (isAiThemed(a.title)) {
+      if (aiInGrid >= 2) continue;
+      aiInGrid++;
+    }
+    dayStories.push(a);
+  }
+  dayStories.sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
   const used = new Set(dayStories.map((a) => a.id));
   const rest = pool.filter((a) => !used.has(a.id));
 

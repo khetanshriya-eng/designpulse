@@ -9,6 +9,7 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { Analytics } from "@/components/Analytics";
 import { OutboundTracker } from "@/components/OutboundTracker";
+import { SOURCES } from "@/data/sources";
 import { EngagementBeacon } from "@/components/EngagementBeacon";
 import { SITE_URL } from "@/lib/site";
 
@@ -42,19 +43,19 @@ export const metadata: Metadata = {
   verification: { google: "fiMMiZUjHCpCofsuJO6nn0ShoXOi5tnGYBqwzDRM8zw" },
   title: "Designator",
   description:
-    "A daily briefing for product designers. Curated updates from Figma, NN/g, UX Collective, Lenny's, The Verge, and 70+ trusted sources, summarized so you stay current in under five minutes.",
+    `A daily briefing for product designers. Curated updates from Figma, NN/g, UX Collective, Lenny's, The Verge and ${SOURCES.length - 5} more trusted sources, summarized so you stay current in under five minutes.`,
   // og:image / twitter:image come from app/opengraph-image.tsx automatically.
   openGraph: {
     type: "website",
     siteName: "Designator",
     title: "Designator",
-    description: "Your daily design briefing — 70+ sources, summarized.",
+    description: `Your daily design briefing: ${SOURCES.length} sources, summarized.`,
     url: SITE_URL,
   },
   twitter: {
     card: "summary_large_image",
     title: "Designator",
-    description: "Your daily design briefing — 70+ sources, summarized.",
+    description: `Your daily design briefing: ${SOURCES.length} sources, summarized.`,
   },
   // RSS autodiscovery — readers find /api/rss when the site URL is pasted in.
   alternates: {

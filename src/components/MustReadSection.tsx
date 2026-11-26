@@ -4,13 +4,18 @@ import { CATEGORY_META } from "@/data/sources";
 import { SourceBadge } from "./SourceBadge";
 import { CategoryDot } from "./CategoryDot";
 import { ArticleImage } from "./ArticleImage";
+import { hasRealImage } from "@/lib/article-image";
 import { PixelCard } from "./PixelCard";
 import { SectionHeader } from "./SectionHeader";
 import { formatRelativeTime, formatReadTime } from "@/lib/format";
 
 export function MustReadSection({ articles }: { articles: Article[] }) {
   if (articles.length === 0) return null;
-  const [primary, ...rest] = articles;
+  // The big lead card must show a real picture: lead with the first
+  // must-read that has one (a placeholder filled the section's largest card,
+  // 2026-11-26). Order is otherwise kept.
+  const leadIdx = Math.max(0, articles.findIndex(hasRealImage));
+  const [primary, ...rest] = [articles[leadIdx], ...articles.filter((_, i) => i !== leadIdx)];
   const secondary = rest.slice(0, 4);
   return (
     <section aria-labelledby="must-read-heading">

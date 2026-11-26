@@ -1,6 +1,7 @@
 "use client";
 
 import { useSubscribe } from "./useSubscribe";
+import { SOURCES } from "@/data/sources";
 
 /**
  * Homepage email-capture CTA. Posts to /api/subscribe (Supabase list + Resend welcome).
@@ -68,7 +69,7 @@ export function NewsletterCTA() {
                 className="mt-1.5 text-[14px] leading-normal text-ink-muted"
                 style={{ textWrap: "pretty" }}
               >
-                Picked from 70+ design, UX and product sources, in your inbox by
+                Picked from {SOURCES.length} design, UX and product sources, in your inbox by
                 6 am IST.
               </p>
 
