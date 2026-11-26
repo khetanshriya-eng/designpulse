@@ -90,7 +90,7 @@ function DefaultCard({ article }: { article: Article }) {
           <SourceBadge sourceId={article.sourceId} />
           <CategoryDot category={article.category} />
         </div>
-        <h3 className="font-title text-[15px] leading-[1.4] text-ink group-hover:text-accent transition-colors line-clamp-3">
+        <h3 className="font-title text-[15px] leading-[1.4] text-ink group-hover:text-accent transition-colors line-clamp-4">
           {article.title}
         </h3>
         {article.summary && (
