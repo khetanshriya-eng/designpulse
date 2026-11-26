@@ -15,7 +15,8 @@
  */
 import "server-only";
 import { createPublicClient, createServiceClient } from "@/lib/db/client";
-import { sourcePriority, CATEGORY_META, type SourceCategory } from "@/data/sources";
+import { sourcePriority, CATEGORY_META, MOSAIC_SOURCE_SLUGS, SOURCES, type SourceCategory } from "@/data/sources";
+import { isAiThemed, isShortClip } from "@/lib/ai-themed";
 import { getEditionName } from "@/lib/editionName";
 import { isOffBrand } from "@/lib/content/filter";
 import { unsubscribeUrl } from "@/lib/unsubscribe";
@@ -41,6 +42,8 @@ export type DigestArticle = {
   sourceName: string;
   category: string; // category slug
   readMinutes: number | null;
+  /** Shown for the lead story only, when it's a real picture. */
+  thumbnailUrl?: string | null;
 };
 
 /* ------------------------------------------------------------------ *
@@ -48,6 +51,10 @@ export type DigestArticle = {
  * ------------------------------------------------------------------ */
 
 type Candidate = {
+  id: string;
+  thumbnail: string | null;
+  /** 0 = today's top story, 1 = today's must-read, 2 = everything else. */
+  rank: number;
   title: string;
   summary: string;
   url: string;
@@ -90,6 +97,9 @@ function selectDigestArticles(
   const catCount: Record<string, number> = {};
   const srcCount: Record<string, number> = {};
   let passUsed = 0;
+  // Same rule as the site: at most two AI-themed headlines among the picks.
+  const MAX_AI = 2;
+  let aiCount = 0;
 
   for (let i = 0; i < PASSES.length; i++) {
     const p = PASSES[i];
@@ -102,6 +112,9 @@ function selectDigestArticles(
       if (c.publishedMs < cutoff) continue;
       if ((catCount[c.category] ?? 0) >= p.maxPerCat) continue;
       if ((srcCount[c.srcSlug] ?? 0) >= p.maxPerSource) continue;
+      const ai = isAiThemed(c.title);
+      if (ai && aiCount >= MAX_AI) continue;
+      if (ai) aiCount++;
       selected.push(c);
       seen.add(c.url);
       catCount[c.category] = (catCount[c.category] ?? 0) + 1;
@@ -109,6 +122,13 @@ function selectDigestArticles(
     }
     passUsed = i + 1;
     if (selected.length >= DIGEST_TARGET) break;
+  }
+
+  // The lead story must read as design: no AI-themed headline or Short at #1.
+  const leadOk = (c: Candidate) => !isAiThemed(c.title) && !isShortClip(c.url);
+  if (selected.length && !leadOk(selected[0])) {
+    const j = selected.findIndex(leadOk);
+    if (j > 0) selected.unshift(...selected.splice(j, 1));
   }
 
   return { selected, pass: passUsed };
@@ -148,6 +168,11 @@ const GRAY = "#5c5470"; // summaries/date → inverts to mauve-gray, 7.8:1
 const INTRO = "#3f3556"; // intro sits between title and summary in hierarchy
 const BYLINE = "#6b6382";
 const MONO = "'Courier New', Courier, monospace";
+// Headlines and summaries in the reader's system sans: Courier for whole
+// paragraphs was hard to read and made every story twice as tall (2026-11-26
+// review). Courier stays for the small labels (number, category, byline),
+// which keeps the pixel/typewriter flavour where it's decoration, not reading.
+const SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
 // Pixel wordmark PNG — the ONLY way lime + cream survive Gmail dark exactly
 // (Gmail never repaints large images; ≥54px declared height defeats its
@@ -219,29 +244,40 @@ export function renderDigestHtml(
     .map((a, i) => {
       const cat = CATEGORY_META[a.category as SourceCategory]?.label ?? a.category;
       const catColor = EMAIL_CAT_COLORS[a.category] ?? PURPLE;
-      const read = a.readMinutes ? `${a.readMinutes} min read` : "quick read";
-      // Hierarchy, top to bottom: (1) number chip + category — alone on their
-      // own nowrap line; (2) title; (3) summary; (4) source byline; (5) Read →.
+      // Say what the reader is getting: watch a video, listen to a podcast,
+      // read an article. ("quick read" on a video was wrong.)
+      const kind = a.category === "youtube" ? "watch" : a.category === "podcasts" ? "listen" : "read";
+      const length = a.readMinutes
+        ? `${a.readMinutes} min ${kind === "read" ? "read" : kind}`
+        : kind === "watch" ? "video" : kind === "listen" ? "podcast" : "quick read";
+      const action = kind === "watch" ? "Watch" : kind === "listen" ? "Listen" : "Read";
+      // Only the lead story gets a picture: one strong image, then a fast list.
+      const leadImage =
+        i === 0 && a.thumbnailUrl
+          ? `<a href="${esc(a.url)}" style="text-decoration:none;"><img src="${esc(a.thumbnailUrl)}" width="552" alt="" style="display:block;width:100%;max-width:552px;height:auto;border:2px solid ${NAVY};margin:0 0 18px;" /></a>`
+          : "";
+      // Hierarchy: (1) number + category; (2) headline (the link); (3) summary;
+      // (4) source · length · text link. No button per story: seven identical
+      // buttons were noise; the headline is the main link.
       return `
       <tr>
-        <td class="dm-cell" style="padding:26px 24px 28px;border-top:2px solid ${NAVY};">
+        <td class="dm-cell" style="padding:24px 24px 26px;border-top:2px solid ${NAVY};">
+          ${leadImage}
           <table role="presentation" cellpadding="0" cellspacing="0" border="0">
             <tr>
               <td class="dm-chip" style="background:${PURPLE};border:2px solid ${NAVY};font-family:${MONO};font-size:12px;line-height:1;font-weight:bold;color:${CREAM};padding:3px 9px;">${i + 1}</td>
               <td class="dm-cat-${esc(a.category)}" style="padding-left:12px;font-family:${MONO};font-size:11px;line-height:1;font-weight:bold;letter-spacing:2px;color:${catColor};white-space:nowrap;">${esc(cat.toUpperCase())}</td>
             </tr>
           </table>
-          <div style="height:16px;line-height:16px;font-size:0;">&nbsp;</div>
-          <a href="${esc(a.url)}" class="dm-title" style="font-family:${MONO};font-size:19px;line-height:1.4;font-weight:bold;color:${NAVY};text-decoration:none;">${esc(a.title)}</a>
+          <div style="height:14px;line-height:14px;font-size:0;">&nbsp;</div>
+          <a href="${esc(a.url)}" class="dm-title" style="font-family:${SANS};font-size:20px;line-height:1.3;font-weight:bold;color:${NAVY};text-decoration:none;">${esc(a.title)}</a>
           ${
             a.summary
-              ? `<p class="dm-sum" style="font-family:${MONO};font-size:14px;line-height:1.65;color:${GRAY};margin:12px 0 0;">${esc(stripDashes(a.summary))}</p>`
+              ? `<p class="dm-sum" style="font-family:${SANS};font-size:15px;line-height:1.55;color:${GRAY};margin:10px 0 0;">${esc(stripDashes(a.summary))}</p>`
               : ""
           }
           <div style="height:14px;line-height:14px;font-size:0;">&nbsp;</div>
-          <div class="dm-byline" style="font-family:${MONO};font-size:12px;line-height:1;color:${BYLINE};">${esc(a.sourceName)} &nbsp;·&nbsp; ${esc(read)}</div>
-          <div style="height:18px;line-height:18px;font-size:0;">&nbsp;</div>
-          <a href="${esc(a.url)}" class="dm-btn" style="font-family:${MONO};font-size:13px;font-weight:bold;color:${CREAM};background:${PURPLE};padding:6px 12px;border:2px solid ${NAVY};text-decoration:none;">Read&nbsp;→</a>
+          <div class="dm-byline" style="font-family:${MONO};font-size:12px;line-height:1.4;color:${BYLINE};">${esc(a.sourceName)} &nbsp;·&nbsp; ${esc(length)} &nbsp;·&nbsp; <a href="${esc(a.url)}" class="dm-link" style="color:${PURPLE};font-weight:bold;text-decoration:none;">${action}&nbsp;→</a></div>
         </td>
       </tr>`;
     })
@@ -278,6 +314,8 @@ export function renderDigestHtml(
     .dm-cell { border-color: #7668c2 !important; }
     .dm-chip { background: ${LIME} !important; color: ${NAVY} !important; }
     .dm-btn { background: ${LIME} !important; color: ${NAVY} !important; }
+    .dm-link { color: ${LIME} !important; }
+    .dm-kicker { color: #9e8cff !important; }
     .dm-ctabtn { color: ${LIME} !important; border-color: ${LIME} !important; }
 ${nightCatRules}
   }
@@ -285,6 +323,12 @@ ${nightCatRules}
 </head>
 <body style="margin:0;padding:0;">
 <!-- designator digest -->
+<!-- Preheader: the inbox preview line after the subject. Lists the next
+     stories so the preview pitches the edition instead of repeating the
+     wordmark's alt text. Hidden in the opened email. -->
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:${CARD_BG};opacity:0;">${esc(
+  articles.slice(1, 4).map((a) => a.title).join(" · ")
+)}&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="dm-page" style="background:${PAGE_BG};padding:16px 8px;">
   <tr>
     <td align="center">
@@ -304,14 +348,14 @@ ${nightCatRules}
              the night-lavender family, which reads designed, not accidental. -->
         <tr>
           <td style="padding:20px 24px 0;">
-            <div class="dm-edname" style="font-family:${MONO};font-size:17px;line-height:1.3;font-weight:bold;color:${NAVY};">${esc(editionName)}</div>
-            <div class="dm-date" style="font-family:${MONO};font-size:12px;line-height:1;color:${GRAY};margin-top:8px;">${esc(dateLabel)} &nbsp;·&nbsp; ${articles.length} stories</div>
+            <div class="dm-kicker" style="font-family:${MONO};font-size:11px;line-height:1;font-weight:bold;letter-spacing:2px;color:${PURPLE};">TODAY'S EDITION &nbsp;·&nbsp; ${esc(dateLabel.toUpperCase())}</div>
+            <div class="dm-edname" style="font-family:${SANS};font-size:22px;line-height:1.25;font-weight:bold;color:${NAVY};margin-top:6px;">${esc(editionName)}</div>
           </td>
         </tr>
         <!-- Intro line (keeps the email from being 100% links) -->
         <tr>
           <td style="padding:16px 24px 20px;">
-            <p class="dm-intro" style="font-family:${MONO};font-size:14px;line-height:1.65;color:${INTRO};margin:0;">Good morning. Here are today's design stories worth your time, picked from 75+ sources and summarized so you can catch up in five minutes.</p>
+            <p class="dm-intro" style="font-family:${SANS};font-size:15px;line-height:1.55;color:${INTRO};margin:0;">Good morning. Here are today's ${articles.length} best design stories, picked from ${SOURCES.length} sources and summarised so you can catch up in five minutes.</p>
           </td>
         </tr>
         <!-- Stories -->
@@ -319,7 +363,7 @@ ${nightCatRules}
         <!-- Share ask: word of mouth is the main way a daily briefing grows. -->
         <tr>
           <td class="dm-cell" style="padding:22px 24px 24px;border-top:2px solid ${NAVY};">
-            <p class="dm-sum" style="font-family:${MONO};font-size:14px;line-height:1.65;color:${GRAY};margin:0;">Know a designer who'd like this? Forward this email, or send them today's edition:</p>
+            <p class="dm-sum" style="font-family:${SANS};font-size:15px;line-height:1.55;color:${GRAY};margin:0;">Know a designer who'd like this? Forward this email, or send them today's edition:</p>
             <div style="height:10px;line-height:10px;font-size:0;">&nbsp;</div>
             <a href="${esc(shareUrl)}" class="dm-title" style="font-family:${MONO};font-size:14px;font-weight:bold;color:${PURPLE};text-decoration:underline;">${esc(shareLabel)}</a>
           </td>
@@ -420,13 +464,13 @@ export function renderWelcomeEmail(opts: { returning?: boolean } = {}): {
         </tr>
         <tr>
           <td style="padding:26px 24px 8px;">
-            <div class="dm-title" style="font-family:${MONO};font-size:22px;line-height:1.3;font-weight:bold;color:${NAVY};">${heading} <span style="color:${PURPLE};">✦</span></div>
+            <div class="dm-title" style="font-family:${SANS};font-size:24px;line-height:1.25;font-weight:bold;color:${NAVY};">${heading} <span style="color:${PURPLE};">✦</span></div>
           </td>
         </tr>
         <tr>
           <td style="padding:12px 24px 0;">
-            <p class="dm-sum" style="font-family:${MONO};font-size:14px;line-height:1.65;color:${GRAY};margin:0 0 14px;">Each morning you'll get Designator: the day's best design and product stories, summarized so you can catch up in five minutes.</p>
-            <p class="dm-sum" style="font-family:${MONO};font-size:14px;line-height:1.65;color:${GRAY};margin:0 0 20px;">Your first edition lands tomorrow morning. Today's is already live.</p>
+            <p class="dm-sum" style="font-family:${SANS};font-size:15px;line-height:1.55;color:${GRAY};margin:0 0 14px;">Each morning you'll get Designator: the day's best design and product stories, summarized so you can catch up in five minutes.</p>
+            <p class="dm-sum" style="font-family:${SANS};font-size:15px;line-height:1.55;color:${GRAY};margin:0 0 20px;">Your first edition lands tomorrow morning. Today's is already live.</p>
           </td>
         </tr>
         <tr>
@@ -436,12 +480,12 @@ export function renderWelcomeEmail(opts: { returning?: boolean } = {}): {
         </tr>
         <tr>
           <td style="padding:0 24px 18px;">
-            <p class="dm-sum" style="font-family:${MONO};font-size:14px;line-height:1.65;color:${GRAY};margin:0;"><strong style="color:${NAVY};" class="dm-title">One question:</strong> which design source do you read that Designator should add? Just hit reply. I read every one.</p>
+            <p class="dm-sum" style="font-family:${SANS};font-size:15px;line-height:1.55;color:${GRAY};margin:0;"><strong style="color:${NAVY};" class="dm-title">One question:</strong> which design source do you read that Designator should add? Just hit reply. I read every one.</p>
           </td>
         </tr>
         <tr>
           <td style="padding:0 24px 26px;">
-            <p class="dm-sum" style="font-family:${MONO};font-size:12.5px;line-height:1.6;color:${GRAY};margin:0;">P.S. If this lands in Spam or Promotions, drag it to your Primary inbox so you don't miss an edition.</p>
+            <p class="dm-sum" style="font-family:${SANS};font-size:13px;line-height:1.55;color:${GRAY};margin:0;">P.S. If this lands in Spam or Promotions, drag it to your Primary inbox so you don't miss an edition.</p>
           </td>
         </tr>
         <tr>
@@ -685,7 +729,7 @@ export async function runSendDigest(
   const { data, error } = await sb
     .from("articles")
     .select(
-      "title, summary, original_url, category, read_minutes, published_at, sources(name, slug)"
+      "id, title, summary, original_url, category, read_minutes, published_at, thumbnail_url, is_must_read, sources(name, slug)"
     )
     .gte("published_at", since)
     // No summary filter: unsummarized fresh articles are eligible as a
@@ -700,7 +744,20 @@ export async function runSendDigest(
     .limit(150);
   if (error) throw error;
 
+  // Today's edition leads the email too: its top story first, then its
+  // must-reads, so the email and the site open on the same stories (they were
+  // picked separately, newest-first, until 2026-11-26).
+  const { data: edition } = await sb
+    .from("editions")
+    .select("hero_article_id")
+    .eq("edition_date", istToday())
+    .maybeSingle();
+  const heroId = edition?.hero_article_id ?? null;
+
   type Row = {
+    id: string;
+    thumbnail_url: string | null;
+    is_must_read: boolean | null;
     title: string;
     summary: string | null;
     original_url: string;
@@ -722,6 +779,9 @@ export async function runSendDigest(
     const publishedMs = r.published_at ? Date.parse(r.published_at) : NaN;
     if (!Number.isFinite(publishedMs)) continue;
     candidates.push({
+      id: r.id,
+      thumbnail: r.thumbnail_url,
+      rank: r.id === heroId ? 0 : r.is_must_read ? 1 : 2,
       title: r.title,
       summary: r.summary ?? "",
       url: safeUrl,
@@ -733,8 +793,9 @@ export async function runSendDigest(
       publishedMs,
     });
   }
-  // Tier 1 leads; recency order preserved within a tier (stable sort).
-  candidates.sort((a, b) => a.tier - b.tier);
+  // Today's top story, then must-reads, then tier 1 first; recency order is
+  // preserved within each group (stable sort).
+  candidates.sort((a, b) => a.rank - b.rank || a.tier - b.tier);
 
   const { selected, pass } = selectDigestArticles(candidates, now);
 
@@ -762,21 +823,25 @@ export async function runSendDigest(
     log.warn(`digest thin — only ${selected.length} articles after all passes`);
   }
 
-  const today = new Date();
-  const dateLabel = today.toLocaleDateString("en-US", {
+  // IST editorial day, written the way the site writes it (26 November).
+  const isoDate = istToday();
+  const dateLabel = new Date(`${isoDate}T00:00:00Z`).toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "UTC",
   });
-  const isoDate = today.toISOString().slice(0, 10);
   // Test sends get a UNIQUE subject (time-stamped) — a same-subject test
   // threads into the previous one, and Gmail then trims the near-identical
   // body as "quoted content", which renders as an empty-looking email.
   const testStamp = new Date().toISOString().slice(11, 16).replace(":", "");
-  const subject = opts.to
-    ? `✦ Designator · ${dateLabel} · test ${testStamp}`
-    : `✦ Designator · ${dateLabel}`;
+  // Lead with the story, not the date: the inbox line is the email's only
+  // pitch. "✦ <lead headline> + 6 more" (headline trimmed to stay readable).
+  const lead = selected[0]?.title.trim() ?? "";
+  const leadShort = lead.length > 70 ? `${lead.slice(0, 67).trimEnd()}…` : lead;
+  const baseSubject = `✦ ${leadShort} + ${selected.length - 1} more`;
+  const subject = opts.to ? `${baseSubject} · test ${testStamp}` : baseSubject;
   const html = renderDigestHtml(
     selected.map((c) => ({
       title: c.title,
@@ -785,6 +850,7 @@ export async function runSendDigest(
       sourceName: c.srcName,
       category: c.category,
       readMinutes: c.readMinutes,
+      thumbnailUrl: c.thumbnail && !MOSAIC_SOURCE_SLUGS.has(c.srcSlug) ? safeHttpUrl(c.thumbnail) : null,
     })),
     getEditionName(isoDate),
     dateLabel,
