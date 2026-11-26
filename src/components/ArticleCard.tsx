@@ -123,7 +123,7 @@ function TextLedCard({ article, readTime, compactSummary = false }: { article: A
       <TextLedTop article={article} />
       <div className="p-4 pt-4 flex flex-col gap-2.5 flex-1">
         <SourceBadge sourceId={article.sourceId} />
-        <h3 className="font-heading text-[1.45rem] leading-[1.3] text-ink group-hover:text-accent transition-colors line-clamp-3">
+        <h3 className="font-heading font-heading-sm text-[1.3rem] leading-[1.3] text-ink group-hover:text-accent transition-colors line-clamp-3">
           {article.title}
         </h3>
         {article.summary && (
