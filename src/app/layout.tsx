@@ -125,6 +125,19 @@ export default function RootLayout({
               "try{var d=document.documentElement,h=new Date().getHours(),a=(h<6||h>=19)?'dark':'light';d.dataset.autoTheme=a;var t=localStorage.getItem('designator-theme');var th=(t==='light'||t==='dark')?t:a;d.dataset.theme=th;var m=document.querySelector('meta[name=\"theme-color\"]');if(!m){m=document.createElement('meta');m.setAttribute('name','theme-color');document.head.appendChild(m);}m.setAttribute('content',th==='dark'?'#1a1340':'#5b3df5');}catch(e){}",
           }}
         />
+        {/*
+          Pre-paint: mark known subscribers so the homepage intro (which only
+          explains the site and offers signup) never flashes for them. A
+          subscriber is a browser that signed up here, or anyone arriving from
+          a link in the daily email (utm_source=designator-email), which also
+          covers phones and laptops where they never used the form.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var k='designator-subscribed';if(/[?&]utm_source=designator-email\\b/.test(location.search))localStorage.setItem(k,'1');if(localStorage.getItem(k)==='1')document.documentElement.dataset.subscribed='1';}catch(e){}",
+          }}
+        />
       </head>
       <body className="text-ink">
         {/* Keeps the iOS status-bar/notch region in the nav color (see globals). */}
