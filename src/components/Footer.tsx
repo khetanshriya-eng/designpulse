@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CATEGORY_META, type SourceCategory } from "@/data/sources";
+import { CATEGORY_META, SOURCES, type SourceCategory } from "@/data/sources";
 
 const FOOTER_CATEGORIES: SourceCategory[] = [
   "design-tools",
@@ -36,26 +36,25 @@ export function Footer() {
               designator
             </span>
             <p className="mt-3 text-[13px] leading-relaxed text-white/60 max-w-xs">
-              The daily briefing for product designers. 70+ sources,
-              summarized, in one tab.
+              The daily briefing for product designers. {SOURCES.length}{" "}
+              sources, summarized, in one tab.
             </p>
-            {/* Product Hunt featured badge (launch 2026-07). Plain <img>: the
-                badge is a remote SVG served by PH's widget API — next/image
-                adds nothing here. CSP img-src allows https:. */}
+            {/* Product Hunt link without PH's vote-count badge: a live "2"
+                upvotes read as weak social proof to new visitors
+                (2026-11-26). */}
             <a
-              href="https://www.producthunt.com/products/designator-2?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-designator-2"
+              href="https://www.producthunt.com/products/designator-2?utm_source=designator-footer&utm_medium=referral"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-5 inline-block transition-opacity hover:opacity-90"
+              className="mt-5 inline-flex items-center gap-2 font-pixel text-[12px] uppercase tracking-[0.08em] text-white/70 hover:text-[color:var(--color-lime)] transition-colors"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                alt="Designator - Your 5-minute morning briefing for design and product | Product Hunt"
-                width={250}
-                height={54}
-                loading="lazy"
-                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1210927&theme=neutral&t=1785431348576"
-              />
+              <span
+                aria-hidden
+                className="inline-flex h-6 w-6 items-center justify-center bg-[#ff6154] font-bold text-[13px] text-white"
+              >
+                P
+              </span>
+              Featured on Product Hunt ↗
             </a>
           </div>
 

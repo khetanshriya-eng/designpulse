@@ -7,6 +7,8 @@ import { InspirationStrip } from "@/components/InspirationStrip";
 import { NewsletterCTA } from "@/components/NewsletterCTA";
 import { EditionBar } from "@/components/EditionBar";
 import { SiteIntro } from "@/components/SiteIntro";
+import { isAiThemed } from "@/lib/ai-themed";
+import { hasRealImage } from "@/lib/article-image";
 import { SectionHeader } from "@/components/SectionHeader";
 import { getByCategory, getEdition, getLatest } from "@/lib/data/queries";
 import { SOURCES, type SourceCategory } from "@/data/sources";
@@ -16,6 +18,11 @@ import type { Article } from "@/data/articles";
 // cached HTML (theme is resolved client-side, so no per-request work needed).
 // Matches the data layer's 600s unstable_cache windows.
 export const revalidate = 600;
+
+/** Epoch ms `h` hours ago (module scope: render must not call Date.now()). */
+function hoursAgo(h: number): number {
+  return Date.now() - h * 3600 * 1000;
+}
 
 export default async function Home() {
   const edition = await getEdition();
@@ -53,12 +60,27 @@ export default async function Home() {
     getByCategory("podcasts", 6, excludeFromLatest),
   ]);
 
+  const WEEK = 168; // hours
+  const FORTNIGHT = 336; // podcasts publish less often
   const seen = new Set<string>(excludeFromLatest);
-  const take = (items: Article[], n: number): Article[] => {
+  // `maxAi` caps AI-themed headlines in a section (the AI & Tools section
+  // passes no cap). `maxAgeH` drops stale items: sections promise fresh news,
+  // and a 17-day-old story sat in AI & Tools on 2026-11-26.
+  const take = (
+    items: Article[],
+    n: number,
+    { maxAi = Infinity, maxAgeH = WEEK }: { maxAi?: number; maxAgeH?: number } = {}
+  ): Article[] => {
     const out: Article[] = [];
+    const cutoff = hoursAgo(maxAgeH);
+    let ai = 0;
     for (const a of items) {
       if (out.length >= n) break;
       if (seen.has(a.id)) continue;
+      if (Date.parse(a.publishedAt) < cutoff) continue;
+      const aiThemed = isAiThemed(a.title);
+      if (aiThemed && ai >= maxAi) continue;
+      if (aiThemed) ai++;
       seen.add(a.id);
       out.push(a);
     }
@@ -66,22 +88,28 @@ export default async function Home() {
   };
 
   // Hand-out order = render order (design first, then AI, then the rest).
-  const latestArticles = take(latestPool, 6);
-  const designTools = take(designToolsPool, 2);
-  const uxThinking = take(uxThinkingPool, 2);
-  const videoItems = take(videoPool, 2);
-  const newsletterItems = take(newsletterPool, 2);
-  const inspirationItems = take(inspirationPool, 4);
-  const aiArticles = take(aiPool, 6);
-  const productItems = take(productPool, 2);
-  const podcastItems = take(podcastPool, 2);
+  const latestArticles = take(latestPool, 6, { maxAi: 2 });
+  const designTools = take(designToolsPool, 2, { maxAi: 1 });
+  const uxThinking = take(uxThinkingPool, 2, { maxAi: 1 });
+  const videoItems = take(videoPool, 2, { maxAi: 1 });
+  const newsletterItems = take(newsletterPool, 2, { maxAi: 1 });
+  // Inspiration is an image-only strip: stories with a real picture first.
+  const inspirationItems = take(
+    [...inspirationPool].sort((a, b) => Number(hasRealImage(b)) - Number(hasRealImage(a))),
+    4
+  );
+  // AI & Tools leads with a story that has a real picture: a text-only story
+  // in the big featured slot left half the card blank (2026-11-26).
+  const aiTaken = take(aiPool, 6);
+  const aiLead = Math.max(0, aiTaken.findIndex(hasRealImage));
+  const aiArticles = aiTaken.length ? [aiTaken[aiLead], ...aiTaken.filter((_, i) => i !== aiLead)] : aiTaken;
+  const productItems = take(productPool, 2, { maxAi: 1 });
+  const podcastItems = take(podcastPool, 2, { maxAi: 1, maxAgeH: FORTNIGHT });
 
   // Freshness gating (3A): a homepage section only renders if it has enough
   // recent items, so the page never shows a month-old "Design Tools" block.
   // When a design category is starved, the category grid quietly fills with
   // whichever design-leaning categories ARE fresh (3B graceful degradation).
-  const WEEK = 168; // hours
-  const FORTNIGHT = 336; // podcasts publish less often
   const gridBlocks = (
     [
       { category: "design-tools", articles: designTools },
