@@ -24,8 +24,8 @@ export function loadEditionDates(): Promise<Edition[]> {
 }
 
 /**
- * Browse/jump to any edition. Desktop: a dropdown anchored under the edition
- * name. Mobile: a bottom sheet (slide-up, scroll lock, pixel ✕ — all from the
+ * Browse/jump to any edition. Desktop: a dropdown anchored under the "Past
+ * editions" button. Mobile: a bottom sheet (slide-up, scroll lock, pixel ✕ — all from the
  * shared BottomSheet). The panel follows --color-card (cream by day, indigo at
  * night) with page-scope ink tokens, so it themes with the rest of the site.
  *
@@ -82,7 +82,7 @@ export function EditionPicker({
       onClose={onClose}
       ariaLabel="Browse editions"
       closeOnDesktopScroll
-      desktopClassName="md:absolute md:inset-x-auto md:bottom-auto md:top-full md:left-0 md:mt-2 md:h-auto md:w-[380px] md:max-h-[440px] md:border-[3px] md:shadow-[5px_5px_0_var(--card-shadow)]"
+      desktopClassName="md:absolute md:inset-x-auto md:bottom-auto md:top-full md:right-0 md:mt-2 md:h-auto md:w-[380px] md:max-h-[440px] md:border-[3px] md:shadow-[5px_5px_0_var(--card-shadow)]"
     >
       {/* Search — pinned just under the handle; never scrolls away. The 16px
           mobile rule in globals.css keeps iOS from auto-zooming on focus. */}

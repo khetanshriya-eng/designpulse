@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getEditionName } from "@/lib/editionName";
 import { formatEditionDate } from "@/lib/format";
 import { EditionPicker, loadEditionDates } from "./EditionPicker";
+import { todayIst } from "@/lib/lost";
 import { ShareEditionButton } from "./ShareEditionButton";
 import { SITE_URL } from "@/lib/site";
 
@@ -94,43 +95,53 @@ export function EditionBar({
   const awaiting = liveState !== null;
   const shownDate = awaiting ? liveState.rolledDate : date;
   const name = getEditionName(shownDate);
+  const isToday = live || shownDate === todayIst();
 
   return (
     <div className="site-container">
-      <div className="relative flex items-center justify-between gap-3 pt-4 pb-2">
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          title="Browse past editions"
-          aria-haspopup="dialog"
-          aria-expanded={open}
-          className="group flex flex-col items-start gap-0.5 min-w-0 text-left"
-        >
-          <span className="flex items-center gap-2 min-w-0">
-            <span className="font-heading text-[1.3rem] sm:text-[1.6rem] leading-none text-ink truncate">
-              {name}
-            </span>
+      <div className="relative flex flex-wrap items-end justify-between gap-x-3 gap-y-3 pt-4 pb-2">
+        {/* What this is, in words: "Today's edition · date", then the
+            edition's own name. A bare name read as a mystery heading to
+            first-time visitors (2026-11-26). */}
+        <div className="min-w-0">
+          <p className="font-pixel text-[11px] uppercase tracking-[0.14em] text-accent">
+            {isToday ? "Today's edition" : "Edition"}
+            <span className="text-ink-subtle"> · {formatEditionDate(shownDate)}</span>
+          </p>
+          <h2
+            className="mt-1.5 font-heading text-[1.3rem] sm:text-[1.6rem] leading-none text-ink truncate"
+            title="Every daily edition gets its own name"
+          >
+            {name}
+          </h2>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            className="group inline-flex self-start items-center gap-2 p-2 sm:px-3 sm:py-2 font-pixel text-[11px] uppercase tracking-[0.06em] text-ink bg-[color:var(--color-card)] border-[3px] border-[color:var(--card-border)] shadow-[3px_3px_0_var(--card-shadow)] transition-transform hover:-translate-y-0.5"
+          >
+            Past editions
             <span
               aria-hidden
-              className={`shrink-0 inline-flex items-center justify-center w-5 h-5 bg-lime border-2 border-[#1a1340] transition-transform group-hover:translate-y-0.5 ${
+              className={`inline-flex items-center justify-center w-4 h-4 bg-lime border-2 border-[#1a1340] transition-transform ${
                 open ? "rotate-180" : ""
               }`}
             >
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" shapeRendering="crispEdges">
+              <svg width="8" height="8" viewBox="0 0 10 10" fill="none" shapeRendering="crispEdges">
                 <path d="M1 3l4 4 4-4" stroke="#1a1340" strokeWidth="2" />
               </svg>
             </span>
-          </span>
-          <span className="font-mono text-[12px] text-ink-subtle whitespace-nowrap">
-            {formatEditionDate(shownDate)}
-          </span>
-        </button>
-
-        {awaiting ? (
-          <NextDropChip ms={liveState.countdownMs} />
-        ) : (
-          <ShareEditionButton editionUrl={`${SITE_URL}/edition/${date}`} />
-        )}
+          </button>
+          {awaiting ? (
+            <NextDropChip ms={liveState.countdownMs} />
+          ) : (
+            <ShareEditionButton editionUrl={`${SITE_URL}/edition/${date}`} />
+          )}
+        </div>
 
         <EditionPicker open={open} onClose={() => setOpen(false)} currentDate={date} />
       </div>
