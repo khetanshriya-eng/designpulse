@@ -263,7 +263,7 @@ export function SearchTrigger() {
                 }}
                 className="block px-4 py-3 border-b border-[color:var(--card-border)]/20"
               >
-                <p className="font-title text-[14px] leading-[1.4] text-ink line-clamp-2">
+                <p className="font-title text-[14px] leading-[1.4] text-ink line-clamp-3">
                   {r.title}
                 </p>
                 <div className="mt-1 flex items-center gap-2 font-mono text-[10px] text-ink-subtle">
@@ -364,7 +364,7 @@ export function SearchTrigger() {
                         className="block px-4 py-3.5 hover:bg-paper-tint transition-colors"
                       >
                         <div className="flex items-baseline justify-between gap-3">
-                          <p className="font-title text-[14px] text-ink leading-[1.4] line-clamp-2">
+                          <p className="font-title text-[14px] text-ink leading-[1.4] line-clamp-3">
                             {r.title}
                           </p>
                           <span className="shrink-0 text-[10px] uppercase tracking-[0.14em] text-ink-subtle">

@@ -97,7 +97,7 @@ function SecondaryCard({ article }: { article: Article }) {
             <SourceBadge sourceId={article.sourceId} />
             <CategoryDot category={article.category} />
           </div>
-          <h3 className="font-title text-[15px] leading-[1.4] text-ink group-hover:text-accent transition-colors line-clamp-2">
+          <h3 className="font-title text-[15px] leading-[1.4] text-ink group-hover:text-accent transition-colors line-clamp-3">
             {article.title}
           </h3>
           <div className="flex items-center gap-2 text-[11px] text-ink-subtle mt-auto">
