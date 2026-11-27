@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { ArticleCard } from "@/components/ArticleCard";
 import { HeroCard } from "@/components/HeroCard";
 import { MustReadSection } from "@/components/MustReadSection";
@@ -18,6 +19,16 @@ import type { Article } from "@/data/articles";
 // cached HTML (theme is resolved client-side, so no per-request work needed).
 // Matches the data layer's 600s unstable_cache windows.
 export const revalidate = 600;
+
+// The tab/search title says what the site is; layout's bare "Designator" stays
+// the fallback. alternates is replaced, not merged, so RSS is repeated here.
+export const metadata: Metadata = {
+  title: { absolute: "Designator · The daily briefing for product designers" },
+  alternates: {
+    canonical: "/",
+    types: { "application/rss+xml": "/api/rss" },
+  },
+};
 
 /** Epoch ms `h` hours ago (module scope: render must not call Date.now()). */
 function hoursAgo(h: number): number {
@@ -136,7 +147,7 @@ export default async function Home() {
       {/* Hero — starts promptly after the edition bar. */}
       {edition.hero && (
         <section className="site-container pt-4 pb-16">
-          <HeroCard article={edition.hero} />
+          <HeroCard article={edition.hero} headingAs="h2" />
         </section>
       )}
 

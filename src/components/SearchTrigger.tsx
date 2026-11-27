@@ -246,9 +246,12 @@ export function SearchTrigger() {
             </p>
           )}
           {!tooShort && !loading && !error && visibleResults.length === 0 && (
-            <p className="p-4 text-center font-mono text-[12px] text-ink-subtle">
-              No matches for &ldquo;{q}&rdquo;.
-            </p>
+            <div className="p-4 flex flex-col gap-4">
+              <p className="font-mono text-[12px] text-ink-subtle">
+                No matches for &ldquo;{q}&rdquo;. Try a broader word, or one of these:
+              </p>
+              <ChipGroup label="Popular" terms={POPULAR_SEARCHES} onPick={setQ} />
+            </div>
           )}
           {!loading &&
             visibleResults.map((r) => (
@@ -332,9 +335,17 @@ export function SearchTrigger() {
               aria-live="polite"
             >
               {tooShort && (
-                <p className="px-5 py-8 text-sm text-ink-subtle text-center">
-                  Type at least 2 characters to search.
-                </p>
+                <div className="p-5 flex flex-col gap-5">
+                  <ChipGroup label="Popular" terms={POPULAR_SEARCHES} onPick={setQ} />
+                  {recents.length > 0 && (
+                    <ChipGroup
+                      label="Recent"
+                      terms={recents}
+                      onPick={setQ}
+                      onClear={clearRecents}
+                    />
+                  )}
+                </div>
               )}
               {!tooShort && loading && (
                 <p className="px-4 py-6 text-sm text-ink-subtle">Searching…</p>
@@ -345,9 +356,12 @@ export function SearchTrigger() {
                 </p>
               )}
               {!tooShort && !loading && !error && visibleResults.length === 0 && (
-                <p className="px-4 py-6 text-sm text-ink-subtle">
-                  No matches for &ldquo;{q}&rdquo;.
-                </p>
+                <div className="px-5 py-5 flex flex-col gap-4">
+                  <p className="text-sm text-ink-subtle">
+                    No matches for &ldquo;{q}&rdquo;. Try a broader word, or one of these:
+                  </p>
+                  <ChipGroup label="Popular" terms={POPULAR_SEARCHES} onPick={setQ} />
+                </div>
               )}
               {!loading && visibleResults.length > 0 && (
                 <ul className="divide-y divide-rule">

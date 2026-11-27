@@ -51,6 +51,7 @@ export async function CategoryListing({ slug, page }: { slug: SourceCategory; pa
     <>
     <div className="site-container py-10 sm:py-14">
       <SectionHeader
+        as="h1"
         kicker="Category"
         title={meta.label}
         description={

@@ -634,3 +634,8 @@ html[data-subscribed] .site-intro {
   font-family: var(--font-sans);
   font-weight: 700;
 }
+
+/* Newsletter CTA art caption: lime reads on the purple panel (light theme);
+   the dark theme's panel is pale lavender, where lime is ~1.8:1, so use navy. */
+.cta-lands { color: #d4ff3f; }
+html[data-theme="dark"] .cta-lands { color: #1a1340; }
