@@ -9,6 +9,7 @@
  * so a backfill can be run from a preview. Previews share the database.
  */
 import type { NextRequest } from "next/server";
+import { revalidateTag } from "next/cache";
 import { runThumbs } from "@/lib/thumbs";
 import { logger } from "@/lib/logger";
 import { checkCronAuth } from "@/lib/cron-auth";
@@ -33,6 +34,9 @@ async function handle(req: NextRequest) {
       budgetMs: 45000,
       log,
     });
+    // New thumbnails only show once the cached story lists refresh (10 min),
+    // so expire them now when anything was made.
+    if (result.made > 0) revalidateTag("content", { expire: 0 });
     return Response.json({ success: true, ...result });
   } catch (err) {
     const message = (err as Error).message;
