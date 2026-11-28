@@ -55,3 +55,17 @@ jobs:
             if grep -q '"processed":0' out.json; then break; fi
             if [ "$i" -lt 3 ]; then sleep 65; fi
           done
+      - name: Make small thumbnails for recent stories
+        if: always()
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          BASE: https://www.designatorapp.com
+        run: |
+          set -u
+          # Resizes visible stories' images to small WebP files (src/lib/thumbs.ts).
+          # An optimisation only: a failure here warns but never fails the job.
+          code=$(curl -s -o thumbs.json -w "%{http_code}" --max-time 65 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$BASE/api/cron/thumbs?limit=40&concurrency=4")
+          echo "thumbs: HTTP $code $(head -c 300 thumbs.json)"
+          if [ "$code" != "200" ]; then echo "::warning::thumbs call failed (HTTP $code)"; fi

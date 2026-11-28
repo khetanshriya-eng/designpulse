@@ -43,6 +43,8 @@ export type ArticleRow = {
   original_url: string;
   summary: string | null;
   thumbnail_url: string | null;
+  /** Stored small thumbnails (migration 0009): article id, '-' = failed, null = not yet. */
+  thumb_path?: string | null;
   author: string | null;
   published_at: string | null;
   fetched_at: string;

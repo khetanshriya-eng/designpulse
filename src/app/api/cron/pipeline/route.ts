@@ -25,6 +25,7 @@ import { revalidateTag, revalidatePath } from "next/cache";
 import { runFetch } from "@/lib/pipeline/fetch";
 import { runSummarize } from "@/lib/pipeline/summarize";
 import { runCurate } from "@/lib/pipeline/curate";
+import { runThumbs } from "@/lib/thumbs";
 import { runSendDigest } from "@/lib/newsletter";
 import { logger } from "@/lib/logger";
 import { sendAdminAlert } from "@/lib/notify";
@@ -176,6 +177,24 @@ async function handle(req: NextRequest) {
     out.curate = { error };
     log.error("curate step failed", { error });
     failures.push({ step: "curate", error });
+  }
+
+  // Small thumbnails for the stories curate just featured (src/lib/thumbs.ts),
+  // with whatever time is left, capped at 8 s. Resumable: the GitHub booster
+  // finishes the rest; until then cards fall back to the resizing proxy.
+  const thumbBudget = Math.min(8_000, 52_000 - (Date.now() - t0));
+  if (thumbBudget > 2_000) {
+    try {
+      const thumbs = await withStepDeadline(
+        runThumbs({ limit: 12, concurrency: 4, budgetMs: thumbBudget - 1_000, log: logger("cron.pipeline.thumbs") }),
+        thumbBudget
+      );
+      out.thumbs = thumbs.timedOut ? { timedOut: true } : thumbs.result;
+    } catch (err) {
+      // Never fails the run: thumbnails are an optimisation.
+      out.thumbs = { error: (err as Error).message };
+      log.warn("thumbs step failed", { error: (err as Error).message });
+    }
   }
 
   // Content just changed — bust the site's caches so the NEXT visitor sees the

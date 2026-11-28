@@ -38,8 +38,9 @@ type Props = {
 
 /**
  * Thumbnails come from each source's own server at full size (1280–1600px
- * originals in 150–450px tiles), which made pictures slow (2026-11-28). They
- * now go through wsrv.nl, a free open-source image proxy on a global CDN,
+ * originals in 150–450px tiles), which made pictures slow (2026-11-28). Cards
+ * now load our own small WebP copies first (made when the story arrived, see
+ * src/lib/thumbs.ts). Stories without one yet go through wsrv.nl, a free open-source image proxy on a global CDN,
  * which resizes and converts to WebP. Vercel's own optimizer was ruled out:
  * Hobby includes 5K transformations a month and returns 402 (no image) past
  * that. If the proxy fails, the card retries the original URL, then falls
@@ -87,9 +88,14 @@ export function ArticleImage({
   compact = false,
 }: Props) {
   const [failed, setFailed] = useState(false);
-  // First try the resized copy; if the proxy can't serve it, use the original.
-  const [direct, setDirect] = useState(false);
-  const fail = () => (direct ? setFailed(true) : setDirect(true));
+  // Fallback chain: our stored small WebP (made when the story arrived) →
+  // the resizing proxy → the original → the pixel mosaic.
+  const [stage, setStage] = useState(0);
+  const stages = (["stored", "proxy", "direct"] as const).filter((st) =>
+    st === "stored" ? !!article.thumbBase : st === "proxy" ? canProxy(article.thumbnailUrl ?? "") : true
+  );
+  const mode = stages[stage];
+  const fail = () => (stage + 1 < stages.length ? setStage(stage + 1) : setFailed(true));
   // Some sources (e.g. Hugging Face) emit generic title-banner images that
   // look worse than the mosaic — force the fallback for those.
   const prefersMosaic = MOSAIC_SOURCE_SLUGS.has(article.sourceId);
@@ -104,7 +110,19 @@ export function ArticleImage({
 
   if (hasImage) {
     const src = article.thumbnailUrl ?? "";
-    const useProxy = !direct && canProxy(src);
+    const base = article.thumbBase ?? "";
+    const imgSrc =
+      mode === "stored"
+        ? `${base}/${size === "sm" ? 640 : 1280}.webp`
+        : mode === "proxy"
+          ? proxied(src, size === "lg" ? 1200 : size === "md" ? 800 : 400)
+          : src;
+    const imgSrcSet =
+      mode === "stored"
+        ? `${base}/640.webp 640w, ${base}/1280.webp 1280w`
+        : mode === "proxy"
+          ? PROXY_WIDTHS.map((w) => `${proxied(src, w)} ${w}w`).join(", ")
+          : undefined;
     return (
       <div
         data-image="real"
@@ -114,14 +132,10 @@ export function ArticleImage({
             alt would make screen readers read it twice per card. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          key={useProxy ? "proxy" : "direct"}
-          src={useProxy ? proxied(src, size === "lg" ? 1200 : size === "md" ? 800 : 400) : src}
-          srcSet={
-            useProxy
-              ? PROXY_WIDTHS.map((w) => `${proxied(src, w)} ${w}w`).join(", ")
-              : undefined
-          }
-          sizes={useProxy ? SIZES[size] : undefined}
+          key={mode}
+          src={imgSrc}
+          srcSet={imgSrcSet}
+          sizes={imgSrcSet ? SIZES[size] : undefined}
           decoding="async"
           alt=""
           loading={priority ? "eager" : "lazy"}

@@ -25,7 +25,7 @@ import type { Article } from "@/data/articles";
 // fetched text, only the summarizer needs it) and the fts vector, so a
 // 60-row search moved megabytes and took ~1.2 s (2026-11-24).
 const SELECT =
-  "id, source_id, title, original_url, summary, thumbnail_url, author, published_at, fetched_at, read_minutes, duration_minutes, category, content_type, is_featured, is_must_read, content_hash, created_at, sources(*)";
+  "id, source_id, title, original_url, summary, thumbnail_url, thumb_path, author, published_at, fetched_at, read_minutes, duration_minutes, category, content_type, is_featured, is_must_read, content_hash, created_at, sources(*)";
 
 /**
  * Get the daily edition: hero, editor's pick, must-reads, plus a fallback
