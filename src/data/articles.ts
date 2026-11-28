@@ -22,4 +22,6 @@ export type Article = {
   swatch?: string;
   /** Real image URL (RSS enclosure/og:image/youtube thumb). Null → typographic fallback. */
   thumbnailUrl?: string | null;
+  /** Base URL of the stored small WebP thumbnails (…/640.webp, …/1280.webp). */
+  thumbBase?: string | null;
 };

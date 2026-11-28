@@ -42,6 +42,10 @@ export function rowToArticle(row: ArticleWithSource): Article | null {
     isMustRead: row.is_must_read,
     swatch: src.swatch ?? undefined,
     thumbnailUrl: safeHttpUrl(row.thumbnail_url),
+    thumbBase:
+      row.thumb_path && row.thumb_path !== "-" && process.env.NEXT_PUBLIC_SUPABASE_URL
+        ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/thumbs/${row.thumb_path}`
+        : null,
   };
 }
 
