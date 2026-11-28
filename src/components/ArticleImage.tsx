@@ -36,6 +36,33 @@ type Props = {
   compact?: boolean;
 };
 
+/**
+ * Thumbnails come from each source's own server at full size (1280–1600px
+ * originals in 150–450px tiles), which made pictures slow (2026-11-28). They
+ * now go through wsrv.nl, a free open-source image proxy on a global CDN,
+ * which resizes and converts to WebP. Vercel's own optimizer was ruled out:
+ * Hobby includes 5K transformations a month and returns 402 (no image) past
+ * that. If the proxy fails, the card retries the original URL, then falls
+ * back to the pixel mosaic, so pictures never break because of the proxy.
+ */
+const PROXY_WIDTHS = [400, 800, 1200, 1600];
+
+// Rough rendered width per card size, for the browser to pick a srcset entry
+// (it multiplies by the screen's pixel density itself).
+const SIZES: Record<Size, string> = {
+  sm: "(min-width: 640px) 320px, 50vw",
+  md: "(min-width: 1024px) 440px, 100vw",
+  lg: "(min-width: 1024px) 1000px, 100vw",
+};
+
+function proxied(src: string, width: number): string {
+  return `https://wsrv.nl/?url=${encodeURIComponent(src)}&w=${width}&we&output=webp&q=75`;
+}
+
+function canProxy(src: string): boolean {
+  return /^https?:\/\//i.test(src) && !/\.svg(\?|$)/i.test(src);
+}
+
 const ASPECT: Record<Aspect, string> = {
   video: "aspect-[16/10]",
   square: "aspect-square",
@@ -60,6 +87,9 @@ export function ArticleImage({
   compact = false,
 }: Props) {
   const [failed, setFailed] = useState(false);
+  // First try the resized copy; if the proxy can't serve it, use the original.
+  const [direct, setDirect] = useState(false);
+  const fail = () => (direct ? setFailed(true) : setDirect(true));
   // Some sources (e.g. Hugging Face) emit generic title-banner images that
   // look worse than the mosaic — force the fallback for those.
   const prefersMosaic = MOSAIC_SOURCE_SLUGS.has(article.sourceId);
@@ -73,6 +103,8 @@ export function ArticleImage({
     : `relative w-full ${aspectClass}`;
 
   if (hasImage) {
+    const src = article.thumbnailUrl ?? "";
+    const useProxy = !direct && canProxy(src);
     return (
       <div
         data-image="real"
@@ -82,16 +114,24 @@ export function ArticleImage({
             alt would make screen readers read it twice per card. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={article.thumbnailUrl ?? ""}
+          key={useProxy ? "proxy" : "direct"}
+          src={useProxy ? proxied(src, size === "lg" ? 1200 : size === "md" ? 800 : 400) : src}
+          srcSet={
+            useProxy
+              ? PROXY_WIDTHS.map((w) => `${proxied(src, w)} ${w}w`).join(", ")
+              : undefined
+          }
+          sizes={useProxy ? SIZES[size] : undefined}
+          decoding="async"
           alt=""
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : undefined}
-          onError={() => setFailed(true)}
+          onError={fail}
           // The image can fail before React hydrates (fast 403/404 from a
           // hotlink-blocking CDN), and then onError never reaches us and the
           // browser's broken-image icon stays. Check once on mount.
           ref={(img) => {
-            if (img && img.complete && img.naturalWidth === 0) setFailed(true);
+            if (img && img.complete && img.naturalWidth === 0) fail();
           }}
           onLoad={(e) => {
             // Some sources (HN-linked sites, hotlink-blocked CDNs) return a 1x1
@@ -99,7 +139,7 @@ export function ArticleImage({
             // onError never fires. Treat an effectively-empty image as missing
             // and fall back to the pixel mosaic, like every other card.
             const img = e.currentTarget;
-            if (img.naturalWidth < 32 || img.naturalHeight < 32) setFailed(true);
+            if (img.naturalWidth < 32 || img.naturalHeight < 32) fail();
           }}
           className="absolute inset-0 w-full h-full object-cover"
         />

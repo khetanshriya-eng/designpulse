@@ -114,6 +114,8 @@ export default function RootLayout({
       className={`${pixel.variable} ${jersey.variable} ${mono.variable} h-full antialiased`}
     >
       <head>
+        {/* Story thumbnails are resized by wsrv.nl (see ArticleImage). */}
+        <link rel="preconnect" href="https://wsrv.nl" />
         {/*
           Pre-paint, synchronously: derive the auto theme from the visitor's
           LOCAL time (dark 19:00–06:00), honor a saved manual override, and set
