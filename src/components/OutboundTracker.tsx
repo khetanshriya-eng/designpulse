@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { isInternal } from "@/lib/internal";
 
 /**
  * Counts clicks out to stories. Stories open their source in a new tab, so
@@ -10,6 +11,7 @@ import { useEffect } from "react";
  */
 export function OutboundTracker() {
   useEffect(() => {
+    if (isInternal()) return;
     const send = (e: MouseEvent) => {
       if (e.type === "auxclick" && e.button !== 1) return; // middle-click only
       const a = (e.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null;

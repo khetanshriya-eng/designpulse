@@ -3,6 +3,7 @@
 import Script from "next/script";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { isInternal } from "@/lib/internal";
 
 /**
  * Analytics mount: Google Analytics 4 (gtag.js) + Microsoft Clarity (session
@@ -40,7 +41,8 @@ export function Analytics() {
     // deciding during render would hydration-mismatch the static shell (server
     // renders null, client would render the scripts).
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setEnabled(PROD_HOSTS.has(window.location.hostname));
+    // Browsers marked as ours (?internal=on) are never tracked.
+    setEnabled(PROD_HOSTS.has(window.location.hostname) && !isInternal());
   }, []);
 
   useEffect(() => {
