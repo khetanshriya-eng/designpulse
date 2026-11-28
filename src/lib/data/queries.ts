@@ -11,7 +11,8 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
 import { createPublicClient } from "@/lib/db/client";
-import type { SourceCategory } from "@/data/sources";
+import { sourcePriority, type SourceCategory } from "@/data/sources";
+import { isAiThemed } from "@/lib/ai-themed";
 import {
   rowsToArticles,
   rowToArticle,
@@ -170,15 +171,25 @@ export async function getMustReads(
     (r) => !excludeIds.includes(r.id)
   );
 
-  // Backfill from recent articles if the curator under-filled.
+  // Backfill from recent articles if the curator under-filled (quiet days,
+  // weekends). The backfill obeys the curator's rules: no tier-3 tech/gadget
+  // sources and at most 2 AI-themed stories. Without this, a Verge car story
+  // filled a must-read slot on 28 Nov 2026.
   if (picked.length < limit) {
     const haveIds = new Set<string>([...excludeIds, ...picked.map((r) => r.id)]);
-    const pool = await fetchLatestPool(limit * 5, [...haveIds], 30);
+    const pool = await fetchLatestPool(limit * 8, [...haveIds], 30);
+    const slugOf = (r: ArticleWithSource) =>
+      (Array.isArray(r.sources) ? r.sources[0] : r.sources)?.slug ?? "";
+    let aiCount = picked.filter((r) => isAiThemed(r.title ?? "")).length;
     for (const row of pool) {
       if (picked.length >= limit) break;
       if (haveIds.has(row.id)) continue;
+      if (sourcePriority(slugOf(row)) > 2) continue;
+      const ai = isAiThemed(row.title ?? "");
+      if (ai && aiCount >= 2) continue;
       picked.push(row);
       haveIds.add(row.id);
+      if (ai) aiCount += 1;
     }
   }
 
