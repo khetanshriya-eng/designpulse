@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { isInternal } from "@/lib/internal";
 
 const VISIT_KEY = "designator-visit";
 const DWELL_MS = 5_000;
@@ -30,7 +31,7 @@ export function EngagementBeacon() {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!pathname) return;
+    if (!pathname || isInternal()) return;
     let sent = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const scroller = document.getElementById("app-scroll");

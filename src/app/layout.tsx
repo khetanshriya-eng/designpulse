@@ -11,6 +11,7 @@ import { Analytics } from "@/components/Analytics";
 import { OutboundTracker } from "@/components/OutboundTracker";
 import { SOURCES } from "@/data/sources";
 import { EngagementBeacon } from "@/components/EngagementBeacon";
+import { InternalSwitch } from "@/components/InternalSwitch";
 import { SITE_URL } from "@/lib/site";
 
 // Pixel face — chrome accents (logo, badges, kickers, nav).
@@ -174,6 +175,7 @@ export default function RootLayout({
         <Analytics />
         <OutboundTracker />
         <EngagementBeacon />
+        <InternalSwitch />
       </body>
     </html>
   );
