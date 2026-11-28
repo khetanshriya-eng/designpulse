@@ -40,8 +40,8 @@ export function Analytics() {
     // Post-mount on purpose: the host is only knowable client-side, and
     // deciding during render would hydration-mismatch the static shell (server
     // renders null, client would render the scripts).
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     // Browsers marked as ours (?internal=on) are never tracked.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEnabled(PROD_HOSTS.has(window.location.hostname) && !isInternal());
   }, []);
 
